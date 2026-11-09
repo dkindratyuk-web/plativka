@@ -1,5 +1,17 @@
 # Changelog / Історія змін
 
+## 1.1.1
+
+**English**
+
+- **macOS media keys**: ⏯ (F8) now pauses and resumes — macOS sends it as a different key than Linux/Windows, and Plativka only resumed on it.
+- **Covers in system notifications**: macOS (from the DMG — the notification now comes from "Plativka" with the cover), Windows (installer version — a Windows notification with the cover), Linux (the cover as the notification icon).
+
+**Українська**
+
+- **Медіаклавіші на macOS**: ⏯ (F8) тепер ставить на паузу й продовжує — macOS надсилає її іншою клавішею, ніж Linux/Windows, і Платівка лише продовжувала гру.
+- **Обкладинки в системних сповіщеннях**: macOS (у DMG — сповіщення тепер від «Платівки» з обкладинкою), Windows (версія з інсталятора — сповіщення Windows з обкладинкою), Linux (обкладинка як іконка сповіщення).
+
 ## 1.1.0
 
 **English**

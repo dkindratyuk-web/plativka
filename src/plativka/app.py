@@ -578,7 +578,9 @@ class MpvPlayer(BasePlayer):
         conf = os.path.join(self._dir, "input.conf")
         Path(conf).write_text(
             "NEXT script-message plativka-next\nPREV script-message plativka-prev\n"
-            "PLAYPAUSE cycle pause\nPLAY set pause no\nPAUSE set pause yes\n"
+            # macOS шле клавішу ⏯ (F8) як PLAY, а Linux/Windows — як PLAYPAUSE: обидві перемикають паузу
+            "PLAYPAUSE cycle pause\nPLAY cycle pause\nPAUSE cycle pause\n"
+            "PLAYONLY set pause no\nPAUSEONLY set pause yes\n"
             "STOP script-message plativka-stop\n", "utf-8")
         args = [exe, "--no-config", "--idle=yes", "--no-video", "--no-terminal", "--audio-display=no",
                 f"--input-conf={conf}", "--input-media-keys=yes",
@@ -2230,17 +2232,53 @@ class Plativka(App):
         title = t.title
         sub = " · ".join(x for x in (t.album, t.year) if x)
         if self.popups == "system" and sysdeps.can_system_notify():
-            if self.tray is not None:
-                self.tray.notify(t.artist or APP_NAME, title + (f"\n{sub}" if sub else ""))
-            else:
-                self._sys_notify(t.artist or APP_NAME, title, sub)
+            self._sys_notify(path, t.artist or APP_NAME, title, sub)
         else:
             self.notify(title + (f"\n{sub}" if sub else ""), title=t.artist or _("Зараз грає"),
                         timeout=4, markup=False)
 
     @work(thread=True, group="osnotify")
-    def _sys_notify(self, head: str, body: str, sub: str):
-        sysdeps.system_notify(head, body, sub)
+    def _sys_notify(self, path: str, head: str, body: str, sub: str):
+        """Системне сповіщення про трек — з обкладинкою, де система це вміє."""
+        img = self.cover_img if self._last_cover_path == path else None
+        if img is None:
+            try:
+                img = load_cover(path)
+            except Exception:
+                img = None
+        jpeg, cover = None, None
+        if img is not None:
+            try:
+                import io
+                small = img.convert("RGB")
+                small.thumbnail((256, 256))
+                buf = io.BytesIO()
+                small.save(buf, "JPEG", quality=85)
+                jpeg = buf.getvalue()
+                CACHE_DIR.mkdir(parents=True, exist_ok=True)
+                cover = CACHE_DIR / "notify-cover.jpg"
+                cover.write_bytes(jpeg)
+            except Exception:
+                jpeg, cover = None, None
+        if sysdeps.IS_WIN:
+            from . import winnotify
+            if not winnotify.show(head, body + (f"\n{sub}" if sub else ""), str(cover) if cover else None):
+                if self.tray is not None:
+                    self.tray.notify(head, body + (f"\n{sub}" if sub else ""))
+        elif sysdeps.IS_MAC and sysdeps.in_kitty():
+            self._notify_n = getattr(self, "_notify_n", 0) + 1
+            seq = sysdeps.kitty_notification(head, body + (f"\n{sub}" if sub else ""), jpeg,
+                                             ident=f"plativka-{self._notify_n}")
+            self.call_from_thread(self._write_terminal, seq)
+        else:
+            sysdeps.system_notify(head, body, sub, image=str(cover) if cover else None)
+
+    def _write_terminal(self, seq: str):
+        try:
+            self._driver.write(seq)
+            self._driver.flush()
+        except Exception:
+            pass
 
     def cycle_popups(self):
         order = ["app", "system", "off"] if sysdeps.can_system_notify() else ["app", "off"]

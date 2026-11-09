@@ -61,3 +61,25 @@ def test_fix_cp1251_mojibake():
 def test_fmt_time():
     assert fmt_time(0) == "0:00" and fmt_time(75) == "1:15" and fmt_time(3725) == "1:02:05"
     assert fmt_time(None) == "-:--"
+
+
+def test_kitty_notification_escape():
+    import base64
+    import re
+    from plativka import sysdeps
+    img = bytes(range(256)) * 40          # ~10 КБ — кілька шматків
+    seq = sysdeps.kitty_notification("Виконавець", "Назва\nАльбом", img, ident="plativka-1")
+    parts = re.findall(r"\x1b\]99;([^;]*);([^\x1b]*)\x1b\\", seq)
+    assert "".join(f"\x1b]99;{m};{p}\x1b\\" for m, p in parts) == seq
+    meta = [dict(kv.split("=", 1) for kv in m.split(":")) for m, _ in parts]
+    assert all(m["i"] == "plativka-1" and m["e"] == "1" for m in meta)
+    assert [m["d"] for m in meta][-1] == "1" and set(m["d"] for m in meta[:-1]) == {"0"}
+    assert all(len(p) <= 4096 for _, p in parts)
+    by = {}
+    for m, (_, p) in zip(meta, parts):
+        by.setdefault(m["p"], "")
+        by[m["p"]] += p
+    assert base64.b64decode(by["title"]).decode() == "Виконавець"
+    assert base64.b64decode(by["body"]).decode() == "Назва\nАльбом"
+    assert base64.b64decode(by["icon"]) == img
+    assert base64.b64decode(meta[0]["s"]) == b"silent"

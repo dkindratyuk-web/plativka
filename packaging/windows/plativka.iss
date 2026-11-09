@@ -51,7 +51,8 @@ Source: "{#SourceDir}\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdi
 ; Плеєр відкривається у власному класичному вікні консолі (conhost), а не у Windows Terminal:
 ; лише таке вікно можна згорнути в трей і повернути звідти.
 Name: "{group}\Plativka"; Filename: "{sys}\conhost.exe"; Parameters: """{app}\plativka.exe"""; \
-  WorkingDir: "{userdocs}"; IconFilename: "{app}\plativka.ico"; Comment: "{cm:AppComment}"
+  WorkingDir: "{userdocs}"; IconFilename: "{app}\plativka.ico"; Comment: "{cm:AppComment}"; \
+  AppUserModelID: "dkindratyuk.Plativka"
 Name: "{autodesktop}\Plativka"; Filename: "{sys}\conhost.exe"; Parameters: """{app}\plativka.exe"""; \
   WorkingDir: "{userdocs}"; IconFilename: "{app}\plativka.ico"; Comment: "{cm:AppComment}"; Tasks: desktopicon
 

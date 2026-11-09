@@ -86,7 +86,33 @@ def icon_path() -> str | None:
     return None
 
 
-def system_notify(title: str, body: str, sub: str = "") -> bool:
+def in_kitty() -> bool:
+    """Платівка працює у вікні kitty (так запускає DMG і скрипт для Linux)."""
+    return bool(os.environ.get("KITTY_WINDOW_ID")) and os.environ.get("TERM") == "xterm-kitty"
+
+
+def kitty_notification(title: str, body: str, image: bytes | None = None, ident: str = "plativka") -> str:
+    """Escape-послідовність OSC 99: kitty сам показує системне сповіщення, з обкладинкою.
+
+    На macOS сповіщення приходить від «Платівки» (а не від «Редактора скриптів»),
+    і праворуч у ньому — обкладинка альбому.
+    """
+    import base64
+
+    def b64(x) -> str:
+        return base64.b64encode(x if isinstance(x, bytes) else x.encode("utf-8")).decode("ascii")
+
+    head = f"i={ident}:f={b64('Plativka')}:s={b64('silent')}:o=always"
+    out = [f"\x1b]99;{head}:d=0:e=1:p=title;{b64(title)}\x1b\\"]
+    if image:
+        data = b64(image)
+        for k in range(0, len(data), 4096):
+            out.append(f"\x1b]99;i={ident}:d=0:e=1:p=icon;{data[k:k + 4096]}\x1b\\")
+    out.append(f"\x1b]99;i={ident}:d=1:e=1:p=body;{b64(body)}\x1b\\")
+    return "".join(out)
+
+
+def system_notify(title: str, body: str, sub: str = "", image: str | None = None) -> bool:
     """Системне сповіщення. True — показано (або передано системі)."""
     try:
         if IS_MAC:
@@ -99,7 +125,7 @@ def system_notify(title: str, body: str, sub: str = "") -> bool:
             return True
         if IS_LINUX and shutil.which("notify-send"):
             args = ["notify-send", "-a", "Plativka", "-t", "4000"]
-            ic = icon_path()
+            ic = image or icon_path()
             if ic:
                 args += ["-i", ic]
             subprocess.run([*args, title, body + (f"\n{sub}" if sub else "")], timeout=5,

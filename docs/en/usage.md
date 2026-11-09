@@ -72,14 +72,18 @@ At the end of the playlist Plativka stops and says so. Turn on **repeat: all** t
 
 **N** cycles: **popups: player** (a small window inside the player) → **popups: macOS / Windows / Linux** (a system notification, visible even when the player is in the background) → **popups: off**.
 
-On macOS the first system notification may ask for permission for "Script Editor" — that is the system component that shows the notification.
+System notifications show the **album cover**:
+
+- **macOS** (the DMG): the notification comes from "Plativka" with the cover on the right. The first time macOS asks whether Plativka may show notifications — allow it. In Terminal.app and other terminals the notification is shown by "Script Editor" (a system component), without a cover.
+- **Windows** (installed with the installer): a Windows notification with the cover; a new track replaces the previous notification. Without the installer the tray icon shows a notification without a cover.
+- **Linux**: the cover is shown as the notification icon (GNOME, KDE and most desktops).
 
 ## System integration
 
 - **Windows — media keys**: ⏯ ⏭ ⏮ on the keyboard and headphones control Plativka, and the Windows media overlay (next to the volume popup) shows the track and its cover.
 - **Windows — tray icon**: play/pause, next, previous, show the player, Plativka on GitHub, quit. **H** hides the window to the tray; the **Minimize to tray** option in the tray menu makes minimising do the same. Closing the window with ✕ quits.
 - **Linux — MPRIS**: media keys, the GNOME/KDE media widget and `playerctl` control Plativka and show the track and cover.
-- **macOS — media keys** on the keyboard and headphones usually work while Plativka is playing.
+- **macOS — media keys**: ⏮ ⏯ ⏭ (F7 F8 F9) and headphone buttons control Plativka, and the **Now Playing** widget in Control Center shows the track and cover. macOS sends these keys to the app that started playing most recently — if a browser or Music played something after Plativka, press play in Plativka once and the keys come back.
 
 ## Themes and language
 

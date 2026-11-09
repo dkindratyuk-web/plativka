@@ -29,7 +29,7 @@ Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M
 - **Folder-based library**: add folders through the usual system folder dialog (or just drag one into the window), manage them in one **Folders…** window, browse by artist → album or by folder, search with `J`.
 - **The interface takes its colour from the album cover** that is playing. Real cover art in terminals that can draw images (Kitty, Ghostty, iTerm2, WezTerm, Windows Terminal); a pixel-art cover elsewhere, or a spinning record if you turn covers off.
 - **Real level meter** taken from the audio stream, a big LCD-style clock, a scrolling title.
-- **Track popups**: in the player or as system notifications.
+- **Track popups**: in the player or as system notifications with the album cover.
 - **System integration**: the volume keys on your keyboard (F11/F12 on a Mac) control the player — its volume mirrors the system volume; media keys ⏯ ⏭ ⏮ on all three systems (Windows media overlay, Linux MPRIS, macOS); tray icon on Windows.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.
 - **Remembers everything**: playlist, position, volume, theme and library survive restarts.

@@ -64,6 +64,23 @@ By default the player's volume mirrors the system volume. Check **F1 → Volume*
 
 The system folder dialog is used when one is available. On Linux it needs `zenity` (GNOME and most desktops) or `kdialog` (KDE) — the install script installs zenity; or install it yourself, e.g. `sudo apt install zenity`. Over SSH there is no system dialog, so the in-player picker is used.
 
+## macOS: media keys don't work in any app (Plativka, Music, YouTube)
+
+If ⏮ ⏯ ⏭ in Control Center's **Now Playing** work, but F7 F8 F9 on the keyboard do nothing anywhere while volume keys work, the system service that handles media keys (`rcd`) may be turned off for your user — an old "stop media keys from opening iTunes" tip or a utility could have done that. Check in Terminal:
+
+```
+launchctl print-disabled gui/$(id -u) | grep -i rcd
+```
+
+If it says `"com.apple.rcd" => disabled`, turn it back on:
+
+```
+launchctl enable gui/$(id -u)/com.apple.rcd
+launchctl bootstrap gui/$(id -u) /System/Library/LaunchAgents/com.apple.rcd.plist
+```
+
+(or log out and back in after the first command).
+
 ## macOS: ⏮ ⏯ ⏭ in Control Center work, but the keyboard keys don't
 
 Some keyboards (most non-Apple ones, or a Mac with "Use F1, F2, etc. keys as standard function keys" turned on) send F7 F8 F9 as plain function keys instead of media keys. Since 1.1.2 Plativka treats F7 F8 F9 as previous · pause · next while its window is in front. To control it from other apps too, use the media keys (on Apple keyboards — without Fn, or with Fn if that setting is on).

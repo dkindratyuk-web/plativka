@@ -1,4 +1,4 @@
-# ─────────────────────────────────────────────────────────────────────────────
+﻿# ─────────────────────────────────────────────────────────────────────────────
 #  Збирає інсталятор Платівки для Windows (Plativka-<версія>-windows-x64-setup.exe).
 #  Усередині: Python + бібліотеки (PyInstaller), mpv (офіційна збірка), іконка.
 #  Запускається на Windows (локально або в GitHub Actions). Потрібні: Python 3.12, Inno Setup 6.
@@ -31,8 +31,12 @@ Write-Host "→ mpv…"
 $MpvZip = "$Work\mpv.zip"
 Invoke-WebRequest -Uri $MpvZipUrl -OutFile $MpvZip
 Expand-Archive -Path $MpvZip -DestinationPath "$Work\mpvx" -Force
+# офіційний zip може містити ще один архів (tar.gz / 7z) — розпаковуємо вбудованим tar.exe
+Get-ChildItem -Path "$Work\mpvx" -Recurse -Include *.tar.gz, *.tgz, *.tar.xz, *.7z, *.zip | ForEach-Object {
+  tar -xf $_.FullName -C "$Work\mpvx"
+}
 $MpvExe = Get-ChildItem -Path "$Work\mpvx" -Recurse -Filter "mpv.exe" | Select-Object -First 1
-if (-not $MpvExe) { throw "mpv.exe not found in the archive" }
+if (-not $MpvExe) { Get-ChildItem -Recurse "$Work\mpvx" | Select-Object -First 40 | Format-Table FullName; throw "mpv.exe not found in the archive" }
 New-Item -ItemType Directory -Force -Path "$Work\dist\plativka\mpv" | Out-Null
 Copy-Item -Recurse -Force "$($MpvExe.DirectoryName)\*" "$Work\dist\plativka\mpv\"
 Copy-Item "$Root\LICENSE", "$Root\THIRD_PARTY_LICENSES.md" "$Work\dist\plativka\"

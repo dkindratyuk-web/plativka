@@ -89,6 +89,76 @@ def placeholder_cover(accent: str, dark: bool) -> QPixmap:
     return pix
 
 
+def glyph_icon(kind: str, color: str, size: int = 16) -> QIcon:
+    """Прості векторні значки кнопок — однакові на всіх системах (без кольорових емодзі Windows)."""
+    dpr = 3
+    pix = QPixmap(size * dpr, size * dpr)
+    pix.setDevicePixelRatio(dpr)
+    pix.fill(Qt.transparent)
+    p = QPainter(pix)
+    p.setRenderHint(QPainter.Antialiasing)
+    c = QColor(color)
+    p.setPen(Qt.NoPen)
+    p.setBrush(c)
+    s = float(size)
+
+    def tri(x0, x1, y0=s * .2, y1=s * .8):
+        path = QPainterPath()
+        path.moveTo(x0, y0)
+        path.lineTo(x1, (y0 + y1) / 2)
+        path.lineTo(x0, y1)
+        path.closeSubpath()
+        p.drawPath(path)
+
+    def tri_l(x0, x1, y0=s * .2, y1=s * .8):
+        path = QPainterPath()
+        path.moveTo(x1, y0)
+        path.lineTo(x0, (y0 + y1) / 2)
+        path.lineTo(x1, y1)
+        path.closeSubpath()
+        p.drawPath(path)
+
+    if kind == "play":
+        tri(s * .3, s * .8)
+    elif kind == "pause":
+        p.drawRoundedRect(QRectF(s * .26, s * .22, s * .16, s * .56), 1, 1)
+        p.drawRoundedRect(QRectF(s * .58, s * .22, s * .16, s * .56), 1, 1)
+    elif kind == "stop":
+        p.drawRoundedRect(QRectF(s * .27, s * .27, s * .46, s * .46), 1.5, 1.5)
+    elif kind == "next":
+        tri(s * .2, s * .52)
+        tri(s * .48, s * .8)
+        p.drawRect(QRectF(s * .8, s * .2, s * .08, s * .6))
+    elif kind == "prev":
+        tri_l(s * .48, s * .8)
+        tri_l(s * .2, s * .52)
+        p.drawRect(QRectF(s * .12, s * .2, s * .08, s * .6))
+    elif kind == "eject":
+        path = QPainterPath()
+        path.moveTo(s * .2, s * .58)
+        path.lineTo(s * .5, s * .22)
+        path.lineTo(s * .8, s * .58)
+        path.closeSubpath()
+        p.drawPath(path)
+        p.drawRect(QRectF(s * .2, s * .68, s * .6, s * .1))
+    elif kind in ("up", "down"):
+        path = QPainterPath()
+        if kind == "up":
+            path.moveTo(s * .25, s * .64); path.lineTo(s * .5, s * .34); path.lineTo(s * .75, s * .64)
+        else:
+            path.moveTo(s * .25, s * .36); path.lineTo(s * .5, s * .66); path.lineTo(s * .75, s * .36)
+        path.closeSubpath()
+        p.drawPath(path)
+    elif kind == "pin":
+        p.drawEllipse(QPointF(s * .5, s * .32), s * .2, s * .2)
+        p.drawRect(QRectF(s * .46, s * .45, s * .08, s * .4))
+    elif kind == "menu":
+        for y in (.28, .48, .68):
+            p.drawRoundedRect(QRectF(s * .2, s * y, s * .6, s * .08), 1, 1)
+    p.end()
+    return QIcon(pix)
+
+
 def app_icon() -> QIcon:
     ic = sysdeps.icon_path()
     return QIcon(ic) if ic else QIcon()
@@ -145,7 +215,8 @@ class LcdClock(QWidget):
         super().__init__()
         self.text = "-:--"
         self.color = QColor("#0E7C84")
-        self.setMinimumSize(140, 56)
+        self.setMinimumSize(110, 44)
+        self.setMaximumHeight(48)
         self.setCursor(Qt.PointingHandCursor)
 
     def set_text(self, t: str):
@@ -197,9 +268,9 @@ class VuMeter(QWidget):
         self.enabled_ = True
         self.dark = False
         if horizontal:
-            self.setFixedHeight(12)
+            self.setFixedHeight(9)
         else:
-            self.setFixedSize(84, 46)
+            self.setFixedSize(70, 34)
 
     def show_levels(self, levels, peaks, ok):
         self.levels, self.peaks, self.enabled_ = list(levels), list(peaks), ok
@@ -285,9 +356,10 @@ class TrackTable(QTableWidget):
         h.setSectionResizeMode(0, QHeaderView.Fixed)
         h.setSectionResizeMode(1, QHeaderView.Stretch)
         h.setSectionResizeMode(2, QHeaderView.Fixed)
-        self.setColumnWidth(0, 52)
-        self.setColumnWidth(2, 58)
-        self.verticalHeader().setDefaultSectionSize(28)
+        self.setColumnWidth(0, 56)
+        self.setColumnWidth(2, 50)
+        self.verticalHeader().setDefaultSectionSize(22)
+        self.setAlternatingRowColors(False)
         self.cellDoubleClicked.connect(lambda r, c: self.activated_row.emit(r))
         self.setFocusPolicy(Qt.StrongFocus)
 
@@ -468,6 +540,12 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle(APP_NAME)
         self.setWindowIcon(app_icon())
+        # Mica (Windows 11): прозорість треба увімкнути ще до створення вікна системою
+        self._want_mica = (sysdeps.IS_WIN and not os.environ.get("PLATIVKA_NO_MICA")
+                           and sys.getwindowsversion().build >= 22000)
+        if self._want_mica:
+            self.setAttribute(Qt.WA_TranslucentBackground, True)
+            self.setAttribute(Qt.WA_NoSystemBackground, True)
         self.setAcceptDrops(True)
         self.build_ui()
         self.build_actions()
@@ -476,7 +554,7 @@ class MainWindow(QMainWindow):
         if isinstance(g, list) and len(g) == 4:
             self.setGeometry(*g)
         else:
-            self.resize(600, 760)
+            self.resize(520, 640)
         self.apply_view(initial=True)
         self.rebuild_playlist()
         self.rebuild_tree()
@@ -524,25 +602,25 @@ class MainWindow(QMainWindow):
         root.setObjectName("root")
         self.setCentralWidget(root)
         outer = QVBoxLayout(root)
-        outer.setContentsMargins(10, 10, 10, 10)
-        outer.setSpacing(8)
+        outer.setContentsMargins(8, 8, 8, 8)
+        outer.setSpacing(6)
 
         # ── картка плеєра ──
         self.card = QFrame()
         self.card.setObjectName("card")
         cl = QVBoxLayout(self.card)
-        cl.setContentsMargins(12, 12, 12, 10)
-        cl.setSpacing(8)
+        cl.setContentsMargins(10, 10, 10, 8)
+        cl.setSpacing(6)
         top = QHBoxLayout()
         top.setSpacing(12)
-        self.cover = CoverLabel(172)
+        self.cover = CoverLabel(128)
         self.cover.clicked.connect(self.toggle_view)
         top.addWidget(self.cover, 0, Qt.AlignTop)
 
         self.lcd = QFrame()
         self.lcd.setObjectName("lcd")
         lv = QVBoxLayout(self.lcd)
-        lv.setContentsMargins(12, 10, 12, 10)
+        lv.setContentsMargins(10, 6, 10, 6)
         lv.setSpacing(2)
         r1 = QHBoxLayout()
         self.state = QLabel("■")
@@ -599,14 +677,16 @@ class MainWindow(QMainWindow):
         tr.setSpacing(5)
         self.buttons = {}
         for key, glyph, tip, fn in (
-                ("prev", "⏮", _("Попередній трек"), lambda: self.spawn(self.prev())),
-                ("play", "▶", _("Грати"), lambda: self.spawn(self.play())),
-                ("pause", "⏸", _("Пауза"), lambda: self.spawn(self.pause())),
-                ("stop", "⏹", _("Стоп"), lambda: self.spawn(self.stop())),
-                ("next", "⏭", _("Наступний трек"), lambda: self.spawn(self.next())),
-                ("eject", "⏏", _("Додати теку до списку"), self.add_playlist_folder)):
+                ("prev", "prev", _("Попередній трек"), lambda: self.spawn(self.prev())),
+                ("play", "play", _("Грати"), lambda: self.spawn(self.play())),
+                ("pause", "pause", _("Пауза"), lambda: self.spawn(self.pause())),
+                ("stop", "stop", _("Стоп"), lambda: self.spawn(self.stop())),
+                ("next", "next", _("Наступний трек"), lambda: self.spawn(self.next())),
+                ("eject", "eject", _("Додати теку до списку"), self.add_playlist_folder)):
             b = QToolButton()
-            b.setText(glyph)
+            b.setProperty("glyph", glyph)
+            b.setIconSize(QSize(14, 14))
+            b.setFixedSize(32, 24)
             b.setToolTip(tip)
             b.setObjectName("tbtn")
             b.setCursor(Qt.PointingHandCursor)
@@ -615,7 +695,9 @@ class MainWindow(QMainWindow):
             tr.addWidget(b)
         tr.addStretch()
         self.pin = QToolButton()
-        self.pin.setText("📌")
+        self.pin.setProperty("glyph", "pin")
+        self.pin.setIconSize(QSize(14, 14))
+        self.pin.setFixedSize(28, 24)
         self.pin.setToolTip(_("Поверх усіх вікон"))
         self.pin.setObjectName("tbtn")
         self.pin.setCheckable(True)
@@ -623,6 +705,8 @@ class MainWindow(QMainWindow):
         self.pin.clicked.connect(self.toggle_on_top)
         tr.addWidget(self.pin)
         self.collapse_btn = QToolButton()
+        self.collapse_btn.setIconSize(QSize(14, 14))
+        self.collapse_btn.setFixedSize(28, 24)
         self.collapse_btn.setObjectName("tbtn")
         self.collapse_btn.setCursor(Qt.PointingHandCursor)
         self.collapse_btn.clicked.connect(self.toggle_collapsed)
@@ -634,7 +718,7 @@ class MainWindow(QMainWindow):
         tr.addWidget(self.vol_label)
         self.vol = QSlider(Qt.Horizontal)
         self.vol.setRange(0, 100)
-        self.vol.setFixedWidth(110)
+        self.vol.setFixedWidth(90)
         self.vol.setValue(self.volume)
         self.vol.valueChanged.connect(self._vol_moved)
         tr.addWidget(self.vol)
@@ -648,9 +732,9 @@ class MainWindow(QMainWindow):
 
         # ── список і медіатека ──
         self.lists = QFrame()
-        self.lists.setObjectName("card")
+        self.lists.setObjectName("listcard")
         ll = QVBoxLayout(self.lists)
-        ll.setContentsMargins(12, 8, 12, 8)
+        ll.setContentsMargins(8, 6, 8, 6)
         ll.setSpacing(6)
         head = QHBoxLayout()
         head.setSpacing(4)
@@ -669,7 +753,9 @@ class MainWindow(QMainWindow):
         self.search.returnPressed.connect(self.search_enter)
         head.addWidget(self.search, 1)
         self.menu_btn = QToolButton()
-        self.menu_btn.setText("☰")
+        self.menu_btn.setProperty("glyph", "menu")
+        self.menu_btn.setIconSize(QSize(14, 14))
+        self.menu_btn.setFixedSize(28, 24)
         self.menu_btn.setObjectName("tbtn")
         self.menu_btn.setPopupMode(QToolButton.InstantPopup)
         head.addWidget(self.menu_btn)
@@ -826,9 +912,7 @@ class MainWindow(QMainWindow):
         sec = tune(self.accent_rgb, dark, .09)
         self.clock.color = QColor(acc)
         self.vu.dark = self.mini_vu.dark = dark
-        if not self.mica:
-            self.mica = apply_mica(self, dark)
-        elif sysdeps.IS_WIN:
+        if self.mica:
             apply_mica(self, dark)
         glass = self.mica
         fg = "#F2F3F5" if dark else "#1A1D24"
@@ -846,44 +930,61 @@ class MainWindow(QMainWindow):
         groove = "rgba(255,255,255,0.16)" if dark else "rgba(0,0,0,0.14)"
         btn = "rgba(255,255,255,0.07)" if dark else "rgba(0,0,0,0.055)"
         btn_h = "rgba(255,255,255,0.14)" if dark else "rgba(0,0,0,0.10)"
-        self.setAttribute(Qt.WA_TranslucentBackground, glass)
+        a = QColor(acc)
+        if glass:
+            listcard = f"rgba({a.red()},{a.green()},{a.blue()},{0.07 if dark else 0.06})"
+        else:
+            base = QColor(card)
+            k = .07 if dark else .05
+            listcard = QColor(round(base.red() + (a.red() - base.red()) * k), round(base.green() + (a.green() - base.green()) * k),
+                              round(base.blue() + (a.blue() - base.blue()) * k)).name()
+        for w in (self.table, self.tree):
+            pal = w.palette()
+            sel = QColor(acc)
+            sel.setAlpha(56 if dark else 34)
+            pal.setColor(pal.ColorRole.Highlight, sel)
+            pal.setColor(pal.ColorRole.HighlightedText, QColor(fg))
+            pal.setColor(pal.ColorRole.AlternateBase, QColor(0, 0, 0, 0))
+            pal.setColor(pal.ColorRole.Base, QColor(0, 0, 0, 0))
+            w.setPalette(pal)
+        self._fg = fg
         self.setStyleSheet(f"""
             QMainWindow, #root {{ background: {bg}; }}
             QWidget {{ color: {fg}; }}
-            #card {{ background: {card}; border: 1px solid {stroke}; border-radius: 9px; }}
+            #card {{ background: {card}; border: 1px solid {stroke}; border-radius: 8px; }}
+            #listcard {{ background: {listcard}; border: 1px solid {stroke}; border-radius: 8px; }}
             #lcd {{ background: {lcd_bg}; border-radius: 7px; }}
-            #state {{ color: {acc}; font-size: 15px; }}
-            #title {{ font-size: 14px; font-weight: 600; }}
-            #bigtitle {{ font-size: 17px; font-weight: 600; }}
-            #sub {{ color: {acc}; font-size: 13px; }}
-            #dim {{ color: {sub}; font-size: 12px; }}
-            #empty {{ color: {sub}; font-size: 13px; padding: 20px; }}
-            #flag {{ color: {sub}; font-size: 12px; }}
-            #flagon {{ color: {acc}; font-size: 12px; font-weight: 600; }}
-            QToolButton#tbtn {{ background: {btn}; border: none; border-radius: 6px; padding: 4px 10px;
-                               font-size: 14px; min-width: 22px; }}
+            #state {{ color: {acc}; font-size: 12px; }}
+            #title {{ font-size: 12px; font-weight: 600; }}
+            #bigtitle {{ font-size: 14px; font-weight: 600; }}
+            #sub {{ color: {acc}; font-size: 12px; }}
+            #dim {{ color: {sub}; font-size: 11px; }}
+            #empty {{ color: {sub}; font-size: 12px; padding: 16px; }}
+            #flag {{ color: {sub}; font-size: 11px; }}
+            #flagon {{ color: {acc}; font-size: 11px; font-weight: 600; }}
+            QToolButton#tbtn {{ background: {btn}; border: none; border-radius: 5px; padding: 0; }}
             QToolButton#tbtn:hover {{ background: {btn_h}; }}
             QToolButton#tbtn:checked {{ background: {hl_bg}; }}
             QToolButton#tbtn::menu-indicator {{ image: none; }}
-            QPushButton#small, QPushButton#primary {{ background: {btn}; border: none; border-radius: 6px;
-                               padding: 5px 12px; font-size: 12px; }}
+            QPushButton#small, QPushButton#primary {{ background: {btn}; border: none; border-radius: 5px;
+                               padding: 3px 9px; font-size: 11px; }}
             QPushButton#small:hover {{ background: {btn_h}; }}
             QPushButton#primary {{ background: {acc}; color: {'#101215' if dark else 'white'}; font-weight: 600; }}
             QPushButton#tab, QPushButton#mode {{ background: transparent; border: none; border-radius: 6px;
-                               padding: 4px 10px; color: {sub}; font-size: 13px; }}
+                               padding: 2px 8px; color: {sub}; font-size: 12px; }}
             QPushButton#tab:hover, QPushButton#mode:hover {{ background: {btn}; }}
             QPushButton#tab[on="true"], QPushButton#mode[on="true"] {{ background: {hl_bg}; color: {acc};
                                font-weight: 600; }}
-            QLineEdit {{ background: {btn}; border: 1px solid {stroke}; border-radius: 6px; padding: 4px 8px;
-                         font-size: 12px; selection-background-color: {acc}; }}
+            QLineEdit {{ background: {btn}; border: 1px solid {stroke}; border-radius: 5px; padding: 2px 6px;
+                         font-size: 11px; selection-background-color: {acc}; }}
             QLineEdit:focus {{ border: 1px solid {acc}; }}
             QSlider::groove:horizontal {{ height: 4px; border-radius: 2px; background: {groove}; }}
             QSlider::sub-page:horizontal {{ height: 4px; border-radius: 2px; background: {acc}; }}
-            QSlider::handle:horizontal {{ width: 14px; height: 14px; margin: -5px 0; border-radius: 7px;
-                               background: {'#3A3D45' if dark else 'white'}; border: 3px solid {acc}; }}
-            QTableWidget, QTreeWidget {{ background: transparent; border: none; font-size: 13px; outline: 0;
+            QSlider::handle:horizontal {{ width: 10px; height: 10px; margin: -4px 0; border-radius: 5px;
+                               background: {'#3A3D45' if dark else 'white'}; border: 2px solid {acc}; }}
+            QTableWidget, QTreeWidget {{ background: transparent; border: none; font-size: 12px; outline: 0;
                                alternate-background-color: transparent; }}
-            QTableWidget::item, QTreeWidget::item {{ padding: 2px 4px; border: none; }}
+            QTableWidget::item, QTreeWidget::item {{ padding: 0 3px; border: none; }}
             QTableWidget::item:selected, QTreeWidget::item:selected {{ background: {hl_bg}; color: {fg}; }}
             QTreeWidget::item:hover, QTableWidget::item:hover {{ background: {btn}; }}
             QScrollBar:vertical {{ width: 8px; background: transparent; }}
@@ -893,6 +994,7 @@ class MainWindow(QMainWindow):
             QMenu {{ padding: 4px; }}
         """)
         self._acc, self._sec, self._sub = acc, sec, sub
+        self._paint_icons()
         self.update_flags()
         self.set_tab(self.tab, save=False)
         self.set_lib_mode(self.lib_mode, rebuild=False)
@@ -901,11 +1003,29 @@ class MainWindow(QMainWindow):
             self.cover.set_cover(placeholder_cover(acc, dark))
         self.clock.update()
 
+    def _paint_icons(self):
+        fg = getattr(self, "_fg", "#1A1D24")
+        for b in list(self.buttons.values()) + [self.pin, self.collapse_btn, self.menu_btn]:
+            g = b.property("glyph")
+            if g:
+                b.setIcon(glyph_icon(g, fg))
+
     def cycle_theme(self):
         self.base = {"auto": "light", "light": "dark", "dark": "auto"}.get(self.base, "auto")
         self.apply_theme()
         self.toast({"auto": _("Тема: як у системі"), "light": _("Тема: світла"), "dark": _("Тема: темна")}[self.base])
         self.save_cfg()
+
+    def showEvent(self, e):
+        super().showEvent(e)
+        if self._want_mica and not self.mica:
+            self.mica = apply_mica(self, self.is_dark())
+            log(f"mica: {self.mica}")
+            if self.mica:
+                self.apply_theme()
+            else:
+                self.setAttribute(Qt.WA_TranslucentBackground, False)
+                self.apply_theme()
 
     def changeEvent(self, e):
         if e.type() == QEvent.ThemeChange and self.base == "auto":
@@ -917,7 +1037,7 @@ class MainWindow(QMainWindow):
     # ───────────── вигляд ─────────────
     def apply_view(self, initial=False):
         full = self.view == "full" and not self.collapsed
-        self.cover.set_size(172 if full else 96)
+        self.cover.set_size(128 if full else 64)
         for w in (self.clock, self.vu, self.state, self.title, self.info):
             w.setVisible(full)
         for w in (self.c_title, self.c_sub, self.mini_vu):
@@ -925,11 +1045,12 @@ class MainWindow(QMainWindow):
         self.lists.setVisible(not self.collapsed)
         self.pin.setVisible(self.collapsed or self.view == "compact")
         self.buttons["eject"].setVisible(not self.collapsed)
-        self.collapse_btn.setText("▾" if self.collapsed else "▴")
+        self.collapse_btn.setProperty("glyph", "down" if self.collapsed else "up")
+        self._paint_icons()
         self.collapse_btn.setToolTip(_("Розгорнути") if self.collapsed else _("Міні-плеєр"))
         self.a_view.setChecked(self.view == "compact")
         self.a_mini.setChecked(self.collapsed)
-        self.lcd.layout().setContentsMargins(*(12, 10, 12, 10) if full else (4, 2, 4, 2))
+        self.lcd.layout().setContentsMargins(*(10, 6, 10, 6) if full else (2, 0, 2, 0))
         self.lcd.setProperty("flat", not full)
         if self.collapsed:
             self.setMinimumHeight(0)

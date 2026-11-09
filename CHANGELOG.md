@@ -1,5 +1,21 @@
 # Changelog / Історія змін
 
+## 1.3.1
+
+**English**
+
+- Plativka Desktop: much more compact — smaller fonts, buttons, rows, cover and clock, closer to the terminal version.
+- The playlist/library panel and the selected row now take their colour from the album cover too.
+- Same-looking drawn button icons on every system (no colourful emoji buttons on Windows).
+- Windows 11: the translucent Mica background is switched on before the window appears (it did not show in 1.3.0).
+
+**Українська**
+
+- Віконна Платівка: набагато компактніша — менші шрифти, кнопки, рядки, обкладинка й годинник, ближче до консольної версії.
+- Панель списку/медіатеки й виділений рядок тепер теж беруть колір з обкладинки.
+- Однакові намальовані значки кнопок на всіх системах (без кольорових емодзі на Windows).
+- Windows 11: напівпрозорий фон Mica вмикається до появи вікна (у 1.3.0 він не з'являвся).
+
 ## 1.3.0
 
 **English**

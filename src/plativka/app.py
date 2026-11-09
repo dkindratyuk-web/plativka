@@ -894,6 +894,32 @@ class VUMeter(Static):
         self.update(out)
 
 
+class MiniVU(Static):
+    """Індикатор рівня в один рядок — для компактного вигляду."""
+
+    def show(self, levels, peaks, enabled: bool):
+        w = self.size.width
+        if w < 8:
+            self.update("")
+            return
+        dark = self.app.current_theme.dark
+        lo, mid, hi = ((76, 208, 138), (224, 186, 46), (255, 98, 82)) if dark else \
+            ((27, 140, 72), (196, 142, 0), (205, 55, 40))
+        empty = Style(color=self.app.dim_hex)
+        half = (w - 1) // 2 - 2
+        out = Text()
+        for i, name in enumerate(("L", "R")):
+            out.append(name + " ", Style(color=self.app.dim_hex, bold=True))
+            n = int(round(levels[i] * half)) if enabled else 0
+            for x in range(half):
+                f = x / max(1, half - 1)
+                c = mix(lo, mid, f / .7) if f < .7 else mix(mid, hi, (f - .7) / .3)
+                out.append("▮", Style(color=rgb_hex(c)) if x < n else empty)
+            if i == 0:
+                out.append(" ")
+        self.update(out)
+
+
 def vu_scale(w: int) -> str:
     """Підписи шкали в дБ на своїх місцях: -48 на початку, -12 на 3/4, 0 в кінці."""
     row = [" "] * w
@@ -943,8 +969,15 @@ class SeekBar(Widget):
             self.frac, self.total = frac, total
             self.refresh()
 
+    def _label(self) -> str:
+        if not self.total:
+            return "  -:--"
+        if self.screen.has_class("compact"):  # у компактному вигляді немає великого годинника
+            return f" {fmt_time(self.frac * self.total)} / {fmt_time(self.total)}"
+        return " " + fmt_time(self.total)
+
     def render(self):
-        lab = " " + fmt_time(self.total) if self.total else "  -:--"
+        lab = self._label()
         w = max(4, self.size.width - len(lab))
         pos = int(clamp(self.frac, 0, 1) * (w - 1))
         p, d = self.app.primary_hex, self.app.dim_hex
@@ -956,7 +989,7 @@ class SeekBar(Widget):
         return t
 
     async def on_click(self, event: events.Click):
-        lab = " " + fmt_time(self.total) if self.total else "  -:--"
+        lab = self._label()
         w = max(4, self.size.width - len(lab))
         if event.x < w:
             await self.app.seek_frac(clamp(event.x / (w - 1), 0, 1))
@@ -1225,6 +1258,8 @@ class HelpScreen(ModalScreen):
             ("Z X C V B", _("назад · грати · пауза · стоп · далі")),
             (_("Пробіл"), _("пауза / продовжити")),
             ("F7 F8 F9", _("назад · пауза · далі (медіаклавіші Mac)")),
+            ("W", _("вигляд: Winamp ⇄ компактний")),
+            ("E", _("компактний вигляд: згорнути до смужки / розгорнути")),
             ("← →", _("перемотати на 5 секунд")),
             ("+ −", _("гучність")),
             ("Tab", _("перейти між списком відтворення й медіатекою")),
@@ -1440,6 +1475,8 @@ class MainScreen(Screen):
         Binding("r", "repeat", _("Повтор"), show=False),
         Binding("n", "popups", _("Сповіщення"), show=False),
         Binding("m", "toggle_library", _("Медіатека"), show=False),
+        Binding("w", "toggle_view", _("Вигляд"), show=False),
+        Binding("e", "toggle_collapsed", _("Згорнути"), show=False),
         Binding("t", "theme", _("Тема"), show=False),
         Binding("o", "cover_mode", _("Обкладинка"), show=False),
         Binding("P,shift+p", "app.lib_all", _("Усе в список"), show=False),
@@ -1452,6 +1489,7 @@ class MainScreen(Screen):
         ("V", _("Стоп"), "stop", 3), ("B", _("Наст."), "next", 1),
         ("Tab", _("Панель"), "next_panel(1)", 2), ("J", _("Пошук"), "jump", 2),
         ("L", _("Тека"), "add_library_folder", 4), ("M", _("Медіатека"), "toggle_library", 3),
+        ("W", _("Вигляд"), "toggle_view", 3), ("E", _("Згорнути"), "toggle_collapsed", 4),
         ("T", _("Тема"), "theme", 5),
         *([("H", _("У трей"), "hide_to_tray", 4)] if sysdeps.IS_WIN else []),
         ("F1", _("Довідка"), "help", 1), ("Q", _("Вихід"), "app.quit", 2),
@@ -1467,6 +1505,11 @@ class MainScreen(Screen):
                             if GRAPHICS is not None:
                                 yield GRAPHICS(id="cover-img")
                         with Vertical(id="lcd"):
+                            yield Marquee(id="c-title")
+                            yield Static(id="c-sub")
+                            with Horizontal(id="c-row"):
+                                yield MiniVU(id="c-vu")
+                                yield Static(id="c-fmt")
                             with Horizontal(id="lcd-row"):
                                 yield Static("■", id="state-icon")
                                 yield BigTime(id="bigtime")
@@ -1487,6 +1530,11 @@ class MainScreen(Screen):
                         yield Clickable(" ▶▶ ", "next", classes="tbtn")
                         yield Clickable(" ⏏ ", "add_playlist_folder", classes="tbtn", id="eject")
                         yield VolumeBar(id="volume")
+                with Horizontal(id="c-tabs"):
+                    yield Clickable(_(" Список "), "focus_panel('playlist')", id="ct-playlist", classes="tab")
+                    yield Clickable(_(" Медіатека "), "focus_panel('library')", id="ct-library", classes="tab")
+                    yield Static(classes="spacer")
+                    yield Clickable(_(" ▴ згорнути "), "app.toggle_collapsed", id="ct-collapse", classes="tab")
                 with Vertical(id="pl-win"):
                     yield PlaylistTable(id="playlist", cursor_type="row", zebra_stripes=False,
                                         show_cursor=True)
@@ -1537,17 +1585,25 @@ class MainScreen(Screen):
     def action_popups(self): self.app.cycle_popups()
     def action_theme(self): self.app.toggle_theme()
     def action_help(self): self.app.push_screen(HelpScreen())
+    def action_toggle_view(self): self.app.toggle_view()
+    def action_toggle_collapsed(self): self.app.toggle_collapsed()
 
     def action_focus_panel(self, which: str):
-        if which == "library" and not self.app.show_library:
-            self.app.toggle_library()
+        if self.app.view == "compact" and self.app.collapsed:
+            self.app.toggle_collapsed()
+        app = self.app
+        lib_on = app.lib_visible()
+        single = self.has_class("narrow") or self.has_class("compact")  # видно одну панель
+        if which == "library" and not lib_on:
+            app.toggle_library()
+            return
+        if which == "playlist" and single and lib_on:
+            app.toggle_library()
             return
         a, b = ("#library", "#lib-empty") if which == "library" else ("#playlist", "#pl-empty")
         target = self.query_one(a) if self.query_one(a).display else self.query_one(b)
-        if target.display:
+        if target.display and target.parent.display:
             target.focus()
-        elif which == "playlist" and self.app.show_library and self.has_class("narrow"):
-            self.app.toggle_library()
 
     def action_next_panel(self, step: int):
         def pick(a, b):
@@ -1555,7 +1611,7 @@ class MainScreen(Screen):
             return wa if wa.display else wb
         panels = [w for w in (pick("#playlist", "#pl-empty"), pick("#library", "#lib-empty"))
                   if w.display and w.parent.styles.display != "none"]
-        if self.has_class("narrow"):  # у вузькому вікні видно одну панель — перемикаємо, що видно
+        if self.has_class("narrow") or self.has_class("compact"):  # у вузькому вікні видно одну панель — перемикаємо, що видно
             self.app.toggle_library()
             return
         if not panels:
@@ -1687,6 +1743,31 @@ Screen.narrow.lib-shown #pl-win { display: none; }
 Screen.narrow #library-win { width: 1fr; max-width: 999; min-width: 0; height: 1fr; }
 Screen.lib-hidden #library-win { display: none; }
 
+/* компактний вигляд (W): невелика смужка плеєра, під нею одна панель із вкладками */
+#c-title, #c-sub, #c-tabs, #c-row { display: none; }
+Screen.compact #body { layout: vertical; }
+Screen.compact #left { min-width: 0; height: 1fr; }
+Screen.compact #main-win { height: 8; }
+Screen.compact #top { height: 4; }
+Screen.compact #cover-box { width: 8; height: 4; }
+Screen.compact #lcd { height: 4; margin-left: 1; padding: 0; background: transparent; }
+Screen.compact #lcd-row, Screen.compact #marquee { display: none; }
+Screen.compact #c-title { display: block; height: 1; text-style: bold; color: $foreground; }
+Screen.compact #c-sub { display: block; height: 1; color: $primary; }
+Screen.compact #seek { margin-top: 0; }
+Screen.compact #info { display: none; }
+Screen.compact #c-row { display: block; height: 1; }
+#c-vu { width: 1fr; height: 1; }
+#c-fmt { width: auto; height: 1; margin-left: 2; color: $foreground 50%; }
+Screen.compact #c-tabs { display: block; height: 1; padding: 0 1; }
+Screen.compact #pl-win { border-top: none; }
+Screen.compact #library-win { width: 1fr; max-width: 999; min-width: 0; height: 1fr; border-top: none; }
+Screen.compact.lib-shown #left { height: 9; }
+Screen.compact.lib-shown #pl-win { display: none; }
+Screen.compact.collapsed #pl-win, Screen.compact.collapsed #library-win { display: none; }
+Screen.compact.collapsed #left { height: 9; }
+Screen.compact.collapsed #body { height: auto; }
+
 Footer { background: $primary 8%; }
 /* активна панель: товста яскрава рамка */
 #pl-win:focus-within { border: heavy $secondary; border-title-color: $secondary; background: $secondary 7%; }
@@ -1753,6 +1834,10 @@ class Plativka(App):
         self.base: str = self.cfg.get("theme", "light")
         self.lib_mode: str = self.cfg.get("lib_mode", "artists")
         self.show_library: bool = bool(self.cfg.get("show_library", True))
+        self.view: str = self.cfg.get("view", "winamp") if self.cfg.get("view") in ("winamp", "compact") else "winamp"
+        self.collapsed: bool = bool(self.cfg.get("collapsed", False))
+        self.compact_tab: str = "library" if self.cfg.get("compact_tab") == "library" else "playlist"
+        self.expanded_rows: int = int(self.cfg.get("expanded_rows", 34) or 34)
         self.cover_mode: str = self.cfg.get("cover_mode") or ("big" if self.cfg.get("big_cover") else "normal")
         self._spin = 0.0
         self.history: list[int] = []
@@ -1789,6 +1874,7 @@ class Plativka(App):
                         position=round(pos or 0, 1), volume=self.player_volume, volume_mode=self.volume_mode, shuffle=self.shuffle,
                         repeat=self.repeat, remaining=self.remaining, theme=self.base, popups=self.popups,
                         lib_mode=self.lib_mode, show_library=self.show_library, cover_mode=self.cover_mode,
+                        view=self.view, collapsed=self.collapsed, compact_tab=self.compact_tab, expanded_rows=self.expanded_rows,
                         minimize_to_tray=self.minimize_to_tray)
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
@@ -1960,6 +2046,8 @@ class Plativka(App):
         self.rebuild_playlist()
         self.rebuild_tree()
         self.update_flags()
+        if self.view == "compact" and self.collapsed:
+            self.call_after_refresh(self._shrink)
         self.set_interval(0.25, self.ui_tick)
         self.set_interval(0.1, self.vu_tick)
         self.set_interval(5, self.save_cfg)
@@ -1995,12 +2083,19 @@ class Plativka(App):
     def update_layout(self):
         if not self.main:
             return
-        narrow = self.size.width < 104
+        compact = self.view == "compact"
+        narrow = self.size.width < 104 and not compact
         s = self.main
+        s.set_class(compact, "compact")
+        s.set_class(compact and self.collapsed, "collapsed")
         s.set_class(narrow, "narrow")
-        s.set_class(not self.show_library, "lib-hidden")
-        s.set_class(self.show_library, "lib-shown")
-        s.set_class(self.cover_mode == "big" and self.size.height >= 30, "big-cover")
+        if compact:
+            s.query_one("#ct-playlist").set_class(self.compact_tab != "library", "on")
+            s.query_one("#ct-library").set_class(self.compact_tab == "library", "on")
+            s.query_one("#ct-collapse", Static).update(_(" ▾ розгорнути ") if self.collapsed else _(" ▴ згорнути "))
+        s.set_class(not self.lib_visible(), "lib-hidden")
+        s.set_class(self.lib_visible(), "lib-shown")
+        s.set_class(self.cover_mode == "big" and self.size.height >= 30 and not compact, "big-cover")
 
     # ── доступ до треків ──
     def track(self, path: str) -> Track:
@@ -2323,12 +2418,66 @@ class Plativka(App):
             msg += _(" (потрібне вікно від 30 рядків)")
         self.notify(msg, timeout=2)
 
-    def toggle_library(self):
-        self.show_library = not self.show_library
+    COLLAPSED_ROWS = 10  # смужка плеєра + вкладки + рядок клавіш
+
+    def resize_rows(self, rows: int):
+        """Змінити висоту вікна термінала (де термінал це дозволяє)."""
+        rows = max(self.COLLAPSED_ROWS, int(rows))
+        if rows == self.size.height or self.is_headless:
+            return
+        if sysdeps.IS_WIN:
+            from . import winplat
+            winplat.resize_rows(rows, self.size.height)
+        else:
+            self._write_terminal(sysdeps.resize_rows_seq(rows, self.size.width))
+
+    def _shrink(self):
+        """Згорнути вікно до смужки, запам'ятавши, якої висоти воно було."""
+        if self.size.height > self.COLLAPSED_ROWS + 2:
+            self.expanded_rows = self.size.height
+        self.resize_rows(self.COLLAPSED_ROWS)
+
+    def _grow(self):
+        if self.size.height <= self.COLLAPSED_ROWS + 2:
+            self.resize_rows(self.expanded_rows)
+
+    def toggle_view(self):
+        self.view = "compact" if self.view == "winamp" else "winamp"
+        if self.collapsed:
+            self._shrink() if self.view == "compact" else self._grow()
         self.update_layout()
+        self.update_now_playing()
+        self.render_cover()
+        self.save_cfg()
+        self.notify(_("Вигляд: компактний") if self.view == "compact" else _("Вигляд: Winamp"), timeout=2)
+
+    def toggle_collapsed(self):
+        if self.view != "compact":
+            return
+        self.collapsed = not self.collapsed
+        self._shrink() if self.collapsed else self._grow()
+        self.update_layout()
+        self.save_cfg()
+
+    def lib_visible(self) -> bool:
+        """Чи видно медіатеку: у компактному вигляді — своя вкладка, у Winamp — M."""
+        return self.compact_tab == "library" if self.view == "compact" else self.show_library
+
+    def toggle_library(self):
+        if self.view == "compact":
+            if self.collapsed:
+                self.collapsed = False
+                self._grow()
+            self.compact_tab = "playlist" if self.compact_tab == "library" else "library"
+        else:
+            self.show_library = not self.show_library
+        self.update_layout()
+        self.save_cfg()
         if self.main:
-            target = "#library" if self.show_library else "#playlist"
-            self.main.query_one(target).focus()
+            lib = self.lib_visible()
+            a, b = ("#library", "#lib-empty") if lib else ("#playlist", "#pl-empty")
+            w = self.main.query_one(a)
+            (w if w.display else self.main.query_one(b)).focus()
 
     # ── періодичне оновлення ──
     def ui_tick(self):
@@ -2353,7 +2502,8 @@ class Plativka(App):
         s.query_one(BigTime).show(sec, self.remaining, blink)
         s.query_one(SeekBar).set((p.time_pos / dur) if (dur and p.active) else 0.0, dur)
         if p.active and not p.paused:
-            s.query_one(Marquee).step()
+            s.query_one("#marquee", Marquee).step()
+            s.query_one("#c-title", Marquee).step()
             if self.cover_mode == "off":
                 self._spin = (self._spin + 24) % 360
                 self.render_cover()
@@ -2370,9 +2520,13 @@ class Plativka(App):
         await self.player.poll_levels()
         try:
             vu = self.main.query_one(VUMeter)
+            mini = self.main.query_one(MiniVU)
         except NoMatches:
             return
-        vu.show(self.player.levels, self.player.peaks, self.player.vu_ok)
+        if self.view == "compact":
+            mini.show(self.player.levels, self.player.peaks, self.player.vu_ok)
+        else:
+            vu.show(self.player.levels, self.player.peaks, self.player.vu_ok)
 
     def update_now_playing(self):
         if not self.main:
@@ -2380,7 +2534,9 @@ class Plativka(App):
         s = self.main
         if 0 <= self.current < len(self.playlist):
             t = self.track(self.playlist[self.current])
-            s.query_one(Marquee).set_text(f"{self.current + 1}. {t.display} ({fmt_time(t.length)})")
+            s.query_one("#marquee", Marquee).set_text(f"{self.current + 1}. {t.display} ({fmt_time(t.length)})")
+            s.query_one("#c-title", Marquee).set_text(t.title or t.display)
+            s.query_one("#c-sub", Static).update(Text(" — ".join(x for x in (t.artist, " · ".join(y for y in (t.album, t.year) if y)) if x)))
             parts = [t.fmt]
             if t.bitrate:
                 parts.append(_("{kbps} кбіт/с").format(kbps=t.bitrate // 1000))
@@ -2390,8 +2546,12 @@ class Plativka(App):
                 parts.append(_("стерео") if t.channels >= 2 else _("моно"))
             album = " · ".join(x for x in (t.album, t.year) if x)
             s.query_one("#info", Static).update(Text("  ".join(parts) + (f"   {album}" if album else "")))
+            s.query_one("#c-fmt", Static).update(Text(" · ".join(parts[:2])))
         else:
-            s.query_one(Marquee).set_text(_("{app} {ver} — оберіть, що послухати").format(app=APP_NAME, ver=VERSION))
+            s.query_one("#marquee", Marquee).set_text(_("{app} {ver} — оберіть, що послухати").format(app=APP_NAME, ver=VERSION))
+            s.query_one("#c-title", Marquee).set_text(APP_NAME)
+            s.query_one("#c-sub", Static).update(_("оберіть, що послухати"))
+            s.query_one("#c-fmt", Static).update("")
             s.query_one("#info", Static).update("")
         s.query_one("#main-win").border_subtitle = _("демо, без звуку") if self.demo else ""
 

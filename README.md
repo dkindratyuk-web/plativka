@@ -26,6 +26,7 @@ Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M
 ## Features
 
 - **Winamp layout and keys**: main window, playlist, media library; `Z X C V B` for prev / play / pause / stop / next.
+- **Compact view** (`W`): a small player strip with the playlist or the library in tabs below it; `E` collapses it to a mini player and shrinks the window.
 - **Folder-based library**: add folders through the usual system folder dialog (or just drag one into the window), manage them in one **Folders…** window, browse by artist → album or by folder, search with `J`.
 - **The interface takes its colour from the album cover** that is playing. Real cover art in terminals that can draw images (Kitty, Ghostty, iTerm2, WezTerm, Windows Terminal); a pixel-art cover elsewhere, or a spinning record if you turn covers off.
 - **Real level meter** taken from the audio stream, a big LCD-style clock, a scrolling title.
@@ -56,6 +57,10 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 |---|---|
 | ![Search](docs/img/en-search.png) | ![Narrow window](docs/img/en-narrow.png) |
 
+| Compact view (`W`) | Collapsed to a mini player (`E`) |
+|---|---|
+| ![Compact view](docs/img/en-compact.png) | ![Mini player](docs/img/en-mini.png) |
+
 ## Keys
 
 | Key | Action |
@@ -72,6 +77,8 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 | `M` | show / hide the library |
 | `O` | cover: normal → large → off (spinning record) |
 | `N` | track popups: in the player → system → off |
+| `W` | view: Winamp ⇄ compact |
+| `E` | compact view: collapse to a mini player / expand |
 | `T` | light / dark theme |
 | `F2` | interface language (applies after restart) |
 | `H` | hide to tray (Windows) |

@@ -108,6 +108,18 @@ async def shoot(lang: str, music: Path):
             await pilot.press("m")
         await pilot.pause(0.5)
         shots.append(("narrow", app2.save_screenshot(filename=f"{lang}-narrow.svg", path=str(TMP))))
+    app3 = P.Plativka(demo=True)
+    async with app3.run_test(size=(84, 26)) as pilot:
+        await pilot.pause(1.5)
+        await pilot.press("x", "w", "1")
+        await pilot.pause(1.5)
+        shots.append(("compact", app3.save_screenshot(filename=f"{lang}-compact.svg", path=str(TMP))))
+    app4 = P.Plativka(demo=True)       # компактний вигляд, згорнутий до смужки (E)
+    async with app4.run_test(size=(84, 10)) as pilot:
+        await pilot.pause(1.5)
+        await pilot.press("x", "e")
+        await pilot.pause(1.5)
+        shots.append(("mini", app4.save_screenshot(filename=f"{lang}-mini.svg", path=str(TMP))))
     return shots
 
 

@@ -91,6 +91,20 @@ def in_kitty() -> bool:
     return bool(os.environ.get("KITTY_WINDOW_ID")) and os.environ.get("TERM") == "xterm-kitty"
 
 
+def resize_rows_seq(rows: int, cols: int) -> str:
+    """Escape-послідовність, що змінює висоту вікна термінала до `rows` рядків.
+
+    kitty: команда керування resize-os-window (у вікні Платівки дозволено лише її).
+    Термінал macOS, iTerm2, xterm та інші: стандартний код xterm «CSI 8 ; рядки ; стовпці t».
+    """
+    if in_kitty():
+        import json
+        cmd = {"cmd": "resize-os-window", "version": [0, 45, 0], "no_response": True,
+               "payload": {"self": True, "action": "resize", "unit": "cells", "width": 0, "height": int(rows)}}
+        return "\x1bP@kitty-cmd" + json.dumps(cmd) + "\x1b\\"
+    return f"\x1b[8;{int(rows)};{int(cols)}t"
+
+
 def kitty_notification(title: str, body: str, image: bytes | None = None, ident: str = "plativka") -> str:
     """Escape-послідовність OSC 99: kitty сам показує системне сповіщення, з обкладинкою.
 

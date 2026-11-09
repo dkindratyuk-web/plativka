@@ -18,6 +18,16 @@ The row of keys at the very bottom adapts to the window width: in a narrow windo
 
 Everything can be clicked with the mouse: buttons, the seek bar (jump to a point), the clock (elapsed ↔ remaining), the volume bar (click or scroll), the switches.
 
+## Compact view
+
+**W** switches between the Winamp layout and the **compact view** (inspired by the Sonata player): a small strip with the cover, title, "artist — album · year", a one-line level meter, the seek bar with the time, the buttons and the volume. Below it, one panel with tabs — **Playlist** and **Library** (click them, or press **1** / **2** / **Tab**).
+
+**E** (or **▴ collapse**) collapses the compact view to just the strip — a mini player you can keep in a corner of the screen. Plativka shrinks its window to the strip and restores the previous height when you expand it again (**E**, **▾ expand**, or a tab). Resizing works in the Plativka window on macOS (DMG) and Linux (kitty), in the classic Windows console window (the Start-menu shortcut), and in Terminal.app, iTerm2 and xterm; in other terminals resize the window yourself.
+
+The view, the tab and the collapsed state are remembered.
+
+> Linux: if you installed Plativka before 1.2.0, run the install script again so the Plativka window is allowed to resize itself.
+
 ## Adding music
 
 Plativka never copies or changes your files — it only reads them.

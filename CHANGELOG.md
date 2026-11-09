@@ -1,5 +1,19 @@
 # Changelog / Історія змін
 
+## 1.2.0
+
+**English**
+
+- **Compact view** (`W`), inspired by the Sonata player: a small player strip (cover, title, artist — album, one-line level meter, seek bar with time, buttons, volume) with the playlist and the library as tabs below.
+- **Mini player** (`E`): collapses the compact view to the strip and shrinks the window (macOS DMG and Linux kitty window, the classic Windows console, Terminal.app, iTerm2, xterm); expanding restores the previous height.
+- The view, tab and collapsed state are remembered. Linux: re-run the install script to let the window resize itself.
+
+**Українська**
+
+- **Компактний вигляд** (`W`), натхненний плеєром Sonata: невелика смужка плеєра (обкладинка, назва, виконавець — альбом, індикатор рівня в один рядок, смуга перемотування з часом, кнопки, гучність), під нею список і медіатека у вкладках.
+- **Міні-плеєр** (`E`): згортає компактний вигляд до смужки й зменшує вікно (вікно Платівки на macOS і Linux, класична консоль Windows, Термінал macOS, iTerm2, xterm); розгортання повертає попередню висоту.
+- Вигляд, вкладка й згорнутий стан запам'ятовуються. Linux: запустіть скрипт встановлення ще раз, щоб вікно могло саме змінювати розмір.
+
 ## 1.1.2
 
 **English**

@@ -107,3 +107,28 @@ async def test_keybar_fits(width):
         assert shown, "at least the most important keys are shown"
         assert sum(w.size.width for w in shown) <= width
         assert any("F1" in str(w.render()) for w in shown)
+
+
+@pytest.mark.asyncio
+async def test_compact_view_and_collapse():
+    app = Plativka(demo=True)
+    async with app.run_test(size=(80, 30)) as pilot:
+        await pilot.pause(0.5)
+        await pilot.press("w")
+        await pilot.pause(0.2)
+        s = app.main
+        assert s.has_class("compact") and not s.has_class("narrow")
+        assert s.query_one("#c-tabs").display and not s.query_one("#lcd-row").display
+        await pilot.press("2")
+        await pilot.pause(0.2)
+        assert app.compact_tab == "library" and s.query_one("#ct-library").has_class("on")
+        await pilot.press("e")
+        await pilot.pause(0.2)
+        assert s.has_class("collapsed")
+        assert not s.query_one("#library-win").display and not s.query_one("#pl-win").display
+        await pilot.press("1")           # вкладка розгортає назад
+        await pilot.pause(0.2)
+        assert not s.has_class("collapsed")
+        await pilot.press("w")
+        await pilot.pause(0.2)
+        assert not s.has_class("compact") and s.query_one("#lcd-row").display

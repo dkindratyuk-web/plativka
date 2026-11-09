@@ -107,3 +107,39 @@ def on_close(callback) -> None:
     h = _HANDLER(handler)
     _keep.append(h)
     _k32.SetConsoleCtrlHandler(h, True)
+
+
+# ── розмір вікна консолі (компактний вигляд згортається до смужки) ──
+class _RECT(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long), ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+
+_u32.GetWindowRect.argtypes = (wintypes.HWND, ctypes.c_void_p)
+_u32.GetClientRect.argtypes = (wintypes.HWND, ctypes.c_void_p)
+_u32.SetWindowPos.argtypes = (wintypes.HWND, wintypes.HWND, ctypes.c_int, ctypes.c_int,
+                              ctypes.c_int, ctypes.c_int, wintypes.UINT)
+
+
+def resize_rows(rows: int, current_rows: int) -> bool:
+    """Змінити висоту власного вікна консолі до `rows` рядків (ширина та сама).
+
+    Працює для класичного вікна консолі (conhost), у якому Платівку відкриває ярлик.
+    Windows Terminal так змінювати не дозволяє — тоді нічого не робимо.
+    """
+    if not own_window() or current_rows <= 0 or rows <= 0:
+        return False
+    try:
+        hwnd = _k32.GetConsoleWindow()
+        win, cli = _RECT(), _RECT()
+        if not (_u32.GetWindowRect(hwnd, ctypes.byref(win)) and _u32.GetClientRect(hwnd, ctypes.byref(cli))):
+            return False
+        row_px = (cli.bottom - cli.top) / current_rows
+        if row_px <= 0:
+            return False
+        frame = (win.bottom - win.top) - (cli.bottom - cli.top)
+        height = int(round(rows * row_px)) + frame
+        SWP_NOMOVE, SWP_NOZORDER, SWP_NOACTIVATE = 0x2, 0x4, 0x10
+        return bool(_u32.SetWindowPos(hwnd, None, 0, 0, win.right - win.left, height,
+                                      SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE))
+    except Exception:
+        return False

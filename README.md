@@ -63,12 +63,16 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 
 ## On a real Mac
 
-The macOS app (DMG) shows real album covers. From left to right: the mini player (`W`, then `E`), the compact view with the playlist, and the Winamp layout in a narrow window.
+The macOS app (DMG) shows real album covers. Top row: the mini player (`W`, then `E`), the compact view with the playlist, the Winamp layout. Bottom row: the dark theme (`T`) — the colours follow each album cover.
 
 <p>
-<img src="docs/img/macos-mini.png" width="32%" alt="Mini player on macOS">
-<img src="docs/img/macos-compact.png" width="32%" alt="Compact view on macOS">
-<img src="docs/img/macos-winamp.png" width="32%" alt="Winamp layout on macOS">
+<img src="docs/img/macos-en-mini.png" width="32%" alt="Mini player on macOS">
+<img src="docs/img/macos-en-compact.png" width="32%" alt="Compact view on macOS">
+<img src="docs/img/macos-en-winamp.png" width="32%" alt="Winamp layout on macOS">
+</p>
+<p>
+<img src="docs/img/macos-en-dark.png" width="32%" alt="Dark theme on macOS">
+<img src="docs/img/macos-en-dark2.png" width="32%" alt="Dark theme with a colourful cover on macOS">
 </p>
 
 ## Keys

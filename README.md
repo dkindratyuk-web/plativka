@@ -95,7 +95,7 @@ plativka            # needs mpv in PATH
 plativka --demo     # look around without mpv and without sound
 ```
 
-Releases are built by GitHub Actions: push a tag like `v1.0.1` and the DMGs, the Windows installer and the Linux archive appear on the Releases page.
+Releases are built by GitHub Actions: bump the version in `src/plativka/__init__.py`, then push a tag like `v1.0.1` (or push `main` to the `release` branch) — the DMGs, the Windows installer and the Linux archive appear on the Releases page.
 
 ## License
 

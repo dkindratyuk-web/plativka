@@ -62,6 +62,7 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 |---|---|
 | `Z` `X` `C` `V` `B` | previous · play · pause · stop · next (like Winamp) |
 | `Space` | pause / resume |
+| `F7` `F8` `F9` | previous · pause · next (Mac media keys, also on keyboards that send them as plain F-keys) |
 | `←` `→` | seek 5 seconds |
 | `+` `−` | volume (same as the system volume keys) |
 | `S` / `R` | shuffle / repeat (off → all → one) |

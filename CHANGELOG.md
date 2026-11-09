@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## 1.1.2
+
+**English**
+
+- **F7 F8 F9** = previous · pause · next while the Plativka window is in front — for keyboards that send these keys as plain F-keys instead of media keys.
+
+**Українська**
+
+- **F7 F8 F9** = назад · пауза · далі, коли вікно Платівки попереду, — для клавіатур, що надсилають ці клавіші як звичайні F-клавіші, а не медіаклавіші.
+
 ## 1.1.1
 
 **English**

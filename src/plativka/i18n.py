@@ -243,6 +243,7 @@ EN: dict[str, str] = {
     "Відкриваю в браузері: {url}": "Opening in the browser: {url}",
     "Гучність:": "Volume:",
     "Довідка": "Help",
+    "назад · пауза · далі (медіаклавіші Mac)": "previous · pause · next (Mac media keys)",
     "Клавіші": "Keys",
     "Мова:": "Language:",
     "Музичний плеєр у дусі Winamp. Автор: {author}. Безкоштовно, з відкритим кодом (MIT).":

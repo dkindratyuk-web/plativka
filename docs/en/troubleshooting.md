@@ -64,6 +64,10 @@ By default the player's volume mirrors the system volume. Check **F1 → Volume*
 
 The system folder dialog is used when one is available. On Linux it needs `zenity` (GNOME and most desktops) or `kdialog` (KDE) — the install script installs zenity; or install it yourself, e.g. `sudo apt install zenity`. Over SSH there is no system dialog, so the in-player picker is used.
 
+## macOS: ⏮ ⏯ ⏭ in Control Center work, but the keyboard keys don't
+
+Some keyboards (most non-Apple ones, or a Mac with "Use F1, F2, etc. keys as standard function keys" turned on) send F7 F8 F9 as plain function keys instead of media keys. Since 1.1.2 Plativka treats F7 F8 F9 as previous · pause · next while its window is in front. To control it from other apps too, use the media keys (on Apple keyboards — without Fn, or with Fn if that setting is on).
+
 ## Logs
 
 If something goes wrong, the logs show what happened:

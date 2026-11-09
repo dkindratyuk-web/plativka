@@ -49,6 +49,7 @@ In the playlist: **Enter** or a double-click plays a track, **Delete** removes i
 |---|---|
 | `Z` `X` `C` `V` `B` | previous · play · pause · stop · next |
 | `Space` | pause / resume |
+| `F7` `F8` `F9` | previous · pause · next |
 | `←` `→` | seek 5 seconds |
 | `+` `−` | volume |
 

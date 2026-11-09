@@ -1224,6 +1224,7 @@ class HelpScreen(ModalScreen):
         rows = [
             ("Z X C V B", _("назад · грати · пауза · стоп · далі")),
             (_("Пробіл"), _("пауза / продовжити")),
+            ("F7 F8 F9", _("назад · пауза · далі (медіаклавіші Mac)")),
             ("← →", _("перемотати на 5 секунд")),
             ("+ −", _("гучність")),
             ("Tab", _("перейти між списком відтворення й медіатекою")),
@@ -1424,6 +1425,11 @@ class MainScreen(Screen):
         Binding("2", "focus_panel('library')", _("Медіатека"), show=False),
         Binding("f1,question_mark", "help", _("Довідка"), show=False),
         Binding("space", "toggle", _("Пауза"), show=False, priority=True),
+        # Клавіатури, що шлють F7–F9 як звичайні F-клавіші (сторонні або з увімкненим
+        # «F1, F2… як стандартні функціональні клавіші»), — ці клавіші все одно керують плеєром.
+        Binding("f7", "prev", show=False, priority=True),
+        Binding("f8", "toggle", show=False, priority=True),
+        Binding("f9", "next", show=False, priority=True),
         Binding("left", "seek(-5)", _("−5 с"), show=False, priority=True),
         Binding("right", "seek(5)", _("+5 с"), show=False, priority=True),
         Binding("plus,equals_sign", "volume(5)", _("Гучн+"), show=False),

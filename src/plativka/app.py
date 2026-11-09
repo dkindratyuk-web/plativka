@@ -1081,6 +1081,25 @@ class FolderPicker(ModalScreen):
         self.query_one("#path", Input).value = str(parent)
 
 
+class ConfirmScreen(ModalScreen):
+    """Так / Ні. Enter або Y — так, Esc або N — ні."""
+    BINDINGS = [Binding("escape,n", "dismiss(False)", _("Скасувати")),
+                Binding("y,enter", "dismiss(True)", _("Так"))]
+
+    def __init__(self, title: str, text: str, yes: str):
+        super().__init__()
+        self.title_text, self.text, self.yes = title, text, yes
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dlg"):
+            yield Static(self.title_text, classes="dlg-title")
+            yield Static(self.text, classes="dlg-help")
+            with Horizontal(classes="dlg-buttons"):
+                yield Static(classes="spacer")
+                yield Clickable(_(" Скасувати "), "dismiss(False)", classes="btn")
+                yield Clickable(f" {self.yes} ", "dismiss(True)", classes="btn danger")
+
+
 class ListPicker(ModalScreen):
     BINDINGS = [Binding("escape", "dismiss(None)", _("Скасувати"))]
 
@@ -1365,6 +1384,7 @@ Screen.big-cover #cover-box { width: 24; height: 12; }
 .btn { width: auto; color: $foreground 75%; background: $foreground 6%; margin-right: 1; }
 .btn:hover { background: $foreground 15%; color: $foreground; }
 .btn.primary { background: $primary 80%; color: $background; text-style: bold; }
+.btn.danger { background: $error 85%; color: $background; text-style: bold; }
 
 /* ── медіатека ── */
 #library-win {
@@ -2265,8 +2285,17 @@ class Plativka(App):
             self.notify(_("У медіатеці ще немає тек"))
             return
         items = [(f, f.replace(str(Path.home()), "~", 1)) for f in self.lib.folders]
+        if len(self.lib.folders) > 1:
+            items.insert(0, ("__all__", _("✕ Прибрати всі теки ({n})").format(n=len(self.lib.folders))))
 
         def done(path):
+            if path == "__all__":
+                self.push_screen(ConfirmScreen(
+                    _("Прибрати всі теки з медіатеки?"),
+                    _("Медіатека стане порожньою. Файли на диску залишаться, список відтворення теж. "
+                      "Теки можна буде додати знову клавішею L."),
+                    _("Прибрати всі")), lambda ok: ok and self.clear_library())
+                return
             if path and path in self.lib.folders:
                 self.lib.folders.remove(path)
                 pre = path.rstrip(os.sep) + os.sep
@@ -2277,6 +2306,15 @@ class Plativka(App):
                 self.notify(_("Теку прибрано з медіатеки (файли не видалено)"))
         self.push_screen(ListPicker(_("Прибрати теку з медіатеки"), items,
                                     _("Файли на диску залишаться. Esc — скасувати.")), done)
+
+    def clear_library(self):
+        n = len(self.lib.folders)
+        self.lib.folders = []
+        self.lib.tracks = {}
+        self.lib.save()
+        self.save_cfg()
+        self.rebuild_tree()
+        self.notify(_("Медіатеку очищено: прибрано тек — {n} (файли не видалено)").format(n=n))
 
     def start_scan(self, quiet: bool = False):
         if self.scanning:

@@ -20,7 +20,7 @@ Plativka never copies or changes your files — it only reads them.
 
 - **L** or the **+ Folder** button in the library: pick a folder with the arrow keys, Enter opens a folder, **↑ Up** goes one level up, **Add this folder** confirms. You can also type or paste a path.
 - **Drag and drop**: drag a folder from Finder / File Explorer / your file manager into the Plativka window. Folders go to the library; individual audio files go to the end of the playlist.
-- **− Folder** removes a folder from the library (files on disk stay untouched). **↻** rescans the library — use it after you added new files to a folder.
+- **− Folder** removes a folder from the library (files on disk stay untouched). With two or more folders the list starts with **✕ Remove all folders** — it empties the library after a confirmation. **↻** rescans the library — use it after you added new files to a folder.
 
 Supported formats: MP3, FLAC, M4A/AAC/ALAC, OGG/Opus, WAV, AIFF, WMA.
 

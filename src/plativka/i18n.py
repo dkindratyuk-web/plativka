@@ -166,6 +166,16 @@ EN: dict[str, str] = {
     "Додати теку до медіатеки": "Add a folder to the library",
     "Додати теку до списку відтворення": "Add a folder to the playlist",
     "Прибрати теку з медіатеки": "Remove a folder from the library",
+    "✕ Прибрати всі теки ({n})": "✕ Remove all folders ({n})",
+    "Прибрати всі теки з медіатеки?": "Remove all folders from the library?",
+    "Медіатека стане порожньою. Файли на диску залишаться, список відтворення теж. "
+    "Теки можна буде додати знову клавішею L.":
+        "The library will be empty. Files on disk stay, and so does the playlist. "
+        "You can add folders again with L.",
+    "Прибрати всі": "Remove all",
+    "Так": "Yes",
+    "Медіатеку очищено: прибрано тек — {n} (файли не видалено)":
+        "Library cleared: {n} folders removed (files were not deleted)",
     "Файли на диску залишаться. Esc — скасувати.": "Files on disk stay untouched. Esc — cancel.",
     "Потрібен mpv": "mpv is required",
     "Платівка відтворює звук через mpv, але його не знайдено.\n\n{how}\n\n"

@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## 1.0.1
+
+**English**
+
+- Library: **− Folder** now offers **✕ Remove all folders** to empty the library in one go (with a confirmation). Files on disk and the playlist are not touched.
+
+**Українська**
+
+- Медіатека: у вікні **− Тека** з'явився пункт **✕ Прибрати всі теки** — спорожнює медіатеку одним рухом (після підтвердження). Файли на диску й список відтворення не чіпає.
+
 ## 1.0.0
 
 **English**

@@ -1,5 +1,21 @@
 # Changelog / Історія змін
 
+## 1.3.2
+
+**English**
+
+- Plativka Desktop: new sound visualisation — vertical LED-style columns (left channel on the left, right on the right, the newest in the middle), in both the full and the compact view.
+- The whole window now takes its colour from the album cover, not only the clock panel.
+- Compact view and mini player are much tighter: less empty space, equal-sized title, buttons and sliders.
+- macOS: playlist rows use the same compact font as the rest; the empty grey bar at the bottom of the window is gone.
+
+**Українська**
+
+- Віконна Платівка: нова візуалізація звуку — вертикальні «світлодіодні» стовпчики (ліворуч лівий канал, праворуч правий, найсвіжіше — посередині), і у великому, і в компактному вигляді.
+- Тепер усе вікно, а не лише табло, бере колір з обкладинки.
+- Компактний вигляд і міні-плеєр значно щільніші: менше порожнього місця, назва, кнопки й повзунки одного масштабу.
+- macOS: рядки списку тим самим компактним шрифтом, що й решта; порожня сіра смуга внизу вікна зникла.
+
 ## 1.3.1
 
 **English**

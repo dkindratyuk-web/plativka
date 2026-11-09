@@ -257,59 +257,58 @@ class LcdClock(QWidget):
         p.end()
 
 
-class VuMeter(QWidget):
-    """Індикатор рівня L/R: вертикальні «смужки» (табло) або один рядок (компактний вигляд)."""
+class LevelBars(QWidget):
+    """Візуалізація звуку вертикальними «світлодіодними» стовпчиками.
 
-    def __init__(self, horizontal=False):
+    Посередині — щойно зігране, до країв — кілька секунд тому: ліворуч лівий канал,
+    праворуч правий. Тож видно і гучність, і стерео, і як вона змінювалась.
+    """
+
+    def __init__(self, cols: int = 16, rows: int = 7):
         super().__init__()
-        self.horizontal = horizontal
-        self.levels = [0.0, 0.0]
-        self.peaks = [0.0, 0.0]
-        self.enabled_ = True
+        from collections import deque
+        self.cols, self.rows = cols, rows
+        half = cols // 2
+        self.hist = [deque([0.0] * half, maxlen=half), deque([0.0] * half, maxlen=half)]
+        self.color = QColor("#0E7C84")
         self.dark = False
-        if horizontal:
-            self.setFixedHeight(9)
-        else:
-            self.setFixedSize(70, 34)
+        self.enabled_ = True
 
     def show_levels(self, levels, peaks, ok):
-        self.levels, self.peaks, self.enabled_ = list(levels), list(peaks), ok
+        self.enabled_ = ok
+        for ch in (0, 1):
+            self.hist[ch].append(levels[ch] if ok else 0.0)
         self.update()
 
     def paintEvent(self, e):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         p.setPen(Qt.NoPen)
-        lo, mid, hi = QColor(52, 170, 100), QColor(214, 168, 30), QColor(222, 84, 58)
-        off = QColor(255, 255, 255, 30) if self.dark else QColor(0, 0, 0, 26)
-        n = 18 if self.horizontal else 12
-        for ch in range(2):
-            lv = self.levels[ch] if self.enabled_ else 0
-            pk = self.peaks[ch] if self.enabled_ else 0
-            for i in range(n):
-                f = i / (n - 1)
-                c = lo if f < .62 else mid if f < .86 else hi
-                lit = f <= lv
-                peak = abs(f - pk) < .5 / n and pk > .05
-                p.setBrush(c if (lit or peak) else off)
-                if self.horizontal:
-                    half = (self.width() - 34) / 2
-                    bw = half / n
-                    x0 = ch * (half + 34) + 14
-                    p.drawRoundedRect(QRectF(x0 + i * bw, 2, bw - 3, self.height() - 4), 1.5, 1.5)
+        half = self.cols // 2
+        gap_mid = 4.0
+        cw = (self.width() - gap_mid) / self.cols
+        rh = self.height() / self.rows
+        off = QColor(255, 255, 255, 26) if self.dark else QColor(0, 0, 0, 22)
+        warm, hot = QColor(226, 168, 34), QColor(222, 80, 58)
+        for c in range(self.cols):
+            if c < half:
+                v = self.hist[0][c]                    # ліворуч: старіше → новіше до центру
+                x = c * cw
+            else:
+                v = self.hist[1][self.cols - 1 - c]    # праворуч: новіше біля центру
+                x = c * cw + gap_mid
+            lit = round(v * self.rows)
+            age = (c if c < half else self.cols - 1 - c) / max(1, half - 1)   # 0 — найстаріше
+            for r in range(self.rows):
+                f = r / max(1, self.rows - 1)
+                if r < lit:
+                    col = QColor(self.color) if f < .6 else (warm if f < .85 else hot)
+                    col.setAlphaF(0.6 + 0.4 * age)
                 else:
-                    bw = (self.width() - 2) / n
-                    hh = (self.height() - 6) / 2
-                    p.drawRoundedRect(QRectF(i * bw, ch * (hh + 6), bw - 2.5, hh), 1.5, 1.5)
-        if self.horizontal:
-            p.setPen(QColor(150, 150, 150))
-            f = QFont(self.font())
-            f.setPointSizeF(7.5)
-            f.setBold(True)
-            p.setFont(f)
-            half = (self.width() - 34) / 2
-            p.drawText(QRectF(0, 0, 12, self.height()), Qt.AlignCenter, "L")
-            p.drawText(QRectF(half + 20, 0, 12, self.height()), Qt.AlignCenter, "R")
+                    col = off
+                p.setBrush(col)
+                y = self.height() - (r + 1) * rh
+                p.drawRoundedRect(QRectF(x + 1, y + 1, cw - 2.5, rh - 2), 1.2, 1.2)
         p.end()
 
 
@@ -632,7 +631,8 @@ class MainWindow(QMainWindow):
         self.clock = LcdClock()
         self.clock.clicked.connect(self.toggle_remaining)
         r1.addWidget(self.clock, 1)
-        self.vu = VuMeter()
+        self.vu = LevelBars(14, 7)
+        self.vu.setFixedSize(112, 44)
         r1.addWidget(self.vu, 0, Qt.AlignVCenter)
         lv.addLayout(r1)
         lv.addSpacing(6)
@@ -649,8 +649,6 @@ class MainWindow(QMainWindow):
             w.setMinimumWidth(10)
             w.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
             lv.addWidget(w)
-        self.mini_vu = VuMeter(horizontal=True)
-        lv.addWidget(self.mini_vu)
         flags = QHBoxLayout()
         flags.setSpacing(14)
         self.f_shuffle = Clickable()
@@ -664,10 +662,15 @@ class MainWindow(QMainWindow):
         flags.addStretch()
         lv.addLayout(flags)
         top.addWidget(self.lcd, 1)
+        self.mini_vu = LevelBars(12, 6)          # компактний вигляд: стовпчики праворуч від назви
+        self.mini_vu.setFixedSize(92, 40)
+        top.addWidget(self.mini_vu, 0, Qt.AlignVCenter)
+        self.top_row = top
         cl.addLayout(top)
 
         sr = QHBoxLayout()
         self.seek = SeekSlider()
+        self.seek.setFixedHeight(16)
         self.seek.seek.connect(lambda f: self.spawn(self.seek_frac(f)))
         sr.addWidget(self.seek, 1)
         self.time = QLabel("-:--")
@@ -687,8 +690,8 @@ class MainWindow(QMainWindow):
                 ("eject", "eject", _("Додати теку до списку"), self.add_playlist_folder)):
             b = QToolButton()
             b.setProperty("glyph", glyph)
-            b.setIconSize(QSize(14, 14))
-            b.setFixedSize(32, 24)
+            b.setIconSize(QSize(12, 12))
+            b.setFixedSize(30, 22)
             b.setToolTip(tip)
             b.setObjectName("tbtn")
             b.setCursor(Qt.PointingHandCursor)
@@ -698,8 +701,8 @@ class MainWindow(QMainWindow):
         tr.addStretch()
         self.pin = QToolButton()
         self.pin.setProperty("glyph", "pin")
-        self.pin.setIconSize(QSize(14, 14))
-        self.pin.setFixedSize(28, 24)
+        self.pin.setIconSize(QSize(12, 12))
+        self.pin.setFixedSize(26, 22)
         self.pin.setToolTip(_("Поверх усіх вікон"))
         self.pin.setObjectName("tbtn")
         self.pin.setCheckable(True)
@@ -707,8 +710,8 @@ class MainWindow(QMainWindow):
         self.pin.clicked.connect(self.toggle_on_top)
         tr.addWidget(self.pin)
         self.collapse_btn = QToolButton()
-        self.collapse_btn.setIconSize(QSize(14, 14))
-        self.collapse_btn.setFixedSize(28, 24)
+        self.collapse_btn.setIconSize(QSize(12, 12))
+        self.collapse_btn.setFixedSize(26, 22)
         self.collapse_btn.setObjectName("tbtn")
         self.collapse_btn.setCursor(Qt.PointingHandCursor)
         self.collapse_btn.clicked.connect(self.toggle_collapsed)
@@ -721,6 +724,7 @@ class MainWindow(QMainWindow):
         self.vol = QSlider(Qt.Horizontal)
         self.vol.setRange(0, 100)
         self.vol.setFixedWidth(90)
+        self.vol.setFixedHeight(16)
         self.vol.setValue(self.volume)
         self.vol.valueChanged.connect(self._vol_moved)
         tr.addWidget(self.vol)
@@ -756,8 +760,8 @@ class MainWindow(QMainWindow):
         head.addWidget(self.search, 1)
         self.menu_btn = QToolButton()
         self.menu_btn.setProperty("glyph", "menu")
-        self.menu_btn.setIconSize(QSize(14, 14))
-        self.menu_btn.setFixedSize(28, 24)
+        self.menu_btn.setIconSize(QSize(12, 12))
+        self.menu_btn.setFixedSize(26, 22)
         self.menu_btn.setObjectName("tbtn")
         self.menu_btn.setPopupMode(QToolButton.InstantPopup)
         head.addWidget(self.menu_btn)
@@ -914,14 +918,29 @@ class MainWindow(QMainWindow):
         sec = tune(self.accent_rgb, dark, .09)
         self.clock.color = QColor(acc)
         self.vu.dark = self.mini_vu.dark = dark
+        self.vu.color = self.mini_vu.color = QColor(acc)
         if self.mica:
             apply_mica(self, dark)
         glass = self.mica
         fg = "#F2F3F5" if dark else "#1A1D24"
         sub = "rgba(255,255,255,0.58)" if dark else "rgba(0,0,0,0.52)"
-        bg = "transparent" if glass else ("#16181E" if dark else "#ECEFF4")
-        card = ("rgba(255,255,255,0.05)" if dark else "rgba(255,255,255,0.58)") if glass else \
-            ("#1E2129" if dark else "#F7F8FB")
+        a = QColor(acc)
+
+        def blend(base: str, k: float) -> str:
+            b = QColor(base)
+            return QColor(round(b.red() + (a.red() - b.red()) * k), round(b.green() + (a.green() - b.green()) * k),
+                          round(b.blue() + (a.blue() - b.blue()) * k)).name()
+
+        def tint(base: str, k: float, alpha: float) -> str:
+            c = QColor(blend(base, k))
+            return f"rgba({c.red()},{c.green()},{c.blue()},{alpha})"
+        # усе вікно, а не лише табло, підфарбоване кольором обкладинки
+        if glass:
+            bg = tint("#202020" if dark else "#F3F3F3", .25, .18 if dark else .22)
+            card = tint("#2B2B2B" if dark else "#FFFFFF", .10, .38 if dark else .55)
+        else:
+            bg = blend("#16181E" if dark else "#ECEFF4", .10 if dark else .08)
+            card = blend("#1E2129" if dark else "#F7F8FB", .06 if dark else .045)
         stroke = "rgba(255,255,255,0.09)" if dark else "rgba(0,0,0,0.08)"
         lcd = QColor(acc)
         lcd.setAlpha(22 if dark else 18)
@@ -932,14 +951,7 @@ class MainWindow(QMainWindow):
         groove = "rgba(255,255,255,0.16)" if dark else "rgba(0,0,0,0.14)"
         btn = "rgba(255,255,255,0.07)" if dark else "rgba(0,0,0,0.055)"
         btn_h = "rgba(255,255,255,0.14)" if dark else "rgba(0,0,0,0.10)"
-        a = QColor(acc)
-        if glass:
-            listcard = f"rgba({a.red()},{a.green()},{a.blue()},{0.07 if dark else 0.06})"
-        else:
-            base = QColor(card)
-            k = .07 if dark else .05
-            listcard = QColor(round(base.red() + (a.red() - base.red()) * k), round(base.green() + (a.green() - base.green()) * k),
-                              round(base.blue() + (a.blue() - base.blue()) * k)).name()
+        listcard = card
         for w in (self.table, self.tree):
             pal = w.palette()
             sel = QColor(acc)
@@ -956,9 +968,10 @@ class MainWindow(QMainWindow):
             #card {{ background: {card}; border: 1px solid {stroke}; border-radius: 8px; }}
             #listcard {{ background: {listcard}; border: 1px solid {stroke}; border-radius: 8px; }}
             #lcd {{ background: {lcd_bg}; border-radius: 7px; }}
+            #lcd[flat="true"] {{ background: transparent; }}
             #state {{ color: {acc}; font-size: 12px; }}
             #title {{ font-size: 12px; font-weight: 600; }}
-            #bigtitle {{ font-size: 14px; font-weight: 600; }}
+            #bigtitle {{ font-size: 13px; font-weight: 600; }}
             #sub {{ color: {acc}; font-size: 12px; }}
             #dim {{ color: {sub}; font-size: 11px; }}
             #empty {{ color: {sub}; font-size: 12px; padding: 16px; }}
@@ -1052,8 +1065,14 @@ class MainWindow(QMainWindow):
         self.collapse_btn.setToolTip(_("Розгорнути") if self.collapsed else _("Міні-плеєр"))
         self.a_view.setChecked(self.view == "compact")
         self.a_mini.setChecked(self.collapsed)
-        self.lcd.layout().setContentsMargins(*(10, 6, 10, 6) if full else (2, 0, 2, 0))
+        self.lcd.layout().setContentsMargins(*(10, 6, 10, 6) if full else (0, 0, 0, 0))
+        self.lcd.layout().setSpacing(2 if full else 1)
         self.lcd.setProperty("flat", not full)
+        self.lcd.style().unpolish(self.lcd)
+        self.lcd.style().polish(self.lcd)
+        self.card.layout().setSpacing(6 if full else 3)
+        self.card.layout().setContentsMargins(*(10, 10, 10, 8) if full else (8, 8, 8, 6))
+        self.top_row.setSpacing(10)
         if self.collapsed:
             self.setMinimumHeight(0)
             QTimer.singleShot(0, self._fit_mini)

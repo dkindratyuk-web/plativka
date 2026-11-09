@@ -39,7 +39,9 @@ cp "$ROOT/LICENSE" "$ROOT/THIRD_PARTY_LICENSES.md" "$APP/Contents/Resources/"
 echo "→ mpv…"
 curl -fsSL "$MPV_ZIP_URL" -o mpv.zip
 mkdir -p mpvx && ditto -x -k mpv.zip mpvx
-MPV_APP="$(find mpvx -maxdepth 3 -name 'mpv.app' -type d | head -1)"
+# офіційний zip містить ще й вкладений tar.gz — розпаковуємо все, що є
+find mpvx -maxdepth 2 \( -name '*.tar.gz' -o -name '*.tgz' -o -name '*.tar.xz' \) -exec tar -xf {} -C mpvx \;
+MPV_APP="$(find mpvx -maxdepth 4 -name 'mpv.app' -type d | head -1)"
 [ -n "$MPV_APP" ] || { echo "У архіві mpv не знайдено mpv.app"; find mpvx -maxdepth 3; exit 1; }
 ditto "$MPV_APP" "$APP/Contents/Resources/mpv.app"
 

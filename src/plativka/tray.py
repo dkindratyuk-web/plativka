@@ -25,6 +25,7 @@ class Tray:
             I(_("Згортати в трей"), lambda: call(app.toggle_minimize_to_tray),
               checked=lambda item: app.minimize_to_tray),
             M.SEPARATOR,
+            I(_("Платівка на GitHub"), lambda: call(app.open_github)),
             I(_("Вийти з Платівки"), lambda: call(app.quit_from_tray)),
         )
         self.icon = pystray.Icon("plativka", image, _("Платівка"), menu)

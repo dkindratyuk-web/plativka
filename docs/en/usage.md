@@ -12,15 +12,19 @@ Plativka is laid out like Winamp:
 
 In a narrow window (under ~100 characters) the parts are stacked, and **M** switches the bottom part between the playlist and the library.
 
+**Moving between the panels**: **Tab** (or **Shift+Tab**) jumps between the playlist and the library; **1** goes to the playlist, **2** to the library. The active panel has a bold frame and a ● before its name. A mouse click on a panel works too.
+
+The row of keys at the very bottom adapts to the window width: in a narrow window it shows only the most important keys. **F1** (or **?**) always opens the full help — every key, the settings, the version and the GitHub links.
+
 Everything can be clicked with the mouse: buttons, the seek bar (jump to a point), the clock (elapsed ↔ remaining), the volume bar (click or scroll), the switches.
 
 ## Adding music
 
 Plativka never copies or changes your files — it only reads them.
 
-- **L** or the **+ Folder** button in the library: pick a folder with the arrow keys, Enter opens a folder, **↑ Up** goes one level up, **Add this folder** confirms. You can also type or paste a path.
+- **L** or the **+ Folder** button in the library opens the usual system folder dialog (Finder on macOS, "Select folder" on Windows, the GNOME/KDE dialog on Linux). On macOS and Linux you can select several folders at once with Cmd/Ctrl. If there is no system dialog (e.g. over SSH), a folder picker opens inside the player: arrow keys to move, Enter opens a folder, **↑ Up** goes one level up, **Add this folder** confirms; you can also type or paste a path.
 - **Drag and drop**: drag a folder from Finder / File Explorer / your file manager into the Plativka window. Folders go to the library; individual audio files go to the end of the playlist.
-- **− Folder** removes a folder from the library (files on disk stay untouched). With two or more folders the list starts with **✕ Remove all folders** — it empties the library after a confirmation. **↻** rescans the library — use it after you added new files to a folder.
+- **Folders…** opens the list of library folders with the number of tracks in each. Tick folders with Space or a click and press **Remove checked**; **Remove all** empties the library after a confirmation; **+ Add…** adds more. Files on disk stay untouched. **↻** rescans the library — use it after you added new files to a folder.
 
 Supported formats: MP3, FLAC, M4A/AAC/ALAC, OGG/Opus, WAV, AIFF, WMA.
 
@@ -47,6 +51,8 @@ In the playlist: **Enter** or a double-click plays a track, **Delete** removes i
 | `Space` | pause / resume |
 | `←` `→` | seek 5 seconds |
 | `+` `−` | volume |
+
+**Volume** mirrors the system volume: the volume keys on your keyboard (F11/F12 or the speaker keys on a Mac, the volume keys or the Windows/Linux sound slider) move the player's volume bar, and `+` `−` in the player change the system volume. If you prefer a separate player volume, switch it in **F1 → Volume**. On Linux this needs PipeWire (`wpctl`) or PulseAudio (`pactl`), which every modern desktop has.
 | `S` | shuffle on/off |
 | `R` | repeat: off → all → one |
 
@@ -70,13 +76,15 @@ On macOS the first system notification may ask for permission for "Script Editor
 
 ## System integration
 
-- **Windows — tray icon**: play/pause, next, previous, show the player, quit. **H** hides the window to the tray; the **Minimize to tray** option in the tray menu makes minimising do the same. Closing the window with ✕ quits.
+- **Windows — media keys**: ⏯ ⏭ ⏮ on the keyboard and headphones control Plativka, and the Windows media overlay (next to the volume popup) shows the track and its cover.
+- **Windows — tray icon**: play/pause, next, previous, show the player, Plativka on GitHub, quit. **H** hides the window to the tray; the **Minimize to tray** option in the tray menu makes minimising do the same. Closing the window with ✕ quits.
 - **Linux — MPRIS**: media keys, the GNOME/KDE media widget and `playerctl` control Plativka and show the track and cover.
 - **macOS — media keys** on the keyboard and headphones usually work while Plativka is playing.
 
 ## Themes and language
 
 - **T** switches between the light and the dark theme.
+- The language and the volume mode can also be changed in **F1** (help).
 - **F2** switches the interface language (English ↔ Ukrainian). It applies after a restart. By default the language follows the system. You can also start with `plativka --lang=en` or `--lang=uk`.
 
 ## Where Plativka keeps its data

@@ -31,10 +31,13 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 
-from . import __version__, sysdeps
+from . import __version__, pickers, sysdeps, sysvol
 from .i18n import LANG, LANGS, _, file_manager_from, n_tracks
 
 APP_NAME = _("Платівка")
+GITHUB_URL = "https://github.com/dkindratyuk-web/plativka"
+ISSUES_URL = GITHUB_URL + "/issues/new/choose"
+AUTHOR = "dkindratyuk-web"
 VERSION = __version__
 CONF_DIR = sysdeps.config_dir()
 CACHE_DIR = sysdeps.cache_dir()
@@ -92,13 +95,13 @@ from rich.text import Text  # noqa: E402
 from textual import events, on, work  # noqa: E402
 from textual.app import App, ComposeResult  # noqa: E402
 from textual.binding import Binding  # noqa: E402
-from textual.containers import Horizontal, Vertical  # noqa: E402
+from textual.containers import Horizontal, Vertical, VerticalScroll  # noqa: E402
 from textual.css.query import NoMatches  # noqa: E402
 from textual.screen import ModalScreen, Screen  # noqa: E402
 from textual.theme import Theme  # noqa: E402
 from textual.widget import Widget  # noqa: E402
 from textual.widgets import (DataTable, DirectoryTree, Footer, Input, OptionList,  # noqa: E402
-                             Static, Tree)
+                             SelectionList, Static, Tree)
 from textual.widgets.option_list import Option  # noqa: E402
 
 
@@ -958,28 +961,95 @@ class SeekBar(Widget):
 
 
 class VolumeBar(Widget):
-    DEFAULT_CSS = "VolumeBar { height: 1; width: 22; }"
+    """Гучність. Ширина підлаштовується: у тісному вікні зникають підпис і відсотки."""
+    DEFAULT_CSS = "VolumeBar { height: 1; width: 1fr; min-width: 6; }"
+    _bar = (0, 10)  # де починаються «смужки» і скільки їх — для кліку мишкою
 
     def render(self):
-        v = self.app.volume
-        n = round(v / 10)
-        t = Text()
-        t.append(_("гучн "), Style(color=self.app.dim_hex))
-        t.append("▮" * n, Style(color=self.app.primary_hex))
-        t.append("▮" * (10 - n), Style(color=self.app.dim_hex))
-        t.append(f" {v:>3}%", Style(color=self.app.dim_hex))
+        app = self.app
+        v, w = app.volume, self.size.width
+        dim, pri = Style(color=app.dim_hex), Style(color=app.primary_hex)
+        label = _("без звуку ") if app.sys_muted else _("гучн ")
+        pct = f" {v:>3}%"
+        if w >= len(label) + 10 + len(pct):
+            parts, nb = [label], 10
+        elif w >= 10 + len(pct):
+            parts, nb = [], 10
+        else:
+            parts, nb, pct = [], max(3, min(10, w)), ""
+        lead = "".join(parts)
+        total = len(lead) + nb + len(pct)
+        pad = max(0, w - total)  # притиснути до правого краю
+        self._bar = (pad + len(lead), nb)
+        n = round(v / 100 * nb)
+        t = Text(" " * pad)
+        t.append(lead, dim)
+        t.append("▮" * n, dim if app.sys_muted else pri)
+        t.append("▮" * (nb - n), dim)
+        t.append(pct, dim)
         return t
 
     async def on_click(self, event: events.Click):
-        x = event.x - 5
-        if 0 <= x < 10:
-            await self.app.set_volume((x + 1) * 10)
+        start, nb = self._bar
+        x = event.x - start
+        if 0 <= x < nb:
+            await self.app.set_volume(round((x + 1) / nb * 100))
 
     async def on_mouse_scroll_up(self, event):
         await self.app.set_volume(self.app.volume + 5)
 
     async def on_mouse_scroll_down(self, event):
         await self.app.set_volume(self.app.volume - 5)
+
+
+class EmptyHint(Static, can_focus=True):
+    """Підказка в порожній панелі. На неї можна перейти Tab-ом; Enter виконує дію (додати теку)."""
+    BINDINGS = [Binding("enter,space", "activate", show=False)]
+
+    def __init__(self, text, action: str, **kw):
+        super().__init__(text, **kw)
+        self._act = action
+
+    async def action_activate(self):
+        await self.screen.run_action(self._act)
+
+    async def on_click(self, event):
+        await self.screen.run_action(self._act)
+
+
+class KeyBar(Horizontal):
+    """Нижній рядок клавіш. Показує стільки підказок, скільки влазить, — найважливіші першими."""
+    DEFAULT_CSS = "KeyBar { height: 1; width: 1fr; }"
+
+    def __init__(self, hints, **kw):
+        super().__init__(**kw)
+        self.hints = hints  # (клавіша, підпис, дія, пріоритет: 1 — найважливіше)
+
+    def compose(self) -> ComposeResult:
+        for i, (key, desc, action, _prio) in enumerate(self.hints):
+            yield Clickable(Text.assemble((f" {key}", "bold"), f" {desc} "), action, id=f"kb-{i}", classes="kb")
+
+    def on_mount(self):
+        self.call_after_refresh(self.fit)
+
+    def on_resize(self, event):
+        self.fit()
+
+    def fit(self):
+        width = self.size.width or 80
+        order = sorted(range(len(self.hints)), key=lambda i: self.hints[i][3])
+        used, show = 0, set()
+        for i in order:
+            key, desc, _a, _p = self.hints[i]
+            need = len(key) + len(desc) + 3
+            if used + need <= width:
+                used += need
+                show.add(i)
+        for i in range(len(self.hints)):
+            try:
+                self.query_one(f"#kb-{i}").display = i in show
+            except NoMatches:
+                pass
 
 
 class DblClickMixin:
@@ -1100,6 +1170,154 @@ class ConfirmScreen(ModalScreen):
                 yield Clickable(f" {self.yes} ", "dismiss(True)", classes="btn danger")
 
 
+class HelpScreen(ModalScreen):
+    """F1: про програму, автор, GitHub, усі клавіші, налаштування."""
+    BINDINGS = [Binding("escape,f1,question_mark,q", "dismiss(None)", _("Закрити"))]
+
+    def compose(self) -> ComposeResult:
+        app = self.app
+        with Vertical(id="dlg", classes="help"):
+            yield Static(f"{APP_NAME} {VERSION}", classes="dlg-title")
+            yield Static(_("Музичний плеєр у дусі Winamp. Автор: {author}. Безкоштовно, з відкритим кодом (MIT).")
+                         .format(author=AUTHOR), classes="dlg-help")
+            with Horizontal(classes="dlg-buttons"):
+                yield Clickable(_(" GitHub — сторінка проєкту "), "open_url('github')", classes="btn primary")
+                yield Clickable(_(" Повідомити про помилку "), "open_url('issues')", classes="btn")
+                yield Static(classes="spacer")
+                yield Clickable(_(" Закрити "), "dismiss(None)", classes="btn")
+            yield Static(GITHUB_URL, id="help-url")
+            yield Static(_("Налаштування"), classes="help-h")
+            with Horizontal(classes="help-set"):
+                yield Static(_("Гучність:"), classes="help-k")
+                yield Clickable("", "toggle_volume_mode", id="set-volume", classes="flag on")
+            with Horizontal(classes="help-set"):
+                yield Static(_("Мова:"), classes="help-k")
+                yield Clickable("", "app.toggle_language", id="set-lang", classes="flag on")
+            yield Static(_("Клавіші"), classes="help-h")
+            with VerticalScroll(id="help-keys"):
+                yield Static(self._keys_text())
+
+    def on_mount(self):
+        self.update_settings()
+
+    def update_settings(self):
+        app = self.app
+        mode = (_("як у системі (клавіші гучності керують і плеєром)") if app.volume_mode == "system"
+                else _("окрема гучність плеєра"))
+        if app.volume_mode == "system" and app.sysvol is None and not app.demo:
+            mode += _(" — недоступно, діє гучність плеєра")
+        self.query_one("#set-volume", Static).update(mode + "  ⇄")
+        lang = (app.cfg.get("lang") or LANG)
+        self.query_one("#set-lang", Static).update(
+            {"uk": "українська", "en": "English"}[lang] + _("  ⇄  (після перезапуску)"))
+
+    def action_toggle_volume_mode(self):
+        self.app.toggle_volume_mode()
+        self.set_timer(0.6, self.update_settings)
+
+    def action_open_url(self, which: str):
+        self.app.open_url(GITHUB_URL if which == "github" else ISSUES_URL)
+
+    def _keys_text(self) -> Text:
+        rows = [
+            ("Z X C V B", _("назад · грати · пауза · стоп · далі")),
+            (_("Пробіл"), _("пауза / продовжити")),
+            ("← →", _("перемотати на 5 секунд")),
+            ("+ −", _("гучність")),
+            ("Tab", _("перейти між списком відтворення й медіатекою")),
+            ("1 / 2", _("список відтворення / медіатека")),
+            ("S / R", _("перемішування / повтор")),
+            (_("J або /"), _("знайти трек")),
+            ("L", _("додати теку до медіатеки")),
+            ("Shift+P", _("уся медіатека в список")),
+            ("M", _("показати / сховати медіатеку")),
+            ("O", _("обкладинка: звичайна → велика → вимкнена")),
+            ("N", _("сповіщення про трек")),
+            ("T", _("світла / темна тема")),
+            ("F2", _("мова інтерфейсу")),
+            *([("H", _("сховати в трей"))] if sysdeps.IS_WIN else []),
+            ("Delete", _("прибрати трек зі списку")),
+            ("F1 / ?", _("ця довідка")),
+            ("Q", _("вийти")),
+            ("", ""),
+            (_("У медіатеці"), ""),
+            ("Enter", _("грати трек разом з альбомом")),
+            ("P", _("грати виконавця / альбом / теку")),
+            ("A", _("додати в кінець списку")),
+        ]
+        t = Text()
+        for k, d in rows:
+            t.append(f"{k:<12}", Style(bold=True, color=self.app.primary_hex))
+            t.append(d + "\n")
+        return t
+
+
+class FoldersScreen(ModalScreen):
+    """Теки медіатеки: додати (системне вікно), прибрати позначені, прибрати всі."""
+    BINDINGS = [Binding("escape", "dismiss(None)", _("Закрити"))]
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dlg"):
+            yield Static(_("Теки медіатеки"), classes="dlg-title")
+            yield Static(_("Позначте теки пробілом або кліком і натисніть «Прибрати позначені». "
+                           "Файли на диску залишаться."), classes="dlg-help")
+            yield SelectionList(id="folders")
+            yield Static(_("Тек ще немає. Натисніть «+ Додати…», щоб обрати теку з музикою."), id="folders-empty")
+            with Horizontal(classes="dlg-buttons"):
+                yield Clickable(_(" + Додати… "), "add", classes="btn primary")
+                yield Clickable(_(" Прибрати позначені "), "remove_checked", classes="btn")
+                yield Clickable(_(" Прибрати всі "), "remove_all", classes="btn danger", id="rm-all")
+                yield Static(classes="spacer")
+                yield Clickable(_(" Закрити "), "dismiss(None)", classes="btn")
+
+    def on_mount(self):
+        self.refresh_list()
+
+    def refresh_list(self):
+        sl = self.query_one(SelectionList)
+        sl.clear_options()
+        home = str(Path.home())
+        dim = Style(color=self.app.dim_hex)
+        for f in self.app.lib.folders:
+            n = len(self.app.lib.under(f))
+            p = Path(f)
+            label = Text(p.name or f, Style(bold=True))
+            label.append(f"  {n_tracks(n)}" if n else "", dim)
+            label.append(f"   {str(p.parent).replace(home, '~', 1)}", dim)
+            sl.add_option((label, f))
+        has = bool(self.app.lib.folders)
+        sl.display = has
+        self.query_one("#folders-empty").display = not has
+        self.query_one("#rm-all").display = len(self.app.lib.folders) > 1
+        if has:
+            sl.highlighted = 0
+            sl.focus()
+
+    def action_add(self):
+        self.app.add_library_folder(after=self.refresh_list)
+
+    def action_remove_checked(self):
+        sel = list(self.query_one(SelectionList).selected)
+        if not sel:
+            hl = self.query_one(SelectionList).highlighted
+            if hl is not None and self.app.lib.folders:
+                sel = [self.query_one(SelectionList).get_option_at_index(hl).value]
+        if sel:
+            self.app.remove_folders(sel)
+            self.refresh_list()
+
+    def action_remove_all(self):
+        def done(ok):
+            if ok:
+                self.app.clear_library()
+                self.refresh_list()
+        self.app.push_screen(ConfirmScreen(
+            _("Прибрати всі теки з медіатеки?"),
+            _("Медіатека стане порожньою. Файли на диску залишаться, список відтворення теж. "
+              "Теки можна буде додати знову клавішею L."),
+            _("Прибрати всі")), done)
+
+
 class ListPicker(ModalScreen):
     BINDINGS = [Binding("escape", "dismiss(None)", _("Скасувати"))]
 
@@ -1193,28 +1411,42 @@ class NoMpvScreen(Screen):
 class MainScreen(Screen):
     # Клавіші Z X C V B — як у Winamp
     BINDINGS = [
-        Binding("z", "prev", _("Попер.")),
-        Binding("x", "play", _("Грати")),
-        Binding("c", "pause", _("Пауза")),
-        Binding("v", "stop", _("Стоп")),
-        Binding("b", "next", _("Наст.")),
+        Binding("z", "prev", _("Попер."), show=False),
+        Binding("x", "play", _("Грати"), show=False),
+        Binding("c", "pause", _("Пауза"), show=False),
+        Binding("v", "stop", _("Стоп"), show=False),
+        Binding("b", "next", _("Наст."), show=False),
+        Binding("tab", "next_panel(1)", _("Панель"), show=False, priority=True),
+        Binding("shift+tab", "next_panel(-1)", _("Панель"), show=False, priority=True),
+        Binding("1", "focus_panel('playlist')", _("Список"), show=False),
+        Binding("2", "focus_panel('library')", _("Медіатека"), show=False),
+        Binding("f1,question_mark", "help", _("Довідка"), show=False),
         Binding("space", "toggle", _("Пауза"), show=False, priority=True),
         Binding("left", "seek(-5)", _("−5 с"), show=False, priority=True),
         Binding("right", "seek(5)", _("+5 с"), show=False, priority=True),
         Binding("plus,equals_sign", "volume(5)", _("Гучн+"), show=False),
         Binding("minus", "volume(-5)", _("Гучн−"), show=False),
-        Binding("l", "add_library_folder", _("Тека→медіатека")),
-        Binding("j,slash", "jump", _("Пошук")),
+        Binding("l", "add_library_folder", _("Тека"), show=False),
+        Binding("j,slash", "jump", _("Пошук"), show=False),
         Binding("s", "shuffle", _("Перемішати"), show=False),
         Binding("r", "repeat", _("Повтор"), show=False),
         Binding("n", "popups", _("Сповіщення"), show=False),
-        Binding("m", "toggle_library", _("Медіатека")),
-        Binding("t", "theme", _("Тема")),
+        Binding("m", "toggle_library", _("Медіатека"), show=False),
+        Binding("t", "theme", _("Тема"), show=False),
         Binding("o", "cover_mode", _("Обкладинка"), show=False),
         Binding("P,shift+p", "app.lib_all", _("Усе в список"), show=False),
         Binding("f2", "language", _("Мова"), show=False),
-        *([Binding("h", "hide_to_tray", _("У трей"))] if sysdeps.IS_WIN else []),
-        Binding("q", "app.quit", _("Вихід")),
+        *([Binding("h", "hide_to_tray", _("У трей"), show=False)] if sysdeps.IS_WIN else []),
+        Binding("q", "app.quit", _("Вихід"), show=False),
+    ]
+    KEY_HINTS = [
+        ("Z", _("Попер."), "prev", 2), ("X", _("Грати"), "play", 1), ("C", _("Пауза"), "pause", 1),
+        ("V", _("Стоп"), "stop", 3), ("B", _("Наст."), "next", 1),
+        ("Tab", _("Панель"), "next_panel(1)", 2), ("J", _("Пошук"), "jump", 2),
+        ("L", _("Тека"), "add_library_folder", 4), ("M", _("Медіатека"), "toggle_library", 3),
+        ("T", _("Тема"), "theme", 5),
+        *([("H", _("У трей"), "hide_to_tray", 4)] if sysdeps.IS_WIN else []),
+        ("F1", _("Довідка"), "help", 1), ("Q", _("Вихід"), "app.quit", 2),
     ]
 
     def compose(self) -> ComposeResult:
@@ -1246,13 +1478,12 @@ class MainScreen(Screen):
                         yield Clickable(" ■ ", "stop", classes="tbtn")
                         yield Clickable(" ▶▶ ", "next", classes="tbtn")
                         yield Clickable(" ⏏ ", "add_playlist_folder", classes="tbtn", id="eject")
-                        yield Static(classes="spacer")
                         yield VolumeBar(id="volume")
                 with Vertical(id="pl-win"):
                     yield PlaylistTable(id="playlist", cursor_type="row", zebra_stripes=False,
                                         show_cursor=True)
-                    yield Static(_("Список порожній.\n\nОберіть альбом чи теку в медіатеці й натисніть Enter або P, "
-                                   "або додайте теку кнопкою «+ Тека» нижче."), id="pl-empty")
+                    yield EmptyHint(_("Список порожній.\n\nОберіть альбом чи теку в медіатеці й натисніть Enter або P, "
+                                      "або додайте теку кнопкою «+ Тека» нижче."), "add_playlist_folder", id="pl-empty")
                     with Horizontal(classes="tools"):
                         yield Clickable(_(" + Тека "), "add_playlist_folder", classes="btn")
                         yield Clickable(_(" − Прибрати "), "app.remove_selected", classes="btn")
@@ -1264,15 +1495,16 @@ class MainScreen(Screen):
                     yield Clickable(_(" Виконавці "), "lib_mode('artists')", id="tab-artists", classes="tab")
                     yield Clickable(_(" Теки "), "lib_mode('folders')", id="tab-folders", classes="tab")
                 yield LibraryTree(_("Медіатека"), id="library")
-                yield Static(_("Медіатека порожня.\n\nДодайте теку з музикою: клавіша L або кнопка «+ Тека».\n\n"
-                               "Або просто перетягніть теку з {fm} у вікно плеєра.").format(fm=file_manager_from()), id="lib-empty")
+                yield EmptyHint(_("Медіатека порожня.\n\nДодайте теку з музикою: клавіша L або кнопка «+ Тека».\n\n"
+                                  "Або просто перетягніть теку з {fm} у вікно плеєра.").format(fm=file_manager_from()),
+                                "add_library_folder", id="lib-empty")
                 with Horizontal(classes="tools"):
                     yield Clickable(_(" + Тека "), "add_library_folder", classes="btn")
-                    yield Clickable(_(" − Тека "), "remove_library_folder", classes="btn")
+                    yield Clickable(_(" Теки… "), "remove_library_folder", classes="btn")
                     yield Static(classes="spacer")
                     yield Clickable(_(" ▶ Усе "), "app.lib_all", classes="btn primary")
                     yield Clickable(" ↻ ", "rescan", classes="btn")
-        yield Footer()
+        yield KeyBar(self.KEY_HINTS, id="keybar")
 
     def on_mount(self):
         self.query_one("#main-win").border_title = APP_NAME
@@ -1296,6 +1528,39 @@ class MainScreen(Screen):
     def action_repeat(self): self.app.cycle_repeat()
     def action_popups(self): self.app.cycle_popups()
     def action_theme(self): self.app.toggle_theme()
+    def action_help(self): self.app.push_screen(HelpScreen())
+
+    def action_focus_panel(self, which: str):
+        if which == "library" and not self.app.show_library:
+            self.app.toggle_library()
+            return
+        a, b = ("#library", "#lib-empty") if which == "library" else ("#playlist", "#pl-empty")
+        target = self.query_one(a) if self.query_one(a).display else self.query_one(b)
+        if target.display:
+            target.focus()
+        elif which == "playlist" and self.app.show_library and self.has_class("narrow"):
+            self.app.toggle_library()
+
+    def action_next_panel(self, step: int):
+        def pick(a, b):
+            wa, wb = self.query_one(a), self.query_one(b)
+            return wa if wa.display else wb
+        panels = [w for w in (pick("#playlist", "#pl-empty"), pick("#library", "#lib-empty"))
+                  if w.display and w.parent.styles.display != "none"]
+        if self.has_class("narrow"):  # у вузькому вікні видно одну панель — перемикаємо, що видно
+            self.app.toggle_library()
+            return
+        if not panels:
+            return
+        cur = self.focused
+        i = next((k for k, w in enumerate(panels) if w is cur or (cur is not None and w.parent is cur.parent)), -1)
+        panels[(i + step) % len(panels)].focus()
+
+    def on_descendant_focus(self, event):
+        self.app.update_panel_titles()
+
+    def on_descendant_blur(self, event):
+        self.app.update_panel_titles()
     def action_language(self): self.app.toggle_language()
     def action_hide_to_tray(self): self.app.hide_to_tray()
     def action_cover_mode(self): self.app.cycle_cover_mode()
@@ -1370,7 +1635,7 @@ Screen.big-cover #cover-box { width: 24; height: 12; }
 /* ── список відтворення ── */
 #pl-win {
     height: 1fr; padding: 0 1;
-    border: round $secondary 50%; border-title-color: $secondary; border-title-style: bold;
+    border: round $secondary 30%; border-title-color: $secondary 70%; border-title-style: bold;
     border-subtitle-color: $foreground 55%;
     background: $secondary 4%;
 }
@@ -1380,6 +1645,7 @@ Screen.big-cover #cover-box { width: 24; height: 12; }
 #playlist > .datatable--hover { background: $secondary 12%; }
 #playlist:blur > .datatable--cursor { background: $secondary 14%; }
 #pl-empty { height: 1fr; content-align: center middle; text-align: center; color: $foreground 55%; display: none; }
+#pl-empty:focus, #lib-empty:focus { color: $foreground; text-style: bold; }
 .tools { height: 1; margin-top: 1; }
 .btn { width: auto; color: $foreground 75%; background: $foreground 6%; margin-right: 1; }
 .btn:hover { background: $foreground 15%; color: $foreground; }
@@ -1389,7 +1655,7 @@ Screen.big-cover #cover-box { width: 24; height: 12; }
 /* ── медіатека ── */
 #library-win {
     width: 42%; max-width: 64; min-width: 32; padding: 0 1;
-    border: round $accent 50%; border-title-color: $accent; border-title-style: bold;
+    border: round $accent 30%; border-title-color: $accent 70%; border-title-style: bold;
     border-subtitle-color: $foreground 55%;
     background: $accent 4%;
 }
@@ -1414,6 +1680,21 @@ Screen.narrow #library-win { width: 1fr; max-width: 999; min-width: 0; height: 1
 Screen.lib-hidden #library-win { display: none; }
 
 Footer { background: $primary 8%; }
+/* активна панель: товста яскрава рамка */
+#pl-win:focus-within { border: heavy $secondary; border-title-color: $secondary; background: $secondary 7%; }
+#library-win:focus-within { border: heavy $accent; border-title-color: $accent; background: $accent 7%; }
+#keybar { background: $primary 8%; }
+.kb { width: auto; color: $foreground 80%; }
+.kb:hover { background: $primary 25%; color: $foreground; }
+/* довідка і теки */
+#dlg.help { width: 86; }
+#help-url { color: $foreground 50%; margin-bottom: 1; }
+.help-h { text-style: bold; color: $primary; margin-top: 1; }
+.help-set { height: 1; }
+.help-k { width: 12; color: $foreground 70%; }
+#help-keys { height: 12; background: $primary 4%; }
+#folders { height: auto; max-height: 14; background: $primary 4%; border: none; margin-bottom: 1; }
+#folders-empty { color: $foreground 60%; margin-bottom: 1; }
 Toast { background: $surface; width: 44; }
 Toast.-information { border-left: outer $primary; }
 Toast.-information > .toast--title { color: $primary; text-style: bold; }
@@ -1431,6 +1712,7 @@ NoMpvScreen { align: center middle; }
 #dlg Input:focus { border: tall $primary 70%; }
 #dirs { height: 16; background: $primary 4%; margin-bottom: 1; }
 #dirs > .tree--cursor { background: $primary 30%; }
+.dlg-buttons { height: 1; margin-top: 1; }
 #opts, #res { height: auto; max-height: 18; background: $primary 4%; border: none; }
 #opts > .option-list--option-highlighted, #res > .option-list--option-highlighted { background: $primary 30%; }
 .dlg-buttons { height: 1; }
@@ -1450,7 +1732,12 @@ class Plativka(App):
         self.extra: dict[str, Track] = {}
         self.playlist: list[str] = [p for p in self.cfg["playlist"] if isinstance(p, str)]
         self.current: int = self.cfg.get("current", -1)
-        self.volume: int = int(self.cfg.get("volume", 70))
+        self.player_volume: int = int(self.cfg.get("volume", 70))   # власна гучність плеєра (mpv)
+        self.volume: int = self.player_volume                         # те, що показує смужка
+        self.volume_mode: str = self.cfg.get("volume_mode", "system")  # system — дзеркало гучності системи
+        self.sysvol = None
+        self.sys_muted = False
+        self.smtc = None
         self.shuffle: bool = bool(self.cfg.get("shuffle", False))
         self.repeat: str = self.cfg.get("repeat", "off")
         self.remaining: bool = bool(self.cfg.get("remaining", False))
@@ -1491,7 +1778,7 @@ class Plativka(App):
     def save_cfg(self):
         pos = self.player.time_pos if self.player and self.player.active else self.cfg.get("position", 0)
         self.cfg.update(folders=self.lib.folders, playlist=self.playlist, current=self.current,
-                        position=round(pos or 0, 1), volume=self.volume, shuffle=self.shuffle,
+                        position=round(pos or 0, 1), volume=self.player_volume, volume_mode=self.volume_mode, shuffle=self.shuffle,
                         repeat=self.repeat, remaining=self.remaining, theme=self.base, popups=self.popups,
                         lib_mode=self.lib_mode, show_library=self.show_library, cover_mode=self.cover_mode,
                         minimize_to_tray=self.minimize_to_tray)
@@ -1531,10 +1818,12 @@ class Plativka(App):
             await self.push_screen(NoMpvScreen())
             return
         try:
-            await self.player.start(self.volume)
+            await self.player.start(self.player_volume)
         except Exception as e:
             self.notify(_("Не вдалося запустити mpv: {e}").format(e=e), severity="error", timeout=10, markup=False)
         self.setup_platform()
+        if self.volume_mode == "system" and not self.demo:
+            self._init_sysvol()
         self.main = MainScreen()
         await self.push_screen(self.main)
 
@@ -1551,6 +1840,15 @@ class Plativka(App):
         else:
             from . import winplat
             winplat.on_close(self.save_cfg)  # mpv закриється сам: він у «завданні» плеєра
+            if not self.demo and not os.environ.get("PLATIVKA_NO_TRAY"):
+                try:
+                    from .smtc import Smtc
+                    sm = Smtc(self)
+                    if sm.start():
+                        self.smtc = sm
+                        log("smtc: ok")
+                except Exception as e:
+                    log(f"smtc: {e}")
             try:
                 if os.environ.get("PLATIVKA_NO_TRAY"):
                     raise RuntimeError("tray disabled by PLATIVKA_NO_TRAY")
@@ -1592,6 +1890,8 @@ class Plativka(App):
                 self.mpris.refresh(cur, self._cover_file)
             except Exception as e:
                 log(f"mpris refresh: {e}")
+        if self.smtc is not None:
+            self.smtc.refresh(cur, self._cover_file)
         if self.tray is not None:
             title = f"{APP_NAME} — {cur.display}" if cur else APP_NAME
             if title != self._tray_title:
@@ -1648,6 +1948,7 @@ class Plativka(App):
 
     def after_main_mount(self):
         self.update_layout()
+        self.call_after_refresh(self.update_panel_titles)
         self.rebuild_playlist()
         self.rebuild_tree()
         self.update_flags()
@@ -1671,6 +1972,8 @@ class Plativka(App):
             self.tray.stop()
         if self.mpris is not None:
             self.mpris.stop()
+        if self.smtc is not None:
+            self.smtc.stop()
         if self.player:
             await self.player.close()
         self.exit()
@@ -1802,9 +2105,94 @@ class Plativka(App):
 
     async def set_volume(self, v: int):
         self.volume = int(clamp(v, 0, 100))
-        await self.player.set_volume(self.volume)
+        if self.sysvol is not None:
+            self.sys_muted = False
+            self._sysvol_set(self.volume)
+        else:
+            self.player_volume = self.volume
+            await self.player.set_volume(self.volume)
+        self._refresh_volume()
+
+    def _refresh_volume(self):
         if self.main:
-            self.main.query_one(VolumeBar).refresh()
+            try:
+                self.main.query_one(VolumeBar).refresh()
+            except NoMatches:
+                pass
+
+    # Гучність системи: плеєр завжди на 100 %, смужка показує й змінює гучність системи
+    @work(thread=True, exclusive=True, group="sysvol")
+    def _init_sysvol(self):
+        sysvol.init_thread()
+        sv = sysvol.detect()
+        if sv is None:
+            log("sysvol: недоступна, лишається гучність плеєра")
+            return
+        log(f"sysvol: {sv.name}")
+        self.call_from_thread(self._sysvol_ready, sv)
+        import threading
+        while not self._quitting and self.sysvol is sv:
+            try:
+                r = sv.get()
+            except Exception:
+                r = None
+            if r is not None:
+                self.call_from_thread(self._sysvol_changed, *r)
+            for _i in range(7):
+                if self._quitting or self.sysvol is not sv:
+                    break
+                time.sleep(0.1)
+
+    def _sysvol_ready(self, sv):
+        self.sysvol = sv
+        self.run_worker(self.player.set_volume(100))
+
+    def _sysvol_changed(self, v: int, muted: bool):
+        if self.sysvol is None:
+            return
+        if (v, muted) != (self.volume, self.sys_muted) and time.monotonic() - getattr(self, "_sysvol_t", 0) > 0.8:
+            self.volume, self.sys_muted = v, muted
+            self._refresh_volume()
+
+    @work(thread=True, group="sysvol-set")
+    def _sysvol_set(self, v: int):
+        self._sysvol_t = time.monotonic()
+        sysvol.init_thread()
+        if self.sysvol is not None:
+            self.sysvol.set(v)
+
+    def toggle_volume_mode(self):
+        if self.volume_mode == "system":
+            self.volume_mode = "player"
+            self.sysvol = None
+            self.sys_muted = False
+            self.volume = self.player_volume
+            self.run_worker(self.player.set_volume(self.player_volume))
+        else:
+            self.volume_mode = "system"
+            if not self.demo:
+                self._init_sysvol()
+        self._refresh_volume()
+        self.save_cfg()
+
+    def open_url(self, url: str):
+        import webbrowser
+        import threading
+        threading.Thread(target=webbrowser.open, args=(url,), daemon=True).start()
+        self.notify(_("Відкриваю в браузері: {url}").format(url=url), timeout=3, markup=False)
+
+    def open_github(self):
+        self.open_url(GITHUB_URL)
+
+    def update_panel_titles(self):
+        if not self.main:
+            return
+        for win, title in (("#pl-win", _("Список відтворення")), ("#library-win", _("Медіатека"))):
+            try:
+                w = self.main.query_one(win)
+            except NoMatches:
+                continue
+            w.border_title = ("● " + title) if w.has_pseudo_class("focus-within") else title
 
     def _mpv_eof(self, early=None):
         if early:
@@ -1992,7 +2380,7 @@ class Plativka(App):
     def _set_cover(self, path, img):
         self._last_cover_path = path
         self.cover_img = img
-        if self.mpris is not None:
+        if self.mpris is not None or self.smtc is not None:
             self._cover_file = self._write_cover_file(path, img)
         if self.tray is not None:
             self.tray.set_image(self.tray_image(img))
@@ -2259,11 +2647,30 @@ class Plativka(App):
         if node is not None:
             self.add_to_playlist(self.node_paths(node))
 
-    def add_library_folder(self):
-        def done(path):
-            if path:
-                self.add_folders_to_library([path])
-        self.push_screen(FolderPicker(_("Додати теку до медіатеки")), done)
+    def add_library_folder(self, after=None):
+        def done(paths):
+            self.add_folders_to_library(paths)
+            if after:
+                after()
+        self._pick_folders(_("Оберіть теки з музикою для медіатеки"), done)
+
+    def _pick_folders(self, title: str, done):
+        """Системне вікно вибору теки; якщо його немає — вибір у самому плеєрі."""
+        if pickers.available():
+            self._native_pick(title, done)
+        else:
+            self.push_screen(FolderPicker(title), lambda p: p and done([p]))
+
+    @work(thread=True, exclusive=True, group="picker")
+    def _native_pick(self, title: str, done):
+        res = pickers.choose_folders(title)
+
+        def finish():
+            if res is None:
+                self.push_screen(FolderPicker(title), lambda p: p and done([p]))
+            elif res:
+                done(res)
+        self.call_from_thread(finish)
 
     def add_folders_to_library(self, paths: list[str]):
         added = []
@@ -2281,31 +2688,22 @@ class Plativka(App):
             self.start_scan()
 
     def remove_library_folder(self):
-        if not self.lib.folders:
-            self.notify(_("У медіатеці ще немає тек"))
-            return
-        items = [(f, f.replace(str(Path.home()), "~", 1)) for f in self.lib.folders]
-        if len(self.lib.folders) > 1:
-            items.insert(0, ("__all__", _("✕ Прибрати всі теки ({n})").format(n=len(self.lib.folders))))
+        """Вікно «Теки медіатеки»: додати, прибрати позначені, прибрати всі."""
+        self.push_screen(FoldersScreen())
 
-        def done(path):
-            if path == "__all__":
-                self.push_screen(ConfirmScreen(
-                    _("Прибрати всі теки з медіатеки?"),
-                    _("Медіатека стане порожньою. Файли на диску залишаться, список відтворення теж. "
-                      "Теки можна буде додати знову клавішею L."),
-                    _("Прибрати всі")), lambda ok: ok and self.clear_library())
-                return
-            if path and path in self.lib.folders:
+    def remove_folders(self, paths: list[str]):
+        removed = 0
+        for path in paths:
+            if path in self.lib.folders:
                 self.lib.folders.remove(path)
                 pre = path.rstrip(os.sep) + os.sep
                 self.lib.tracks = {k: v for k, v in self.lib.tracks.items() if not k.startswith(pre)}
-                self.lib.save()
-                self.save_cfg()
-                self.rebuild_tree()
-                self.notify(_("Теку прибрано з медіатеки (файли не видалено)"))
-        self.push_screen(ListPicker(_("Прибрати теку з медіатеки"), items,
-                                    _("Файли на диску залишаться. Esc — скасувати.")), done)
+                removed += 1
+        if removed:
+            self.lib.save()
+            self.save_cfg()
+            self.rebuild_tree()
+            self.notify(_("Прибрано тек: {n} (файли не видалено)").format(n=removed))
 
     def clear_library(self):
         n = len(self.lib.folders)
@@ -2346,10 +2744,10 @@ class Plativka(App):
             self.notify(_("Медіатека оновлена: {n}").format(n=n_tracks(total)))
 
     def add_playlist_folder(self):
-        def done(path):
-            if path:
-                self._collect_folder(path)
-        self.push_screen(FolderPicker(_("Додати теку до списку відтворення")), done)
+        def done(paths):
+            for p in paths:
+                self._collect_folder(p)
+        self._pick_folders(_("Оберіть теку для списку відтворення"), done)
 
     @work(thread=True, group="collect")
     def _collect_folder(self, path: str):

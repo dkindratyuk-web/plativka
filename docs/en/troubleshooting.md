@@ -52,6 +52,18 @@ They need a desktop session with D-Bus (GNOME, KDE, Xfce, Cinnamon… — practi
 - **Linux**: install `libnotify-bin` (Debian/Ubuntu) or `libnotify` (Fedora/Arch).
 - **Windows**: notifications come from the tray icon; check Settings → System → Notifications.
 
+## macOS: the "Help" menu at the top of the screen opens the wrong site
+
+The menu bar in the macOS DMG belongs to kitty, the window Plativka runs in, so its **Help** menu leads to kitty's website. Plativka's own help is **F1** (or **?**) inside the player — it has the keys, the settings and links to Plativka's GitHub page.
+
+## The volume keys don't change the player's volume
+
+By default the player's volume mirrors the system volume. Check **F1 → Volume**: if it says *unavailable*, the system volume can't be read (on Linux install PipeWire's `wpctl` or PulseAudio's `pactl`), and the player uses its own volume. You can also switch to a separate player volume there on purpose.
+
+## L shows a folder list inside the player instead of a system window
+
+The system folder dialog is used when one is available. On Linux it needs `zenity` (GNOME and most desktops) or `kdialog` (KDE) — the install script installs zenity; or install it yourself, e.g. `sudo apt install zenity`. Over SSH there is no system dialog, so the in-player picker is used.
+
 ## Logs
 
 If something goes wrong, the logs show what happened:

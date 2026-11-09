@@ -36,22 +36,22 @@ SUDO="sudo"; command -v sudo >/dev/null || SUDO=""
 if [ -n "${PLATIVKA_SKIP_PACKAGES:-}" ]; then
   say "$(t "Пропускаю встановлення системних пакетів (PLATIVKA_SKIP_PACKAGES)." "Skipping system packages (PLATIVKA_SKIP_PACKAGES).")"
 elif [[ "$ids" == *" arch "* || "$ids" == *" manjaro "* || "$ids" == *" endeavouros "* || "$ids" == *" cachyos "* ]]; then
-  say "Arch: $(t "встановлюю" "installing") mpv, kitty, python, libnotify…"
-  $SUDO pacman -S --needed --noconfirm mpv kitty python libnotify
+  say "Arch: $(t "встановлюю" "installing") mpv, kitty, python, libnotify, zenity…"
+  $SUDO pacman -S --needed --noconfirm mpv kitty python libnotify zenity
 elif [[ "$ids" == *" fedora "* || "$ids" == *" rhel "* || "$ids" == *" centos "* ]]; then
-  say "Fedora: $(t "встановлюю" "installing") mpv, kitty, python3, libnotify…"
-  if ! $SUDO dnf install -y mpv kitty python3 libnotify; then
+  say "Fedora: $(t "встановлюю" "installing") mpv, kitty, python3, libnotify, zenity…"
+  if ! $SUDO dnf install -y mpv kitty python3 libnotify zenity; then
     say "$(t "mpv немає в стандартних репозиторіях — підключаю RPM Fusion (free)…" "mpv is not in the default repositories — enabling RPM Fusion (free)…")"
     $SUDO dnf install -y "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm"
-    $SUDO dnf install -y mpv kitty python3 libnotify
+    $SUDO dnf install -y mpv kitty python3 libnotify zenity
   fi
 elif [[ "$ids" == *" suse "* || "$ids" == *" opensuse "* ]]; then
-  say "openSUSE: $(t "встановлюю" "installing") mpv, kitty, python3, libnotify-tools…"
-  $SUDO zypper --non-interactive install mpv kitty python3 libnotify-tools
+  say "openSUSE: $(t "встановлюю" "installing") mpv, kitty, python3, libnotify-tools, zenity…"
+  $SUDO zypper --non-interactive install mpv kitty python3 libnotify-tools zenity
 elif [[ "$ids" == *" debian "* || "$ids" == *" ubuntu "* ]]; then
-  say "Debian/Ubuntu: $(t "встановлюю" "installing") mpv, kitty, python3-venv, libnotify-bin…"
+  say "Debian/Ubuntu: $(t "встановлюю" "installing") mpv, kitty, python3-venv, libnotify-bin, zenity…"
   $SUDO apt-get update
-  $SUDO apt-get install -y mpv kitty python3 python3-venv libnotify-bin
+  $SUDO apt-get install -y mpv kitty python3 python3-venv libnotify-bin zenity
 else
   say "$(t "Невідомий дистрибутив" "Unknown distribution") (${ID:-?}). $(t "Встановіть вручну: mpv, kitty, python3 з venv, notify-send." "Install manually: mpv, kitty, python3 with venv, notify-send.")"
 fi

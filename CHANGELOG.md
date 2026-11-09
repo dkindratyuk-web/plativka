@@ -1,5 +1,29 @@
 # Changelog / Історія змін
 
+## 1.1.0
+
+**English**
+
+- **Volume keys**: the player's volume now mirrors the system volume, so the volume keys on your keyboard (F11/F12 on a Mac) and the system sound slider move it, and `+` `−` in the player change the system volume. A separate player volume can be chosen in F1.
+- **Windows media keys**: ⏯ ⏭ ⏮ on keyboards and headphones, plus the Windows media overlay with the track and cover.
+- **Adding folders** opens the usual system folder dialog (Finder / Windows / GNOME, KDE); several folders at once on macOS and Linux. The in-player picker stays as a fallback.
+- **Folders…** window: all library folders with track counts; remove checked ones or all of them, add more.
+- **Clear navigation**: Tab / Shift+Tab / 1 / 2 move between the playlist and the library; the active panel has a bold frame and ●.
+- **Help (F1 or ?)**: version, author, GitHub and bug-report buttons, volume and language settings, all keys. The tray menu on Windows also links to GitHub.
+- The bottom key row and the volume bar adapt to the window width.
+- Linux install script also installs `zenity` (folder dialog).
+
+**Українська**
+
+- **Клавіші гучності**: гучність плеєра тепер дзеркалить системну — клавіші гучності на клавіатурі (F11/F12 на Mac) і системний повзунок рухають її, а `+` `−` у плеєрі змінюють системну гучність. Окрему гучність плеєра можна обрати в F1.
+- **Медіаклавіші на Windows**: ⏯ ⏭ ⏮ на клавіатурі й навушниках, а також панель мультимедіа Windows із треком і обкладинкою.
+- **Додавання тек** відкриває звичайне системне вікно вибору (Finder / Windows / GNOME, KDE); на macOS і Linux — кілька тек одразу. Вибір усередині плеєра лишився як запасний.
+- Вікно **Теки…**: усі теки медіатеки з кількістю треків; прибрати позначені чи всі, додати ще.
+- **Зрозуміла навігація**: Tab / Shift+Tab / 1 / 2 — перехід між списком і медіатекою; активна панель має жирну рамку й ●.
+- **Довідка (F1 або ?)**: версія, автор, кнопки GitHub і «Повідомити про помилку», налаштування гучності й мови, усі клавіші. У меню трею на Windows теж є посилання на GitHub.
+- Нижній рядок клавіш і шкала гучності підлаштовуються під ширину вікна.
+- Скрипт встановлення на Linux ставить і `zenity` (вікно вибору теки).
+
 ## 1.0.1
 
 **English**

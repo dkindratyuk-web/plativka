@@ -26,11 +26,11 @@ Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M
 ## Features
 
 - **Winamp layout and keys**: main window, playlist, media library; `Z X C V B` for prev / play / pause / stop / next.
-- **Folder-based library**: add folders (or just drag one into the window), browse by artist → album or by folder, search with `J`.
+- **Folder-based library**: add folders through the usual system folder dialog (or just drag one into the window), manage them in one **Folders…** window, browse by artist → album or by folder, search with `J`.
 - **The interface takes its colour from the album cover** that is playing. Real cover art in terminals that can draw images (Kitty, Ghostty, iTerm2, WezTerm, Windows Terminal); a pixel-art cover elsewhere, or a spinning record if you turn covers off.
 - **Real level meter** taken from the audio stream, a big LCD-style clock, a scrolling title.
 - **Track popups**: in the player or as system notifications.
-- **System integration**: tray icon on Windows (play/pause, next, previous, quit), media keys and the desktop media widget on Linux (MPRIS), media keys on macOS.
+- **System integration**: the volume keys on your keyboard (F11/F12 on a Mac) control the player — its volume mirrors the system volume; media keys ⏯ ⏭ ⏮ on all three systems (Windows media overlay, Linux MPRIS, macOS); tray icon on Windows.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.
 - **Remembers everything**: playlist, position, volume, theme and library survive restarts.
 - **Two languages**: English and Ukrainian, picked from your system language (`F2` to switch).
@@ -63,10 +63,10 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 | `Z` `X` `C` `V` `B` | previous · play · pause · stop · next (like Winamp) |
 | `Space` | pause / resume |
 | `←` `→` | seek 5 seconds |
-| `+` `−` | volume |
+| `+` `−` | volume (same as the system volume keys) |
 | `S` / `R` | shuffle / repeat (off → all → one) |
 | `J` or `/` | find a track |
-| `L` | add a folder to the library |
+| `L` | add a folder to the library (system folder dialog) |
 | `Shift+P` | put the whole library in the playlist |
 | `M` | show / hide the library |
 | `O` | cover: normal → large → off (spinning record) |
@@ -75,6 +75,8 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 | `F2` | interface language (applies after restart) |
 | `H` | hide to tray (Windows) |
 | `Delete` | remove a track from the playlist |
+| `Tab` · `1` · `2` | switch between the playlist and the library (the active panel has a bold frame and ●) |
+| `F1` or `?` | help: all keys, settings, link to GitHub |
 | `Q` | quit |
 
 In the library: `Enter` on a track plays its whole album, `P` plays the selected artist/album/folder, `A` adds it to the end of the playlist. The mouse works too.

@@ -21,6 +21,7 @@ python -m PyInstaller --noconfirm --clean --onedir --console --name plativka `
   --distpath "$Work\dist" --workpath "$Work\pyi" --specpath "$Work" `
   --collect-all textual --collect-all textual_image --collect-data plativka `
   --collect-submodules plativka --collect-submodules rich --collect-submodules pystray `
+  --collect-submodules comtypes --collect-submodules pycaw --collect-all winrt `
   --hidden-import pystray._win32 `
   --exclude-module numpy --exclude-module yaml --exclude-module chardet `
   --exclude-module charset_normalizer --exclude-module tkinter --exclude-module pytest `

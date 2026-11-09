@@ -1,0 +1,26 @@
+PLATIVKA — FIRST LAUNCH
+=======================
+
+1. Drag "Plativka" onto the "Applications" folder in this window.
+2. Open Applications and double-click Plativka.
+3. macOS will say it cannot verify the developer. This is expected: the app
+   is free and not signed with a paid Apple certificate. Click "Done".
+4. Open  System Settings → Privacy & Security, scroll down and click
+   "Open Anyway" next to the message about Plativka. Confirm with your password.
+5. Done. From now on Plativka opens with a normal double-click.
+
+Full guide: https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-macos.md
+
+
+ПЛАТІВКА — ПЕРШИЙ ЗАПУСК
+========================
+
+1. Перетягніть «Plativka» на теку «Applications» (Програми) в цьому вікні.
+2. Відкрийте Програми й двічі клацніть Plativka.
+3. macOS скаже, що не може перевірити розробника. Так і має бути: програма
+   безкоштовна й не підписана платним сертифікатом Apple. Натисніть «Готово».
+4. Відкрийте  Системні параметри → Конфіденційність і безпека, прокрутіть униз
+   і натисніть «Все одно відкрити» біля повідомлення про Plativka. Підтвердьте паролем.
+5. Готово. Далі Платівка відкривається звичайним подвійним кліком.
+
+Повна інструкція: https://github.com/dkindratyuk-web/plativka/blob/main/docs/uk/install-macos.md

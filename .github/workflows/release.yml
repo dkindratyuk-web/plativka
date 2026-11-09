@@ -1,0 +1,106 @@
+name: Release
+
+# Новий реліз: створити тег версії, напр.  git tag v1.0.1 && git push origin v1.0.1
+# Збірки: DMG для macOS (Apple Silicon, Intel), інсталятор для Windows, архів для Linux.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  MPV_VERSION: v0.41.0
+  KITTY_VERSION: "0.45.0"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  linux:
+    name: Linux archive
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Smoke test
+        run: |
+          python -m pip install . pytest pytest-asyncio
+          python -m pytest -q tests
+      - name: Pack
+        run: |
+          V=$(python -c "import plativka; print(plativka.__version__)")
+          D=plativka-$V-linux
+          mkdir -p "$D/packaging" dist
+          cp -r src pyproject.toml README.md README.uk.md LICENSE THIRD_PARTY_LICENSES.md CHANGELOG.md docs "$D/"
+          cp -r packaging/kitty packaging/icons "$D/packaging/"
+          cp packaging/linux/install.sh packaging/linux/uninstall.sh "$D/"
+          chmod +x "$D/install.sh" "$D/uninstall.sh"
+          tar -czf "dist/$D.tar.gz" "$D"
+      - uses: actions/upload-artifact@v4
+        with: { name: linux, path: dist/*.tar.gz }
+
+  macos:
+    name: macOS DMG (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-14
+            mpv: macos-14-arm
+          - arch: x86_64
+            runner: macos-15-intel
+            mpv: macos-15-intel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Build
+        env:
+          MPV_ZIP_URL: https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-${{ matrix.mpv }}.zip
+          KITTY_DMG_URL: https://github.com/kovidgoyal/kitty/releases/download/v${{ env.KITTY_VERSION }}/kitty-${{ env.KITTY_VERSION }}.dmg
+        run: bash packaging/macos/build_app.sh ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with: { name: "macos-${{ matrix.arch }}", path: dist/*.dmg }
+
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Build
+        run: >
+          powershell -ExecutionPolicy Bypass -File packaging\windows\build.ps1
+          -MpvZipUrl "https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-x86_64-w64-mingw32.zip"
+      - uses: actions/upload-artifact@v4
+        with: { name: windows, path: dist/*.exe }
+
+  release:
+    name: Publish release
+    needs: [linux, macos, windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: dist, merge-multiple: true }
+      - name: Checksums
+        run: cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt
+      - name: Release notes
+        run: |
+          V="${GITHUB_REF_NAME}"
+          f="docs/release-notes/$V.md"
+          [ -f "$f" ] || f=docs/release-notes/template.md
+          sed "s/{{VERSION}}/${V#v}/g" "$f" > notes.md
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Plativka ${{ github.ref_name }}
+          body_path: notes.md
+          files: dist/*

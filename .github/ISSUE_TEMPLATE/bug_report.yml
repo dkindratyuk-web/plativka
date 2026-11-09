@@ -1,0 +1,53 @@
+name: Bug report / Повідомити про помилку
+description: Something doesn't work / Щось не працює
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! You can write in English or Ukrainian.
+        Дякуємо! Можна писати англійською або українською.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened? / Що сталося?
+      description: What did you do, what did you expect, what happened instead? / Що ви робили, що очікували, що сталося натомість?
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: System / Система
+      options:
+        - macOS (Apple Silicon)
+        - macOS (Intel)
+        - Windows 11
+        - Windows 10
+        - Linux — Debian / Ubuntu / Mint
+        - Linux — Fedora
+        - Linux — Arch / Manjaro
+        - Linux — other / інший
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Plativka version / Версія Платівки
+      placeholder: "1.0.0"
+  - type: input
+    id: terminal
+    attributes:
+      label: How do you start it / Як запускаєте
+      description: The installer shortcut, or which terminal (Ghostty, iTerm2, Windows Terminal…) / Ярлик з інсталятора чи який термінал
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / Журнали
+      description: |
+        Attach `plativka.log` and `mpv.log` / Прикладіть `plativka.log` і `mpv.log`:
+        macOS, Linux — `~/.cache/plativka/`; Windows — `%LOCALAPPDATA%\Plativka\cache\`
+  - type: textarea
+    id: screenshot
+    attributes:
+      label: Screenshot / Скріншот
+      description: If it's about how something looks / Якщо проблема з виглядом

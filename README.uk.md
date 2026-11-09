@@ -61,6 +61,16 @@
 |---|---|
 | ![Компактний вигляд](docs/img/uk-compact.png) | ![Міні-плеєр](docs/img/uk-mini.png) |
 
+## На справжньому Mac
+
+Програма для macOS (DMG) показує справжні обкладинки альбомів. Зліва направо: міні-плеєр (`W`, потім `E`), компактний вигляд зі списком і вигляд Winamp у вузькому вікні.
+
+<p>
+<img src="docs/img/macos-mini.png" width="32%" alt="Міні-плеєр на macOS">
+<img src="docs/img/macos-compact.png" width="32%" alt="Компактний вигляд на macOS">
+<img src="docs/img/macos-winamp.png" width="32%" alt="Вигляд Winamp на macOS">
+</p>
+
 ## Клавіші
 
 | Клавіша | Дія |

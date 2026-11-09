@@ -1767,6 +1767,8 @@ Screen.compact.lib-shown #pl-win { display: none; }
 Screen.compact.collapsed #pl-win, Screen.compact.collapsed #library-win { display: none; }
 Screen.compact.collapsed #left { height: 9; }
 Screen.compact.collapsed #body { height: auto; }
+Screen.compact.collapsed #keybar { display: none; }
+Screen.compact #body, Screen.compact #left { overflow: hidden hidden; scrollbar-size: 0 0; }
 
 Footer { background: $primary 8%; }
 /* активна панель: товста яскрава рамка */
@@ -2075,6 +2077,15 @@ class Plativka(App):
         self.exit()
 
     def on_resize(self, event: events.Resize):
+        # Деякі вікна (kitty з відступами) після зменшення дають на рядок менше, ніж просили, —
+        # тоді один раз докидаємо різницю, щоб смужка вмістилась повністю.
+        if getattr(self, "_shrink_fix", False) and self.view == "compact" and self.collapsed:
+            h = event.size.height
+            if 0 < h < self.COLLAPSED_ROWS:
+                self._shrink_fix = False
+                self.resize_rows(2 * self.COLLAPSED_ROWS - h)
+            elif h == self.COLLAPSED_ROWS:
+                self._shrink_fix = False
         self.update_layout()
         if self.main:
             self.rebuild_playlist(keep_cursor=True)
@@ -2418,7 +2429,7 @@ class Plativka(App):
             msg += _(" (потрібне вікно від 30 рядків)")
         self.notify(msg, timeout=2)
 
-    COLLAPSED_ROWS = 10  # смужка плеєра + вкладки + рядок клавіш
+    COLLAPSED_ROWS = 9  # смужка плеєра + рядок вкладок (рядок клавіш у міні-плеєрі схований)
 
     def resize_rows(self, rows: int):
         """Змінити висоту вікна термінала (де термінал це дозволяє)."""
@@ -2435,6 +2446,7 @@ class Plativka(App):
         """Згорнути вікно до смужки, запам'ятавши, якої висоти воно було."""
         if self.size.height > self.COLLAPSED_ROWS + 2:
             self.expanded_rows = self.size.height
+        self._shrink_fix = True
         self.resize_rows(self.COLLAPSED_ROWS)
 
     def _grow(self):

@@ -61,6 +61,16 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 |---|---|
 | ![Compact view](docs/img/en-compact.png) | ![Mini player](docs/img/en-mini.png) |
 
+## On a real Mac
+
+The macOS app (DMG) shows real album covers. From left to right: the mini player (`W`, then `E`), the compact view with the playlist, and the Winamp layout in a narrow window.
+
+<p>
+<img src="docs/img/macos-mini.png" width="32%" alt="Mini player on macOS">
+<img src="docs/img/macos-compact.png" width="32%" alt="Compact view on macOS">
+<img src="docs/img/macos-winamp.png" width="32%" alt="Winamp layout on macOS">
+</p>
+
 ## Keys
 
 | Key | Action |

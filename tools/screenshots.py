@@ -115,7 +115,7 @@ async def shoot(lang: str, music: Path):
         await pilot.pause(1.5)
         shots.append(("compact", app3.save_screenshot(filename=f"{lang}-compact.svg", path=str(TMP))))
     app4 = P.Plativka(demo=True)       # компактний вигляд, згорнутий до смужки (E)
-    async with app4.run_test(size=(84, 10)) as pilot:
+    async with app4.run_test(size=(84, 9)) as pilot:
         await pilot.pause(1.5)
         await pilot.press("x", "e")
         await pilot.pause(1.5)

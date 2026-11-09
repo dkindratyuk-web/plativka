@@ -1,5 +1,17 @@
 # Changelog / Історія змін
 
+## 1.2.1
+
+**English**
+
+- Mini player: no scrollbar and no clipped tab row when the window comes out a row shorter than asked (kitty with padding); the key row is hidden in the mini player so the strip is one line shorter.
+- Screenshots from a real Mac on the GitHub page.
+
+**Українська**
+
+- Міні-плеєр: більше немає смуги прокрутки й обрізаного рядка вкладок, коли вікно виходить на рядок нижчим, ніж просили (kitty з відступами); рядок клавіш у міні-плеєрі схований, тож смужка на рядок нижча.
+- Знімки зі справжнього Mac на сторінці GitHub.
+
 ## 1.2.0
 
 **English**

@@ -549,6 +549,8 @@ class MainWindow(QMainWindow):
         self.setAcceptDrops(True)
         self.build_ui()
         self.build_actions()
+        self.statusBar().setSizeGripEnabled(False)
+        self.statusBar().hide()
         self.apply_theme()
         g = self.cfg.get("geometry")
         if isinstance(g, list) and len(g) == 4:
@@ -1443,7 +1445,10 @@ class MainWindow(QMainWindow):
     def toast(self, text: str):
         """Коротке повідомлення в рядку під кнопками (не заважає роботі)."""
         log(f"toast: {text}")
-        self.statusBar().showMessage(text, 5000)
+        sb = self.statusBar()
+        sb.show()
+        sb.showMessage(text, 5000)
+        QTimer.singleShot(5200, lambda: sb.hide() if not sb.currentMessage() else None)
 
     # ───────────── обкладинка ─────────────
     def load_cover(self, path: str):
@@ -1558,7 +1563,7 @@ class MainWindow(QMainWindow):
                 it = self.table.item(i, c)
                 if it is None:
                     continue
-                f = it.font()
+                f = QFont(self.table.font())
                 f.setBold(cur)
                 it.setFont(f)
                 if cur:

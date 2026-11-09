@@ -15,6 +15,10 @@ Plativka's own code is MIT-licensed (see [LICENSE](LICENSE)). The installers als
 | **textual-image** | all | LGPL-3.0-or-later | https://github.com/lnqs/textual-image |
 | **dbus-next** | Linux | MIT | https://github.com/altdesktop/python-dbus-next |
 | **pystray** | Windows | LGPL-3.0 | https://github.com/moses-palmer/pystray |
+| **Qt 6 / PySide6** | Plativka Desktop | LGPL-3.0 (Qt for Python, dynamically linked) | https://code.qt.io/cgit/pyside/pyside-setup.git |
+| **qasync** | Plativka Desktop | BSD-2-Clause | https://github.com/CabbageDevelopment/qasync |
+| **pycaw**, **comtypes** | Windows | MIT | https://github.com/AndreMiras/pycaw · https://github.com/enthought/comtypes |
+| **PyWinRT** (winrt-*) | Windows | MIT | https://github.com/pywinrt/pywinrt |
 
 The versions of mpv and kitty used for a release are listed at the top of [.github/workflows/release.yml](.github/workflows/release.yml); the matching source is available from the links above under the same version tags. On Linux, mpv and kitty come from your distribution's packages.
 

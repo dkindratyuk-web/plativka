@@ -3,7 +3,8 @@
 #  Платівка / Plativka — встановлення на Linux
 #  Debian / Ubuntu / Mint · Fedora · Arch / Manjaro / EndeavourOS · openSUSE
 #
-#  Запуск:   ./install.sh
+#  Запуск:   ./install.sh              консольна Платівка (у вікні kitty)
+#            ./install.sh --desktop    ще й віконна версія (Qt) — «Plativka Desktop» у меню
 #  Що робить:
 #    1. Ставить системні пакети: mpv (звук), kitty (вікно плеєра з обкладинками),
 #       Python 3, libnotify (сповіщення). Спитає пароль sudo.
@@ -25,6 +26,9 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 if   [ -f "$HERE/pyproject.toml" ];        then ROOT="$HERE"
 elif [ -f "$HERE/../../pyproject.toml" ];  then ROOT="$(cd "$HERE/../.." && pwd)"
 else die "$(t "Не знайдено файлів плеєра поруч зі скриптом. Розпакуйте архів повністю." "Player files not found next to the script. Unpack the whole archive.")"; fi
+
+DESKTOP=
+for a in "$@"; do [ "$a" = "--desktop" ] && DESKTOP=1; done
 
 [ "$(id -u)" -eq 0 ] && die "$(t "Запускайте без sudo: ./install.sh (пароль спитають лише для пакетів)." "Run without sudo: ./install.sh (the password is asked only for packages).")"
 
@@ -56,6 +60,20 @@ else
   say "$(t "Невідомий дистрибутив" "Unknown distribution") (${ID:-?}). $(t "Встановіть вручну: mpv, kitty, python3 з venv, notify-send." "Install manually: mpv, kitty, python3 with venv, notify-send.")"
 fi
 
+# Віконна версія: бібліотеки, без яких Qt не відкриє вікно (xcb-cursor, EGL, xkbcommon)
+if [ -n "$DESKTOP" ] && [ -z "${PLATIVKA_SKIP_PACKAGES:-}" ]; then
+  say "$(t "Бібліотеки для вікна Qt…" "Libraries for the Qt window…")"
+  if   [[ "$ids" == *" arch "* || "$ids" == *" manjaro "* || "$ids" == *" endeavouros "* || "$ids" == *" cachyos "* ]]; then
+    $SUDO pacman -S --needed --noconfirm xcb-util-cursor libxkbcommon-x11 || true
+  elif [[ "$ids" == *" fedora "* || "$ids" == *" rhel "* || "$ids" == *" centos "* ]]; then
+    $SUDO dnf install -y xcb-util-cursor libxkbcommon-x11 mesa-libEGL || true
+  elif [[ "$ids" == *" suse "* || "$ids" == *" opensuse "* ]]; then
+    $SUDO zypper --non-interactive install libxcb-cursor0 libxkbcommon-x11-0 libEGL1 || true
+  elif [[ "$ids" == *" debian "* || "$ids" == *" ubuntu "* ]]; then
+    $SUDO apt-get install -y libxcb-cursor0 libxkbcommon-x11-0 libegl1 || true
+  fi
+fi
+
 command -v mpv >/dev/null     || die "$(t "mpv не встановився. Без нього плеєр не гратиме звук." "mpv was not installed. The player cannot play sound without it.")"
 command -v python3 >/dev/null || die "$(t "python3 не встановився." "python3 was not installed.")"
 ok "$(t "Системні пакети на місці" "System packages are in place")"
@@ -71,7 +89,12 @@ say "$(t "Готую середовище Python (1–2 хвилини)…" "Pre
 rm -rf "$DEST/venv"
 python3 -m venv "$DEST/venv" || die "$(t "Не вдалося створити venv. На Debian/Ubuntu:" "Could not create a venv. On Debian/Ubuntu:") sudo apt install python3-venv"
 "$DEST/venv/bin/pip" install -q --upgrade pip
-"$DEST/venv/bin/pip" install -q "$ROOT"
+if [ -n "$DESKTOP" ]; then
+  say "$(t "Ставлю й віконну версію (Qt, ~150 МБ)…" "Installing the desktop version too (Qt, ~150 MB)…")"
+  "$DEST/venv/bin/pip" install -q "$ROOT[desktop]"
+else
+  "$DEST/venv/bin/pip" install -q "$ROOT"
+fi
 ok "$(t "Плеєр встановлено" "Player installed")"
 
 # ── 3. Команда, вікно Kitty, ярлик ──
@@ -107,6 +130,30 @@ Categories=AudioVideo;Audio;Player;
 Keywords=music;player;mp3;winamp;
 StartupWMClass=plativka
 EOF
+if [ -n "$DESKTOP" ]; then
+  cat > "$BIN/plativka-desktop" <<EOF
+#!/usr/bin/env bash
+exec "$DEST/venv/bin/plativka-desktop" "\$@"
+EOF
+  chmod +x "$BIN/plativka-desktop"
+  cat > "$APPS/plativka-desktop.desktop" <<EOF
+[Desktop Entry]
+Type=Application
+Name=Plativka Desktop
+Name[uk]=Платівка (вікно)
+GenericName=Music Player
+GenericName[uk]=Музичний плеєр
+Comment=Winamp-style music player in a window
+Comment[uk]=Музичний плеєр у дусі Winamp у звичайному вікні
+Exec=$BIN/plativka-desktop
+Icon=plativka
+Terminal=false
+Categories=AudioVideo;Audio;Player;
+Keywords=music;player;mp3;winamp;
+StartupWMClass=Plativka
+EOF
+  ok "$(t "Ярлик «Платівка (вікно)» додано в меню програм" "\"Plativka Desktop\" added to the applications menu")"
+fi
 command -v update-desktop-database >/dev/null && update-desktop-database "$APPS" >/dev/null 2>&1 || true
 command -v gtk-update-icon-cache >/dev/null && gtk-update-icon-cache -q "${ICONS%/256x256/apps}" >/dev/null 2>&1 || true
 ok "$(t "Ярлик «Платівка» додано в меню програм" "\"Plativka\" added to the applications menu")"

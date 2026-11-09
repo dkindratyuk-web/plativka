@@ -47,6 +47,24 @@ Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M
 
 Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka/releases/latest). The macOS and Windows installers include everything Plativka needs — you don't have to install anything else.
 
+### New: Plativka Desktop (beta)
+
+The same player in a regular window instead of a terminal — real album covers everywhere, a big LCD clock, the compact view and a mini player that can stay on top of other windows. On Windows 11 the window has the translucent Mica background. It shares the library with the terminal version.
+
+| System | What to download |
+|---|---|
+| **macOS** | `Plativka-Desktop-…-macos-arm64.dmg` (Apple Silicon) or `…-macos-x86_64.dmg` (Intel) |
+| **Windows 10/11** | `Plativka-Desktop-…-windows-x64-setup.exe` |
+| **Linux** | the same `plativka-…-linux.tar.gz`, install with `./install.sh --desktop` |
+
+<p>
+<img src="docs/img/desktop-en-full.png" width="32%" alt="Plativka Desktop">
+<img src="docs/img/desktop-en-dark.png" width="32%" alt="Plativka Desktop, dark theme, library">
+<img src="docs/img/desktop-en-mini.png" width="32%" alt="Plativka Desktop, mini player">
+</p>
+
+Keys are the same as in the terminal version (`Z X C V B`, `Space`, `W` compact view, `E` mini player, `J` search, `T` theme). This is the first version — please report anything odd on the [Issues page](https://github.com/dkindratyuk-web/plativka/issues).
+
 ## Screenshots
 
 | Dark theme | Covers off — a spinning record |

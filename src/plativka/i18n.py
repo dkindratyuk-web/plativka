@@ -38,12 +38,17 @@ def _system_lang() -> str:
 
 
 def _configured_lang() -> str | None:
-    try:
-        cfg = json.loads((sysdeps.config_dir() / "config.json").read_text("utf-8"))
+    # віконна версія має свої налаштування (desktop.json), консольна — config.json
+    names = ("desktop.json", "config.json") if os.environ.get("PLATIVKA_UI") == "desktop" else ("config.json",)
+    for name in names:
+        try:
+            cfg = json.loads((sysdeps.config_dir() / name).read_text("utf-8"))
+        except Exception:
+            continue
         v = cfg.get("lang")
-        return v if v in LANGS else None
-    except Exception:
-        return None
+        if v in LANGS:
+            return v
+    return None
 
 
 def _pick() -> str:
@@ -82,6 +87,52 @@ def file_manager_from() -> str:
 
 
 EN: dict[str, str] = {
+    # віконна версія (Qt)
+    '+ Додати…': '+ Add…',
+    'Автор: {a}': 'Author: {a}',
+    'Виконавці': 'Artists',
+    'Відтворення': 'Playback',
+    'Грає: {what}': 'Playing: {what}',
+    'Для звуку потрібен mpv.': 'mpv is required for sound.',
+    'Додано в кінець списку: {n}': 'Added to the end of the playlist: {n}',
+    'Додати в кінець списку': 'Add to the end of the playlist',
+    'Додати теку до медіатеки…': 'Add a folder to the library…',
+    'Додати теку до списку': 'Add a folder to the playlist',
+    'Знайти': 'Find',
+    'Знайти…': 'Find…',
+    'Компактний вигляд': 'Compact view',
+    'Ліцензія MIT. Звук — mpv, інтерфейс — Qt.': 'MIT license. Sound: mpv, interface: Qt.',
+    'Медіатека порожня.\n\nДодайте теку з музикою кнопкою «+ Тека» або просто перетягніть теку у вікно.': 'The library is empty.\n\nAdd a music folder with the “+ Folder” button or just drag a folder into the window.',
+    'Медіатека стане порожньою. Файли на диску й список відтворення залишаться.': 'The library will be empty. Files on disk and the playlist stay.',
+    'Мова: українська ⇄ English': 'Language: українська ⇄ English',
+    'Мову буде змінено після перезапуску Платівки.': 'The language will change after Plativka restarts.',
+    'Музичний плеєр у дусі Winamp для macOS, Windows і Linux.': 'A Winamp-style music player for macOS, Windows and Linux.',
+    'Міні-плеєр': 'Mini player',
+    'Очистити список': 'Clear the playlist',
+    'Перемішувати': 'Shuffle',
+    'Пересканувати': 'Rescan',
+    'Поверх усіх вікон': 'Always on top',
+    'Повтор: вимк → усе → один': 'Repeat: off → all → one',
+    'Повідомити про помилку': 'Report a bug',
+    'Позначте теки й натисніть «Прибрати позначені». Файли на диску залишаться.': 'Tick folders and press “Remove checked”. Files on disk stay.',
+    'Прибрати всі теки?': 'Remove all folders?',
+    'Прибрати зі списку': 'Remove from the playlist',
+    'Прибрати позначені': 'Remove checked',
+    'Про Платівку': 'About Plativka',
+    'Розгорнути': 'Expand',
+    'Сканую медіатеку…': 'Scanning the library…',
+    'Сповіщення про трек': 'Track notifications',
+    'Теки': 'Folders',
+    'Теки медіатеки…': 'Library folders…',
+    'Теку — у список відтворення': 'Folder to the playlist',
+    'Тема: авто → світла → темна': 'Theme: auto → light → dark',
+    'Тема: світла': 'Theme: light',
+    'Тема: темна': 'Theme: dark',
+    'Тема: як у системі': 'Theme: as in the system',
+    'Уся медіатека в список': 'Whole library to the playlist',
+    'Файл': 'File',
+    'гучн': 'vol',
+    'сканую…': 'scanning…',
     # назва
     "Платівка": "Plativka",
     # загальне

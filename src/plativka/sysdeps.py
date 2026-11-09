@@ -44,7 +44,8 @@ def find_mpv() -> str | None:
     base = app_dir()
     if base is not None:
         for c in (base / "mpv" / "mpv.exe", base / "mpv.exe", base / "mpv" / "mpv",
-                  base.parent / "Resources" / "mpv" / "mpv"):
+                  base.parent / "Resources" / "mpv" / "mpv",
+                  base.parent / "Resources" / "mpv.app" / "Contents" / "MacOS" / "mpv"):
             if c.exists():
                 return str(c)
     exe = shutil.which("mpv")

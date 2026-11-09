@@ -11,12 +11,21 @@ from pathlib import Path
 from xml.sax.saxutils import escape
 
 AUMID = "dkindratyuk.Plativka"
+SHORTCUT = ("Plativka", "Plativka.lnk")   # тека й ярлик у меню «Пуск», які створює інсталятор
+
+
+def use_desktop_app():
+    """Віконна версія має свій ярлик і свій AppUserModelID."""
+    global AUMID, SHORTCUT, _ok
+    AUMID = "dkindratyuk.Plativka.Desktop"
+    SHORTCUT = ("Plativka Desktop", "Plativka Desktop.lnk")
+    _ok = None
 
 
 def _shortcut_exists() -> bool:
     for base in (os.environ.get("APPDATA"), os.environ.get("PROGRAMDATA")):
         if base and (Path(base) / "Microsoft" / "Windows" / "Start Menu" / "Programs"
-                     / "Plativka" / "Plativka.lnk").exists():
+                     / SHORTCUT[0] / SHORTCUT[1]).exists():
             return True
     return False
 

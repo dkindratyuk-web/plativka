@@ -1,5 +1,17 @@
 # Changelog / Історія змін
 
+## 1.3.0
+
+**English**
+
+- **New: Plativka Desktop (beta)** — the same player in a regular window (Qt): real covers on every system, LCD clock and level meter, playlist and library tabs with search, compact view (`W`), mini player (`E`) with "always on top", light/dark/auto theme coloured by the album cover, Mica background on Windows 11, tray icon, media keys, notifications with covers, system volume mirroring, drag and drop. Downloads: `Plativka-Desktop-…` DMG / installer; on Linux `./install.sh --desktop`.
+- The terminal version is unchanged; its core (library, tags, covers, mpv) is now shared with the desktop version.
+
+**Українська**
+
+- **Нове: віконна Платівка (бета)** — той самий плеєр у звичайному вікні (Qt): справжні обкладинки на всіх системах, годинник-табло й індикатор рівня, вкладки списку й медіатеки з пошуком, компактний вигляд (`W`), міні-плеєр (`E`) з «поверх усіх вікон», світла/темна/системна тема з кольором обкладинки, фон Mica на Windows 11, трей, медіаклавіші, сповіщення з обкладинками, дзеркало системної гучності, перетягування тек. Завантаження: `Plativka-Desktop-…` DMG / інсталятор; на Linux — `./install.sh --desktop`.
+- Консольна версія не змінилась; її ядро (медіатека, теги, обкладинки, mpv) тепер спільне з віконною.
+
 ## 1.2.1
 
 **English**

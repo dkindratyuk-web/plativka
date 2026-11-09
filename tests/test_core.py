@@ -11,7 +11,7 @@ SRC = Path(__file__).resolve().parents[1] / "src" / "plativka"
 def _translatable_strings():
     """Усі рядки, обгорнуті в _(...) у коді плеєра й трею."""
     found = set()
-    for f in ("app.py", "tray.py"):
+    for f in ("app.py", "tray.py", "core.py", "gui.py"):
         tree = ast.parse((SRC / f).read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if isinstance(node, ast.Call) and getattr(node.func, "id", None) == "_" and node.args:

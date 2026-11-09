@@ -47,6 +47,24 @@
 
 Усе лежить на [сторінці релізів](https://github.com/dkindratyuk-web/plativka/releases/latest). Інсталятори для macOS і Windows містять усе потрібне: окремо нічого встановлювати не треба.
 
+### Нове: віконна Платівка (бета)
+
+Той самий плеєр у звичайному вікні замість термінала: справжні обкладинки всюди, великий годинник-табло, компактний вигляд і міні-плеєр, який може бути поверх інших вікон. На Windows 11 вікно має напівпрозорий фон Mica. Медіатека спільна з консольною версією.
+
+| Система | Що завантажити |
+|---|---|
+| **macOS** | `Plativka-Desktop-…-macos-arm64.dmg` (Apple Silicon) або `…-macos-x86_64.dmg` (Intel) |
+| **Windows 10/11** | `Plativka-Desktop-…-windows-x64-setup.exe` |
+| **Linux** | той самий `plativka-…-linux.tar.gz`, встановлення: `./install.sh --desktop` |
+
+<p>
+<img src="docs/img/desktop-uk-full.png" width="32%" alt="Віконна Платівка">
+<img src="docs/img/desktop-uk-dark.png" width="32%" alt="Віконна Платівка, темна тема, медіатека">
+<img src="docs/img/desktop-uk-mini.png" width="32%" alt="Віконна Платівка, міні-плеєр">
+</p>
+
+Клавіші ті самі, що й у консольній версії (`Z X C V B`, `Пробіл`, `W` — компактний вигляд, `E` — міні-плеєр, `J` — пошук, `T` — тема). Це перша версія — пишіть про все дивне на [сторінці Issues](https://github.com/dkindratyuk-web/plativka/issues).
+
 ## Скріншоти
 
 | Темна тема | Обкладинки вимкнено — платівка крутиться |

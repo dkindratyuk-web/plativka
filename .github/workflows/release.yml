@@ -4,7 +4,8 @@ name: Release
 #   Actions → Release → Run workflow (на сайті GitHub), або
 #   git push origin main:release          (тег v<версія> створиться сам), або
 #   git tag v1.0.1 && git push origin v1.0.1
-# Збірки: DMG для macOS (Apple Silicon, Intel), інсталятор для Windows, архів для Linux.
+# Збірки: DMG для macOS (Apple Silicon, Intel), інсталятор для Windows, архів для Linux —
+# консольна Платівка і віконна (Qt, «Desktop»).
 on:
   push:
     tags: ["v*"]
@@ -86,9 +87,50 @@ jobs:
       - uses: actions/upload-artifact@v4
         with: { name: windows, path: dist/*.exe }
 
+  desktop-macos:
+    name: Desktop DMG (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+            mpv: macos-14-arm
+          - arch: x86_64
+            runner: macos-15-intel
+            mpv: macos-15-intel
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Build
+        env:
+          MPV_ZIP_URL: https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-${{ matrix.mpv }}.zip
+        run: bash packaging/macos/build_desktop.sh ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with: { name: "desktop-macos-${{ matrix.arch }}", path: dist/*.dmg }
+
+  desktop-windows:
+    name: Desktop installer (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Inno Setup
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Build
+        run: >
+          powershell -ExecutionPolicy Bypass -File packaging\windows\build_desktop.ps1
+          -MpvZipUrl "https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-x86_64-w64-mingw32.zip"
+      - uses: actions/upload-artifact@v4
+        with: { name: desktop-windows, path: dist/*.exe }
+
   release:
     name: Publish release
-    needs: [linux, macos, windows]
+    needs: [linux, macos, windows, desktop-macos, desktop-windows]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/release' || github.event_name == 'workflow_dispatch'
     steps:

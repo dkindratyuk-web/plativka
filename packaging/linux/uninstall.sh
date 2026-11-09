@@ -5,7 +5,8 @@ case "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" in uk*) UK=1 ;; *) UK= ;; esac
 t() { if [ -n "$UK" ]; then printf '%s' "$1"; else printf '%s' "$2"; fi; }
 DATA="${XDG_DATA_HOME:-$HOME/.local/share}"
 rm -rf "$HOME/.local/share/plativka"
-rm -f  "$HOME/.local/bin/plativka" "$DATA/applications/plativka.desktop" \
+rm -f  "$HOME/.local/bin/plativka" "$HOME/.local/bin/plativka-desktop" \
+       "$DATA/applications/plativka.desktop" "$DATA/applications/plativka-desktop.desktop" \
        "$DATA/icons/hicolor/256x256/apps/plativka.png"
 echo "✓ $(t "Платівку видалено." "Plativka removed.")"
 if [ "${1:-}" = "--all" ]; then

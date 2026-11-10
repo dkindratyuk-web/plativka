@@ -5,8 +5,8 @@
 <h1 align="center">Plativka</h1>
 
 <p align="center">
-  A Winamp-style music player that lives in your terminal.<br>
-  macOS · Windows · Linux — offline, fast, no account, no ads.
+  A Winamp-style music player for macOS, Windows and Linux —<br>
+  in its own window or right in your terminal. Offline, fast, no account, no ads.
 </p>
 
 <p align="center">
@@ -17,83 +17,134 @@
   <a href="https://github.com/dkindratyuk-web/plativka/releases/latest"><b>⬇ Download the latest release</b></a>
 </p>
 
-![Plativka main window](docs/img/en-main.png)
+<p align="center">
+<img src="docs/img/desk-mac-en-full.png" width="32%" alt="Plativka Desktop on macOS">
+<img src="docs/img/desk-win-full-dark.png" width="32%" alt="Plativka Desktop on Windows 11, dark theme">
+<img src="docs/img/desk-mac-en-compact-dark.png" width="32%" alt="Plativka Desktop, compact view">
+</p>
 
-## Why
+Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M4A/AAC, OGG/Opus and WAV. It takes the layout everybody remembers from Winamp — a main window with a big time display and level meter, the playlist and the media library — and makes it light, colourful and quick.
 
-Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M4A/AAC, OGG/Opus and WAV. It takes the layout everybody remembers from Winamp — a big main window with a time display and level meter, the playlist below it and the media library on the side — and puts it in a light, colourful terminal interface that uses almost no resources.
+It comes in two editions that share the same library and settings:
 
-## Features
+| | **Plativka Desktop** (main) | **Plativka for the terminal** |
+|---|---|---|
+| Looks like | a regular app window | a text interface in a terminal window |
+| Covers | real, on every system | real in kitty, Ghostty, iTerm2, WezTerm; pixel-art elsewhere |
+| Mini player | small window, can stay on top | collapses the terminal window |
+| Best for | everyone | people who live in the terminal |
 
-- **Winamp layout and keys**: main window, playlist, media library; `Z X C V B` for prev / play / pause / stop / next.
-- **Compact view** (`W`): a small player strip with the playlist or the library in tabs below it; `E` collapses it to a mini player and shrinks the window.
-- **Folder-based library**: add folders through the usual system folder dialog (or just drag one into the window), manage them in one **Folders…** window, browse by artist → album or by folder, search with `J`.
-- **The interface takes its colour from the album cover** that is playing. Real cover art in terminals that can draw images (Kitty, Ghostty, iTerm2, WezTerm, Windows Terminal); a pixel-art cover elsewhere, or a spinning record if you turn covers off.
-- **Real level meter** taken from the audio stream, a big LCD-style clock, a scrolling title.
-- **Track popups**: in the player or as system notifications with the album cover.
-- **System integration**: the volume keys on your keyboard (F11/F12 on a Mac) control the player — its volume mirrors the system volume; media keys ⏯ ⏭ ⏮ on all three systems (Windows media overlay, Linux MPRIS, macOS); tray icon on Windows.
+---
+
+## Plativka Desktop
+
+### What it can do
+
+- **Winamp layout**: the cover, an LCD-style clock, a level visualisation, the title and format, shuffle / repeat / notification switches, the seek bar, transport buttons and volume — with the playlist and the library underneath.
+- **The colour comes from the album cover**: the clock, the visualisation, the window background, the panels and the highlighted track all change with every album. Light, dark or system theme (`T`).
+- **Level visualisation**: vertical LED-style columns — the left channel on the left, the right channel on the right, what is playing now in the middle and the last few seconds fading out to the sides.
+- **Three sizes**: the full Winamp view, the **compact view** (`W`) with a small cover and the title in large type, and the **mini player** (`E`) — just the player strip, which can stay on top of all windows (📌).
+- **Playlist and library** in tabs with instant search (`J`): the library by artist → album or by folder, double-click a track to play its whole album, right-click to add to the end of the playlist, `▶ All` to play everything.
+- **Folders**: add them with the usual system folder dialog or drag them into the window; the **Folders…** window lists them with track counts.
+- **System integration**: media keys ⏮ ⏯ ⏭ and headphone buttons, Now Playing / the Windows media overlay / MPRIS on Linux, track notifications **with the album cover**, a tray icon, the volume mirrors the system volume (your keyboard's volume keys move the slider).
+- **Windows 11**: the translucent Mica background, tinted by the cover.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.
-- **Remembers everything**: playlist, position, volume, theme and library survive restarts.
-- **Two languages**: English and Ukrainian, picked from your system language (`F2` to switch).
+- **Remembers everything**: playlist, position, volume, view, window size and library.
+- **English and Ukrainian**, chosen from your system language.
 
-## Download and install
+### Screenshots
+
+**macOS** — the full view, the compact view and the mini player in light and dark:
+
+<p>
+<img src="docs/img/desk-mac-en-full.png" width="32%" alt="Full view, macOS">
+<img src="docs/img/desk-mac-en-compact.png" width="32%" alt="Compact view, macOS">
+<img src="docs/img/desk-mac-en-compact-dark.png" width="32%" alt="Compact view, dark theme, macOS">
+</p>
+<p>
+<img src="docs/img/desk-mac-en-mini.png" width="48%" alt="Mini player, macOS">
+<img src="docs/img/desk-mac-en-mini-dark.png" width="48%" alt="Mini player, dark theme, macOS">
+</p>
+
+**Windows 11** — the Mica background lets the wallpaper shine through:
+
+<p>
+<img src="docs/img/desk-win-full.png" width="32%" alt="Full view, Windows 11">
+<img src="docs/img/desk-win-full-dark.png" width="32%" alt="Dark theme, Windows 11">
+<img src="docs/img/desk-win-full-dark2.png" width="32%" alt="Dark theme with a yellow cover, Windows 11">
+</p>
+<p>
+<img src="docs/img/desk-win-compact.png" width="48%" alt="Compact view, Windows 11">
+<img src="docs/img/desk-win-mini.png" width="48%" alt="Mini player, Windows 11">
+</p>
+
+### Download and install
+
+| System | What to download |
+|---|---|
+| **macOS** (Apple Silicon) | `Plativka-Desktop-…-macos-arm64.dmg` |
+| **macOS** (Intel) | `Plativka-Desktop-…-macos-x86_64.dmg` |
+| **Windows 10/11** | `Plativka-Desktop-…-windows-x64-setup.exe` |
+| **Linux** (Debian, Ubuntu, Mint, Fedora, Arch, openSUSE) | `plativka-…-linux.tar.gz`, then `./install.sh --desktop` |
+
+Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka/releases/latest); the macOS and Windows installers include everything, including the mpv sound engine. On macOS the first launch needs one confirmation in System Settings → Privacy & Security → "Open Anyway" ([details](docs/en/install-macos.md)); Windows may show "Windows protected your PC" → "More info" → "Run anyway" ([details](docs/en/install-windows.md)). Linux: [install guide](docs/en/install-linux.md).
+
+### Keys
+
+| Key | Action |
+|---|---|
+| `Space` or `X` | play / pause |
+| `Z` · `B` (or `F7` · `F9`) | previous · next track |
+| `V` · `C` | stop · pause |
+| `←` `→` | seek 5 seconds |
+| `+` `−` | volume (the same as the system volume keys) |
+| `S` · `R` | shuffle · repeat (off → all → one) |
+| `J`, `/` or `Ctrl+F` | search the playlist or the library |
+| `Tab` · `1` · `2` | switch between the playlist and the library |
+| `L` | add a folder to the library |
+| `W` | full view ⇄ compact view |
+| `E` | mini player / expand |
+| `Ctrl+T` | keep the window on top |
+| `N` | track notifications on / off |
+| `T` | theme: system → light → dark |
+| `Delete` | remove the selected tracks from the playlist |
+| `F1` | about Plativka |
+| `Q` or `Ctrl+Q` (`⌘Q` on a Mac) | quit |
+
+Everything is also in the menu: the menu bar on macOS, the ☰ button on Windows and Linux.
+
+---
+
+## Plativka for the terminal
+
+The original edition: the same player as a text interface in a terminal window. It is light as a feather and works over SSH. On macOS and Linux it opens in its own kitty window with real covers; in other terminals covers are drawn with coloured blocks or replaced by a spinning record.
+
+### Download and install
 
 | System | What to download | Guide |
 |---|---|---|
 | **macOS** (Apple Silicon) | `Plativka-…-macos-arm64.dmg` | [Install on macOS](docs/en/install-macos.md) |
 | **macOS** (Intel) | `Plativka-…-macos-x86_64.dmg` | [Install on macOS](docs/en/install-macos.md) |
 | **Windows 10/11** | `Plativka-…-windows-x64-setup.exe` | [Install on Windows](docs/en/install-windows.md) |
-| **Linux** (Debian, Ubuntu, Mint, Fedora, Arch, openSUSE) | `plativka-…-linux.tar.gz` | [Install on Linux](docs/en/install-linux.md) |
+| **Linux** | `plativka-…-linux.tar.gz`, then `./install.sh` | [Install on Linux](docs/en/install-linux.md) |
 
-Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka/releases/latest). The macOS and Windows installers include everything Plativka needs — you don't have to install anything else.
-
-### New: Plativka Desktop (beta)
-
-The same player in a regular window instead of a terminal — real album covers everywhere, a big LCD clock, the compact view and a mini player that can stay on top of other windows. On Windows 11 the window has the translucent Mica background. It shares the library with the terminal version.
-
-| System | What to download |
-|---|---|
-| **macOS** | `Plativka-Desktop-…-macos-arm64.dmg` (Apple Silicon) or `…-macos-x86_64.dmg` (Intel) |
-| **Windows 10/11** | `Plativka-Desktop-…-windows-x64-setup.exe` |
-| **Linux** | the same `plativka-…-linux.tar.gz`, install with `./install.sh --desktop` |
+### Screenshots
 
 <p>
-<img src="docs/img/desktop-en-full.png" width="32%" alt="Plativka Desktop">
-<img src="docs/img/desktop-en-dark.png" width="32%" alt="Plativka Desktop, dark theme, library">
-<img src="docs/img/desktop-en-mini.png" width="32%" alt="Plativka Desktop, mini player">
+<img src="docs/img/macos-en-winamp.png" width="32%" alt="Terminal edition, Winamp layout">
+<img src="docs/img/macos-en-dark2.png" width="32%" alt="Terminal edition, dark theme">
+<img src="docs/img/macos-en-mini.png" width="32%" alt="Terminal edition, mini player">
 </p>
-
-Keys are the same as in the terminal version (`Z X C V B`, `Space`, `W` compact view, `E` mini player, `J` search, `T` theme). This is the first version — please report anything odd on the [Issues page](https://github.com/dkindratyuk-web/plativka/issues).
-
-## Screenshots
 
 | Dark theme | Covers off — a spinning record |
 |---|---|
 | ![Dark theme](docs/img/en-dark.png) | ![Record](docs/img/en-vinyl.png) |
 
-| Quick search (`J`) | Narrow window |
+| Quick search (`J`) | Compact view (`W`) |
 |---|---|
-| ![Search](docs/img/en-search.png) | ![Narrow window](docs/img/en-narrow.png) |
+| ![Search](docs/img/en-search.png) | ![Compact view](docs/img/en-compact.png) |
 
-| Compact view (`W`) | Collapsed to a mini player (`E`) |
-|---|---|
-| ![Compact view](docs/img/en-compact.png) | ![Mini player](docs/img/en-mini.png) |
-
-## On a real Mac
-
-The macOS app (DMG) shows real album covers. Top row: the mini player (`W`, then `E`), the compact view with the playlist, the Winamp layout. Bottom row: the dark theme (`T`) — the colours follow each album cover.
-
-<p>
-<img src="docs/img/macos-en-mini.png" width="32%" alt="Mini player on macOS">
-<img src="docs/img/macos-en-compact.png" width="32%" alt="Compact view on macOS">
-<img src="docs/img/macos-en-winamp.png" width="32%" alt="Winamp layout on macOS">
-</p>
-<p>
-<img src="docs/img/macos-en-dark.png" width="32%" alt="Dark theme on macOS">
-<img src="docs/img/macos-en-dark2.png" width="32%" alt="Dark theme with a colourful cover on macOS">
-</p>
-
-## Keys
+### Keys
 
 | Key | Action |
 |---|---|
@@ -137,8 +188,10 @@ plativka            # needs mpv in PATH
 plativka --demo     # look around without mpv and without sound
 ```
 
-Releases are built by GitHub Actions: bump the version in `src/plativka/__init__.py`, then push a tag like `v1.0.1` (or push `main` to the `release` branch) — the DMGs, the Windows installer and the Linux archive appear on the Releases page.
+The desktop edition: `pipx install ".[desktop]"`, then `plativka-desktop` (or `plativka-desktop --demo`).
+
+Releases are built by GitHub Actions: bump the version in `src/plativka/__init__.py`, then push `main` to the `release` branch — the DMGs, the Windows installers and the Linux archive for both editions appear on the Releases page.
 
 ## License
 
-Plativka is released under the [MIT License](LICENSE). The installers also include [mpv](https://mpv.io) and, on macOS, [kitty](https://sw.kovidgoyal.net/kitty/) — both under the GPL; see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).
+Plativka is released under the [MIT License](LICENSE). The installers also include [mpv](https://mpv.io) (GPL), the desktop edition uses [Qt / PySide6](https://www.qt.io/qt-for-python) (LGPL), and the terminal edition on macOS includes [kitty](https://sw.kovidgoyal.net/kitty/) (GPL); see [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md).

@@ -126,7 +126,7 @@ The original edition: the same player as a text interface in a terminal window. 
 | **macOS** (Apple Silicon) | `Plativka-…-macos-arm64.dmg` | [Install on macOS](docs/en/install-macos.md) |
 | **macOS** (Intel) | `Plativka-…-macos-x86_64.dmg` | [Install on macOS](docs/en/install-macos.md) |
 | **Windows 10/11** | `Plativka-…-windows-x64-setup.exe` | [Install on Windows](docs/en/install-windows.md) |
-| **Linux** | `plativka-…-linux.tar.gz`, then `./install.sh` | [Install on Linux](docs/en/install-linux.md) |
+| **Linux** | `plativka-…-linux.tar.gz`, then `./install.sh --desktop` | [Install on Linux](docs/en/install-linux.md) |
 
 ### Screenshots
 

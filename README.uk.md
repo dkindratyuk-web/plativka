@@ -54,6 +54,8 @@
 
 ### Знімки
 
+Те саме вікно на всіх трьох системах — знімки з macOS, Windows 11 і Linux.
+
 **macOS** — повний вигляд, компактний і міні-плеєр у світлій і темній темі:
 
 <p>
@@ -76,6 +78,18 @@
 <p>
 <img src="docs/img/desk-win-compact.png" width="48%" alt="Компактний вигляд, Windows 11">
 <img src="docs/img/desk-win-mini.png" width="48%" alt="Міні-плеєр, Windows 11">
+</p>
+
+**Linux** — Kubuntu 26.10 з KDE Plasma:
+
+<p>
+<img src="docs/img/desk-linux-uk-full.png" width="32%" alt="Повний вигляд, Kubuntu">
+<img src="docs/img/desk-linux-uk-full-dark.png" width="32%" alt="Темна тема, Kubuntu">
+<img src="docs/img/desk-linux-uk-compact.png" width="32%" alt="Компактний вигляд, Kubuntu">
+</p>
+<p>
+<img src="docs/img/desk-linux-uk-compact-dark.png" width="48%" alt="Компактний вигляд, темна тема, Kubuntu">
+<img src="docs/img/desk-linux-uk-mini.png" width="48%" alt="Міні-плеєр, Kubuntu">
 </p>
 
 ### Завантаження і встановлення

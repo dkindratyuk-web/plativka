@@ -54,6 +54,8 @@ It comes in two editions that share the same library and settings:
 
 ### Screenshots
 
+The same window on all three systems — screenshots from macOS, Windows 11 and Linux.
+
 **macOS** — the full view, the compact view and the mini player in light and dark:
 
 <p>
@@ -76,6 +78,19 @@ It comes in two editions that share the same library and settings:
 <p>
 <img src="docs/img/desk-win-compact.png" width="48%" alt="Compact view, Windows 11">
 <img src="docs/img/desk-win-mini.png" width="48%" alt="Mini player, Windows 11">
+</p>
+
+**Linux** — Kubuntu 26.10 with KDE Plasma:
+
+<p>
+<img src="docs/img/desk-linux-en-full.png" width="32%" alt="Full view, Kubuntu">
+<img src="docs/img/desk-linux-en-full-dark.png" width="32%" alt="Dark theme, Kubuntu">
+<img src="docs/img/desk-linux-en-compact.png" width="32%" alt="Compact view, Kubuntu">
+</p>
+<p>
+<img src="docs/img/desk-linux-en-compact-dark.png" width="32%" alt="Compact view, dark theme, Kubuntu">
+<img src="docs/img/desk-linux-en-mini.png" width="32%" alt="Mini player, Kubuntu">
+<img src="docs/img/desk-linux-en-mini-dark.png" width="32%" alt="Mini player, dark theme, Kubuntu">
 </p>
 
 ### Download and install

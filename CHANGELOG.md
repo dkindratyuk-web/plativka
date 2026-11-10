@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## 1.3.4
+
+**English**
+
+- Windows installers (both versions) close a running Plativka before updating, so the update no longer stops with "DeleteFile failed; code 5. Access is denied."
+
+**Українська**
+
+- Інсталятори для Windows (обидві версії) самі закривають запущену Платівку перед оновленням — більше немає помилки «DeleteFile збій; код 5. Access is denied».
+
 ## 1.3.3
 
 **English**

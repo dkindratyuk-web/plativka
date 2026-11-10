@@ -59,3 +59,28 @@ Filename: "{app}\Plativka.exe"; WorkingDir: "{userdocs}"; Description: "{cm:Laun
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}"
+
+[Code]
+// Перед встановленням/оновленням закриваємо Платівку, що запущена з цієї теки (разом з її mpv),
+// інакше Windows не дасть замінити файли («DeleteFile збій; код 5»).
+procedure StopRunningPlayer();
+var R: Integer;
+begin
+  Exec(ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
+    '-NoProfile -ExecutionPolicy Bypass -Command "Get-Process -ErrorAction SilentlyContinue | ' +
+    'Where-Object { $_.Path -like ''' + ExpandConstant('{app}') + '\*'' } | Stop-Process -Force"',
+    '', SW_HIDE, ewWaitUntilTerminated, R);
+  Sleep(700);
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  StopRunningPlayer();
+  Result := '';
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  StopRunningPlayer();
+  Result := True;
+end;

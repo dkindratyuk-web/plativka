@@ -1545,6 +1545,10 @@ class MainWindow(QMainWindow):
                     return
                 self.call_from_thread(self._tray_message, head, body + (f"\n{sub}" if sub else ""))
             else:
+                if sysdeps.IS_MAC:
+                    from . import macnotify
+                    if macnotify.show(head, sub, body, str(cover) if cover else None):
+                        return
                 sysdeps.system_notify(head, body, sub, image=str(cover) if cover else None)
         threading.Thread(target=work, daemon=True).start()
 
@@ -1896,6 +1900,12 @@ class MainWindow(QMainWindow):
 
     # ───────────── система ─────────────
     def setup_platform(self):
+        if sysdeps.IS_MAC and not self.demo:
+            try:
+                from . import macnotify
+                log(f"macnotify: {macnotify.init()}")
+            except Exception as e:
+                log(f"macnotify: {e}")
         if QSystemTrayIcon.isSystemTrayAvailable() and not os.environ.get("PLATIVKA_NO_TRAY"):
             self.tray = QSystemTrayIcon(app_icon(), self)
             m = QMenu()

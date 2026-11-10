@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## 1.3.3
+
+**English**
+
+- Plativka Desktop on macOS: track notifications show the album cover again — they now come from the app itself ("Plativka Desktop"), not from Script Editor. The first time macOS asks to allow notifications.
+
+**Українська**
+
+- Віконна Платівка на macOS: у сповіщеннях про трек знову є обкладинка — тепер їх надсилає сама програма («Plativka Desktop»), а не «Редактор скриптів». Уперше macOS спитає дозвіл на сповіщення.
+
 ## 1.3.2
 
 **English**

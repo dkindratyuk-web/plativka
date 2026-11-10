@@ -190,7 +190,6 @@ plativka --demo     # look around without mpv and without sound
 
 The desktop edition: `pipx install ".[desktop]"`, then `plativka-desktop` (or `plativka-desktop --demo`).
 
-Releases are built by GitHub Actions: bump the version in `src/plativka/__init__.py`, then push `main` to the `release` branch — the DMGs, the Windows installers and the Linux archive for both editions appear on the Releases page.
 
 ## License
 

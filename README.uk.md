@@ -190,7 +190,6 @@ plativka --demo     # роздивитися без mpv і без звуку
 
 Віконна версія: `pipx install ".[desktop]"`, потім `plativka-desktop` (або `plativka-desktop --demo`).
 
-Релізи збирає GitHub Actions: підніміть версію в `src/plativka/__init__.py` і запуште `main` у гілку `release` — DMG, інсталятори для Windows і архів для Linux обох версій з'являться на сторінці релізів.
 
 ## Ліцензія
 

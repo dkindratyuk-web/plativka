@@ -1,6 +1,27 @@
-# Using Plativka
+# Plativka for the terminal
 
-[Українською](../uk/usage.md) · [Back to README](../../README.md)
+[Українською](../uk/terminal.md) · [Back to README](../../README.md) · [Plativka Desktop](desktop.md)
+
+## What it is and who it's for
+
+The terminal edition is the original Plativka: the same player, but drawn with text in a terminal window instead of a regular app window. It uses very little memory and works over SSH. If you just want a nice music player, take [Plativka Desktop](desktop.md); the terminal edition is for people who like the terminal.
+
+You can install both editions side by side. The first time Plativka Desktop starts, it picks up the music folders and the playlist from the terminal edition; after that each edition keeps its own settings.
+
+## How to start it
+
+| System | Installed with | Starts |
+|---|---|---|
+| **macOS** | `Plativka-…-macos-….dmg` → app **Plativka** | in its own window (kitty inside the app) with real covers |
+| **Windows** | `Plativka-…-windows-x64-setup.exe` → Start menu **Plativka** | in a classic console window; covers drawn with blocks |
+| **Linux** | `./install.sh` (or `./install.sh --desktop`) → menu **Plativka** | in its own kitty window with real covers |
+| any terminal | `plativka` command | in the terminal you typed it in |
+
+Installation step by step: [macOS](install-macos.md) · [Windows](install-windows.md) · [Linux](install-linux.md).
+
+**Which terminal shows real covers**: kitty, Ghostty, iTerm2, WezTerm and recent Windows Terminal. Terminal.app, the classic Windows console, GNOME Terminal and Konsole draw covers with coloured blocks (or press **O** to turn covers off and get a spinning record instead).
+
+**Window size**: at least 80 × 24 characters; from about 100 characters wide the library sits next to the playlist, below that the parts are stacked.
 
 ## The window
 
@@ -62,10 +83,10 @@ In the playlist: **Enter** or a double-click plays a track, **Delete** removes i
 | `F7` `F8` `F9` | previous · pause · next |
 | `←` `→` | seek 5 seconds |
 | `+` `−` | volume |
-
-**Volume** mirrors the system volume: the volume keys on your keyboard (F11/F12 or the speaker keys on a Mac, the volume keys or the Windows/Linux sound slider) move the player's volume bar, and `+` `−` in the player change the system volume. If you prefer a separate player volume, switch it in **F1 → Volume**. On Linux this needs PipeWire (`wpctl`) or PulseAudio (`pactl`), which every modern desktop has.
 | `S` | shuffle on/off |
 | `R` | repeat: off → all → one |
+
+**Volume** mirrors the system volume: the volume keys on your keyboard (F11/F12 or the speaker keys on a Mac, the volume keys or the Windows/Linux sound slider) move the player's volume bar, and `+` `−` in the player change the system volume. If you prefer a separate player volume, switch it in **F1 → Volume**. On Linux this needs PipeWire (`wpctl`) or PulseAudio (`pactl`), which every modern desktop has.
 
 At the end of the playlist Plativka stops and says so. Turn on **repeat: all** to loop.
 

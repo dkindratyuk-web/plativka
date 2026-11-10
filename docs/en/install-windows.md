@@ -2,11 +2,18 @@
 
 [Українською](../uk/install-windows.md) · [Back to README](../../README.md)
 
-The installer contains everything Plativka needs: the player and the mpv audio engine. Nothing else has to be installed. Works on Windows 10 and 11 (64-bit).
+Plativka comes in two editions — pick one, or install both (the first time Plativka Desktop starts, it picks up the music folders and the playlist from the terminal edition). Both work on Windows 10 and 11 (64-bit), and each installer contains everything, including the mpv sound engine.
+
+| | **Plativka Desktop** (recommended) | **Plativka for the terminal** |
+|---|---|---|
+| What you get | a regular window; Mica background on Windows 11 | a text interface in a classic console window |
+| Covers | real pictures | drawn with coloured blocks |
+| File | `Plativka-Desktop-…-windows-x64-setup.exe` | `Plativka-…-windows-x64-setup.exe` |
+| Start menu | **Plativka Desktop** | **Plativka** |
 
 ## 1. Download
 
-Open the [latest release](https://github.com/dkindratyuk-web/plativka/releases/latest) and download `Plativka-…-windows-x64-setup.exe`.
+Open the [latest release](https://github.com/dkindratyuk-web/plativka/releases/latest) and download the installer of the edition you want.
 
 ## 2. Run the installer
 
@@ -19,24 +26,27 @@ Administrator rights are not required: by default Plativka installs for your use
 
 ## 3. Add your music
 
-- Press **L** and pick a folder (arrows to move, Enter to open a folder, then **Add this folder**), **or**
+- Press **L** (or the **+ Folder** button in the library) — the usual Windows "Select folder" dialog opens. **Or**
 - drag a music folder from File Explorer into the Plativka window.
 
-Then, in the library on the right, open an artist → album and press **Enter** on a track. See [Using Plativka](usage.md) for everything else.
+Then open an artist → album in the library and double-click a track (or press **Enter**) — the whole album goes to the playlist. Everything else: [Plativka Desktop guide](desktop.md) · [terminal edition guide](terminal.md).
+
+## Media keys, the media overlay and notifications
+
+In both editions ⏮ ⏯ ⏭ on the keyboard and headphones control Plativka, the Windows media overlay (next to the volume popup) shows the track with its cover, and track notifications come with the cover (the notification on/off switch is `N`).
 
 ## The tray icon
 
-While Plativka is running, its record icon sits in the tray next to the clock (if you don't see it, click the **^** arrow). Right-click it for **Play / pause**, **Next track**, **Previous track**, **Show player** and **Quit Plativka**. The icon shows the current album cover, and hovering over it shows the track.
+While Plativka is running, its icon sits in the tray next to the clock (if you don't see it, click the **^** arrow).
 
-- **Closing the window with ✕ quits Plativka**, just like any other program.
-- To keep music playing without the window, press **H** (or minimise the window with the **Minimize to tray** option ticked in the tray menu). Bring it back with **Show player** or a click on the icon.
+**Plativka Desktop**: click the icon to show the window; right-click for **Play / pause**, **Next track**, **Previous track** and **Quit Plativka**. Closing the window with ✕ quits — unless you tick **☰ → View → Minimize to tray**: then ✕ and minimising hide the window to the tray and the music keeps playing.
 
-The Plativka shortcut opens the player in its own classic console window — that is what makes hiding to the tray possible. If you start `plativka.exe` inside Windows Terminal instead, everything works except hiding to the tray.
+**Terminal edition**: right-click the icon for **Play / pause**, **Next / Previous track**, **Show player**, **Plativka on GitHub** and **Quit Plativka**. ✕ quits; **H** hides the window to the tray (or tick **Minimize to tray** in the tray menu). The Start-menu shortcut opens the player in its own classic console window — that is what makes hiding to the tray and the mini player possible. Started inside Windows Terminal, everything works except those two.
 
 ## Updating
 
-Run the new installer — it replaces the old version. Your library, playlist and settings are kept.
+Run the new installer — it replaces the old version and keeps your library, playlist and settings. If Plativka is running, the installer closes it first (from version 1.3.4; with older versions quit Plativka from the tray before updating).
 
 ## Uninstalling
 
-**Settings → Apps → Installed apps → Plativka → Uninstall**. Settings and the library cache stay in `%APPDATA%\Plativka` and `%LOCALAPPDATA%\Plativka`; delete these folders if you want them gone too.
+**Settings → Apps → Installed apps → Plativka Desktop** (or **Plativka**) **→ Uninstall**. Settings and the library cache stay in `%APPDATA%\Plativka` and `%LOCALAPPDATA%\Plativka`; delete these folders if you want them gone too.

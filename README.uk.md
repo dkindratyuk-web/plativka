@@ -25,7 +25,7 @@
 
 Платівка грає музику, яка вже є на вашому диску, — передусім MP3, а також FLAC, M4A/AAC, OGG/Opus і WAV. Вона бере знайому всім розкладку Winamp — головне вікно з великим годинником та індикатором рівня, список відтворення й медіатеку — і робить її легкою, кольоровою та швидкою.
 
-Є дві версії зі спільною медіатекою та налаштуваннями:
+Є дві версії — можна поставити одну або обидві; під час першого запуску віконна Платівка підхоплює теки з музикою і список відтворення з консольної:
 
 | | **Віконна Платівка** (основна) | **Платівка для термінала** |
 |---|---|---|
@@ -99,9 +99,9 @@
 | **macOS** (Apple Silicon) | `Plativka-Desktop-…-macos-arm64.dmg` |
 | **macOS** (Intel) | `Plativka-Desktop-…-macos-x86_64.dmg` |
 | **Windows 10/11** | `Plativka-Desktop-…-windows-x64-setup.exe` |
-| **Linux** (Debian, Ubuntu, Mint, Fedora, Arch, openSUSE) | `plativka-…-linux.tar.gz`, далі `./install.sh --desktop` |
+| **Linux** (Debian, Ubuntu, Kubuntu, Mint, Fedora, Arch, openSUSE) | `plativka-…-linux.tar.gz`, далі `./install.sh --desktop` |
 
-Усе лежить на [сторінці релізів](https://github.com/dkindratyuk-web/plativka/releases/latest); інсталятори для macOS і Windows містять усе потрібне, разом зі звуковим рушієм mpv. На macOS перший запуск треба один раз підтвердити: «Системні параметри → Приватність і безпека → Усе одно відкрити» ([докладно](docs/uk/install-macos.md)); Windows може показати «Windows захистила ваш ПК» → «Докладніше» → «Усе одно запустити» ([докладно](docs/uk/install-windows.md)). Linux: [інструкція](docs/uk/install-linux.md).
+Усе лежить на [сторінці релізів](https://github.com/dkindratyuk-web/plativka/releases/latest); інсталятори для macOS і Windows містять усе потрібне, разом зі звуковим рушієм mpv. На macOS перший запуск треба один раз підтвердити: «Системні параметри → Приватність і безпека → Усе одно відкрити» ([докладно](docs/uk/install-macos.md)); Windows може показати «Захист ОС Windows» → «Докладніше» → «Усе одно запустити» ([докладно](docs/uk/install-windows.md)). Linux: [інструкція](docs/uk/install-linux.md).
 
 ### Клавіші
 
@@ -140,7 +140,7 @@
 | **macOS** (Apple Silicon) | `Plativka-…-macos-arm64.dmg` | [Встановлення на macOS](docs/uk/install-macos.md) |
 | **macOS** (Intel) | `Plativka-…-macos-x86_64.dmg` | [Встановлення на macOS](docs/uk/install-macos.md) |
 | **Windows 10/11** | `Plativka-…-windows-x64-setup.exe` | [Встановлення на Windows](docs/uk/install-windows.md) |
-| **Linux** | `plativka-…-linux.tar.gz`, далі `./install.sh` | [Встановлення на Linux](docs/uk/install-linux.md) |
+| **Linux** | `plativka-…-linux.tar.gz`, далі `./install.sh` (лише ця версія) або `./install.sh --desktop` (обидві) | [Встановлення на Linux](docs/uk/install-linux.md) |
 
 ### Знімки
 
@@ -188,7 +188,8 @@
 
 ## Документація
 
-- [Як користуватися](docs/uk/usage.md) — медіатека, список, обкладинки, сповіщення, трей, налаштування
+- [Як користуватися віконною Платівкою](docs/uk/desktop.md) — вигляди, медіатека, список, сповіщення, трей, налаштування
+- [Платівка для термінала](docs/uk/terminal.md) — що це, як запустити, термінали й обкладинки, клавіші
 - [Якщо щось не так](docs/uk/troubleshooting.md) — треки обриваються, пауза ззовні, порожня обкладинка, журнали
 - [Історія змін](CHANGELOG.md)
 

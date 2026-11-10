@@ -25,7 +25,7 @@
 
 Plativka plays the music already on your disk — MP3 first of all, plus FLAC, M4A/AAC, OGG/Opus and WAV. It takes the layout everybody remembers from Winamp — a main window with a big time display and level meter, the playlist and the media library — and makes it light, colourful and quick.
 
-It comes in two editions that share the same library and settings:
+It comes in two editions; install either one or both — the first time Plativka Desktop starts, it picks up the music folders and the playlist from the terminal edition:
 
 | | **Plativka Desktop** (main) | **Plativka for the terminal** |
 |---|---|---|
@@ -100,7 +100,7 @@ The same window on all three systems — screenshots from macOS, Windows 11 and 
 | **macOS** (Apple Silicon) | `Plativka-Desktop-…-macos-arm64.dmg` |
 | **macOS** (Intel) | `Plativka-Desktop-…-macos-x86_64.dmg` |
 | **Windows 10/11** | `Plativka-Desktop-…-windows-x64-setup.exe` |
-| **Linux** (Debian, Ubuntu, Mint, Fedora, Arch, openSUSE) | `plativka-…-linux.tar.gz`, then `./install.sh --desktop` |
+| **Linux** (Debian, Ubuntu, Kubuntu, Mint, Fedora, Arch, openSUSE) | `plativka-…-linux.tar.gz`, then `./install.sh --desktop` |
 
 Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka/releases/latest); the macOS and Windows installers include everything, including the mpv sound engine. On macOS the first launch needs one confirmation in System Settings → Privacy & Security → "Open Anyway" ([details](docs/en/install-macos.md)); Windows may show "Windows protected your PC" → "More info" → "Run anyway" ([details](docs/en/install-windows.md)). Linux: [install guide](docs/en/install-linux.md).
 
@@ -141,7 +141,7 @@ The original edition: the same player as a text interface in a terminal window. 
 | **macOS** (Apple Silicon) | `Plativka-…-macos-arm64.dmg` | [Install on macOS](docs/en/install-macos.md) |
 | **macOS** (Intel) | `Plativka-…-macos-x86_64.dmg` | [Install on macOS](docs/en/install-macos.md) |
 | **Windows 10/11** | `Plativka-…-windows-x64-setup.exe` | [Install on Windows](docs/en/install-windows.md) |
-| **Linux** | `plativka-…-linux.tar.gz`, then `./install.sh --desktop` | [Install on Linux](docs/en/install-linux.md) |
+| **Linux** | `plativka-…-linux.tar.gz`, then `./install.sh` (only this edition) or `./install.sh --desktop` (both) | [Install on Linux](docs/en/install-linux.md) |
 
 ### Screenshots
 
@@ -189,7 +189,8 @@ In the library: `Enter` on a track plays its whole album, `P` plays the selected
 
 ## Documentation
 
-- [Using Plativka](docs/en/usage.md) — library, playlist, covers, popups, tray, settings
+- [Using Plativka Desktop](docs/en/desktop.md) — views, library, playlist, notifications, tray, settings
+- [Plativka for the terminal](docs/en/terminal.md) — what it is, how to start it, terminals and covers, keys
 - [Troubleshooting](docs/en/troubleshooting.md) — tracks that stop early, pauses from outside, empty covers, logs
 - [Changelog](CHANGELOG.md)
 

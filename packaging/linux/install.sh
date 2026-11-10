@@ -167,4 +167,8 @@ case ":$PATH:" in
 esac
 
 echo
-ok "$(t "Готово! Запуск: знайдіть «Платівка» в меню програм або наберіть plativka у терміналі." "Done! Start: find \"Plativka\" in the applications menu or type plativka in a terminal.")"
+if [ -n "$DESKTOP" ]; then
+  ok "$(t "Готово! Запуск: знайдіть «Платівка (вікно)» в меню програм або наберіть plativka-desktop у терміналі." "Done! Start: find \"Plativka Desktop\" in the applications menu or type plativka-desktop in a terminal.")"
+else
+  ok "$(t "Готово! Запуск: знайдіть «Платівка» в меню програм або наберіть plativka у терміналі." "Done! Start: find \"Plativka\" in the applications menu or type plativka in a terminal.")"
+fi

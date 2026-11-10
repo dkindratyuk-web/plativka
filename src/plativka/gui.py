@@ -23,7 +23,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, QTimer, Signal, QObject
 from PySide6.QtGui import (QAction, QActionGroup, QColor, QDesktopServices, QFont, QFontMetrics, QIcon,
-                           QImage, QKeySequence, QPainter, QPainterPath, QPixmap, QShortcut)
+                           QImage, QKeySequence, QPainter, QPainterPath, QPalette, QPixmap, QShortcut)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDialog, QDialogButtonBox,
                                QFileDialog, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                                QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox,
@@ -962,6 +962,17 @@ class MainWindow(QMainWindow):
             pal.setColor(pal.ColorRole.Base, QColor(0, 0, 0, 0))
             w.setPalette(pal)
         self._fg = fg
+        # меню, діалоги й підказки — окремі вікна: даємо їм кольори теми, а не системні
+        # (інакше в темній темі світлий текст опинявся на світлому меню)
+        menu_bg = "#2B2D33" if dark else "#FBFBFC"
+        pal = QPalette()
+        for role, col in ((QPalette.Window, menu_bg), (QPalette.WindowText, fg), (QPalette.Base, "#1E2026" if dark else "#FFFFFF"),
+                          (QPalette.AlternateBase, menu_bg), (QPalette.Text, fg), (QPalette.Button, menu_bg),
+                          (QPalette.ButtonText, fg), (QPalette.ToolTipBase, menu_bg), (QPalette.ToolTipText, fg),
+                          (QPalette.Highlight, acc), (QPalette.HighlightedText, "#FFFFFF"),
+                          (QPalette.PlaceholderText, "#8A8F98")):
+            pal.setColor(role, QColor(col))
+        QApplication.setPalette(pal)
         self.setStyleSheet(f"""
             QMainWindow, #root {{ background: {bg}; }}
             QWidget {{ color: {fg}; }}
@@ -1006,7 +1017,14 @@ class MainWindow(QMainWindow):
             QScrollBar::handle:vertical {{ background: {groove}; border-radius: 4px; min-height: 30px; }}
             QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; }}
             QScrollBar::add-page, QScrollBar::sub-page {{ background: transparent; }}
-            QMenu {{ padding: 4px; }}
+            QMenu {{ background: {menu_bg}; color: {fg}; border: 1px solid {stroke}; padding: 4px; }}
+            QMenu::item {{ padding: 4px 22px 4px 24px; border-radius: 4px; background: transparent; }}
+            QMenu::item:selected {{ background: {hl_bg}; color: {fg}; }}
+            QMenu::item:disabled {{ color: {sub}; }}
+            QMenu::separator {{ height: 1px; background: {stroke}; margin: 4px 8px; }}
+            QDialog, QMessageBox {{ background: {menu_bg}; }}
+            QListWidget {{ background: {card}; border: 1px solid {stroke}; border-radius: 6px; }}
+            QToolTip {{ background: {menu_bg}; color: {fg}; border: 1px solid {stroke}; }}
         """)
         self._acc, self._sec, self._sub = acc, sec, sub
         self._paint_icons()

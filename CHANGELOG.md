@@ -1,5 +1,19 @@
 # Changelog / Історія змін
 
+## 1.3.5
+
+**English**
+
+- Plativka Desktop: the ☰ menu, right-click menus, dialogs and tooltips now follow the theme — in the dark theme the menu text was white on a white menu (Windows, Linux).
+- Linux: after `./install.sh --desktop` the script points to "Plativka Desktop" in the menu.
+- Documentation: install guides for both editions on every system, a new Plativka Desktop guide, a separate guide for the terminal edition.
+
+**Українська**
+
+- Віконна Платівка: меню ☰, контекстні меню, діалоги й підказки тепер у кольорах теми — у темній темі текст меню був білим на білому (Windows, Linux).
+- Linux: після `./install.sh --desktop` скрипт підказує шукати в меню «Платівка (вікно)».
+- Документація: інструкції зі встановлення обох версій для кожної системи, новий посібник для віконної Платівки, окремий посібник для консольної версії.
+
 ## 1.3.4
 
 **English**

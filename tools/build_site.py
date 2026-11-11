@@ -95,7 +95,8 @@ T = {
                   "that shrinks the terminal window, and everything controlled from the keyboard.",
         "term_more": "About the terminal edition",
         "term_shots": [("macos-en-winamp.png", "Terminal edition, Winamp layout"),
-                       ("macos-en-dark2.png", "Terminal edition, dark theme")],
+                       ("macos-en-dark2.png", "Terminal edition, dark theme"),
+                       ("macos-en-mini.png", "Terminal edition, mini player")],
         "foot": ["Changelog", "Report a problem", "Documentation"],
         "foot_note": "Plativka is free software under the MIT license.",
         "docs": "docs/en/",
@@ -176,8 +177,9 @@ T = {
                   "в kitty, Ghostty, iTerm2 і WezTerm (піксельні — в інших терміналах), міні-плеєр, "
                   "що зменшує вікно термінала, і все керується з клавіатури.",
         "term_more": "Докладніше про версію для термінала",
-        "term_shots": [("uk-main.png", "Версія для термінала"),
-                       ("uk-dark.png", "Версія для термінала, темна тема")],
+        "term_shots": [("macos-winamp.png", "Версія для термінала, вигляд Winamp"),
+                       ("macos-compact.png", "Версія для термінала, компактний вигляд"),
+                       ("macos-mini.png", "Версія для термінала, міні-плеєр")],
         "foot": ["Історія змін", "Повідомити про проблему", "Документація"],
         "foot_note": "Платівка — вільна програма під ліцензією MIT.",
         "docs": "docs/uk/",
@@ -344,7 +346,7 @@ cd plativka-*-linux
       <p>{t['term_p']}</p>
       <a class="more" href="{docs}terminal.md">{t['term_more']} →</a>
     </div>
-    <div class="shots shots-two">{term}</div>
+    <div class="shots shots-term">{term}</div>
   </div>
 </section>
 </main>

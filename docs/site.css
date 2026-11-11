@@ -96,7 +96,7 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: .6em; }
 .shots figcaption { color: var(--muted); font-size: .85rem; margin-top: 10px; text-align: center; }
 .shots-mini { grid-template-columns: repeat(2, 1fr); margin-top: 40px; max-width: 900px; margin-inline: auto; }
 .shots-mini figcaption { display: none; }
-.shots-two { grid-template-columns: repeat(2, 1fr); }
+.shots-term { align-items: end; }
 
 /* завантаження */
 .ver { font-size: .55em; font-weight: 600; color: var(--muted); vertical-align: middle; margin-left: 8px; }
@@ -115,7 +115,8 @@ code { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, m
 .dl-foot { text-align: center; margin-top: 24px; color: var(--muted); }
 
 /* термінал */
-.term { display: grid; grid-template-columns: .9fr 1.1fr; gap: 48px; align-items: center; }
+.term { display: grid; gap: 28px; }
+.term > div:first-child { max-width: 46em; }
 .term p { color: var(--muted); font-size: 1.05rem; }
 
 /* низ */
@@ -123,16 +124,16 @@ code { font-family: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, m
 .foot p { margin: 4px 0; }
 
 @media (max-width: 900px) {
-  .hero-in, .term { grid-template-columns: 1fr; }
+  .hero-in { grid-template-columns: 1fr; }
   .hero { padding-top: 40px; }
   .features, .dl-grid { grid-template-columns: 1fr 1fr; }
   .top nav { display: none; }
   .lang { margin-left: auto; }
 }
 @media (max-width: 620px) {
-  .features, .dl-grid, .shots, .shots-mini, .shots-two { grid-template-columns: 1fr; }
+  .features, .dl-grid, .shots, .shots-mini { grid-template-columns: 1fr; }
   .shots figure:nth-child(n+2) { display: none; }
-  .shots.shots-mini figure, .shots.shots-two figure { display: block; }
+  .shots.shots-mini figure, .shots.shots-term figure { display: block; }
   .sec { padding: 52px 0; }
   .cta .btn { flex: 1 1 100%; justify-content: center; }
 }

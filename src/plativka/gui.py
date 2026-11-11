@@ -161,6 +161,11 @@ def glyph_icon(kind: str, color: str, size: int = 16) -> QIcon:
 
 def app_icon() -> QIcon:
     ic = sysdeps.icon_path()
+    if ic and sys.platform == "darwin":
+        # у доці macOS іконка має поля й тінь, як системні, інакше вона здається більшою
+        mac = Path(ic).with_name("icon-mac.png")
+        if mac.exists():
+            ic = str(mac)
     return QIcon(ic) if ic else QIcon()
 
 

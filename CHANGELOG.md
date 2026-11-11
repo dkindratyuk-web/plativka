@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## Unreleased / Ще не випущено
+
+**English**
+
+- macOS: the app icon is now the same size as other icons in the Dock (it has the standard margins and shadow).
+
+**Українська**
+
+- macOS: іконка програми тепер такого ж розміру, як інші в доці (зі стандартними полями й тінню).
+
 ## 1.3.5
 
 **English**

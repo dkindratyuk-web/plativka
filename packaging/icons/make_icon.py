@@ -30,8 +30,26 @@ L = 128
 d.ellipse((c - L, c - L, c + L, c + L), fill=(255, 196, 64, 255))
 d.ellipse((c - L + 22, c - L + 22, c + L - 22, c + L - 22), outline=(236, 150, 40, 255), width=6)
 d.ellipse((c - 20, c - 20, c + 20, c + 20), fill=(22, 24, 30, 255))
-bg.save("plativka.png")
-bg.resize((256, 256), Image.LANCZOS).save("../../src/plativka/assets/icon.png")
-bg.save("plativka.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-bg.save("plativka.icns")
+if "--mac-only" in sys.argv:          # лише перегенерувати іконку macOS з готової plativka.png
+    bg = Image.open("plativka.png").convert("RGBA")
+else:
+    bg.save("plativka.png")
+    bg.resize((256, 256), Image.LANCZOS).save("../../src/plativka/assets/icon.png")
+    bg.save("plativka.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
+
+def mac_variant(icon):
+    """macOS: тіло іконки 824×824 з полями 100 px і тінню — як у системних іконок у доці."""
+    body = icon.crop((40, 40, S - 40, S - 40)).resize((824, 824), Image.LANCZOS)
+    out = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    sh = Image.new("L", (S, S), 0)
+    ImageDraw.Draw(sh).rounded_rectangle((100, 112, 924, 936), radius=185, fill=90)
+    out.putalpha(sh.filter(ImageFilter.GaussianBlur(14)))
+    out.alpha_composite(body, (100, 100))
+    return out
+
+
+mac = mac_variant(bg)
+mac.save("plativka-mac.png")
+mac.resize((256, 256), Image.LANCZOS).save("../../src/plativka/assets/icon-mac.png")
+mac.save("plativka.icns")
 print("ok")

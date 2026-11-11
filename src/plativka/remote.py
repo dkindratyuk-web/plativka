@@ -18,19 +18,24 @@ import hmac
 import io
 import ipaddress
 import json
+import re
 import secrets
 import socket
 import time
 from urllib.parse import parse_qs, urlsplit
 
-from . import __version__
+from . import __version__, sysdeps
 from .core import fmt_time, load_cover, log, real_path
 
 DEFAULT_PORT = 8765
 MAX_HEADER = 8 * 1024
 MAX_BODY = 4 * 1024
 MAX_CONN = 32
+MAX_CONN_PER_IP = 4
+HEADER_TIMEOUT = 3        # секунд на заголовки (повільні «висячі» запити відкидаємо швидко)
 IO_TIMEOUT = 10
+SECRET_TTL = 600          # QR-код живе 10 хвилин, потім змінюється сам
+MAX_FAIL_ENTRIES = 1000
 MAX_DEVICES = 10
 CODE_TTL = 120            # секунд живе короткий код
 CODE_TRIES = 5            # невдалих спроб — і код згорає
@@ -54,9 +59,15 @@ def _hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
+LOCAL_NETS = [ipaddress.ip_network(n) for n in (
+    "10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "127.0.0.0/8", "169.254.0.0/16",
+    "::1/128", "fe80::/10", "fc00::/7")]
+
+
 def peer_allowed(addr: str | None) -> bool:
-    """Лише локальна мережа: приватні, loopback і link-local адреси."""
-    if not addr:
+    """Лише локальна мережа: явний перелік приватних, loopback і link-local мереж
+    (не ip.is_private — він у різних версіях Python пропускає Teredo, 6to4 тощо)."""
+    if not addr or not isinstance(addr, str):
         return False
     try:
         ip = ipaddress.ip_address(addr.split("%", 1)[0])
@@ -64,19 +75,35 @@ def peer_allowed(addr: str | None) -> bool:
         return False
     if isinstance(ip, ipaddress.IPv6Address) and ip.ipv4_mapped:
         ip = ip.ipv4_mapped
-    return ip.is_loopback or ip.is_link_local or (ip.is_private and not ip.is_unspecified
-                                                  and not ip.is_reserved and not ip.is_multicast)
+    return any(ip in n for n in LOCAL_NETS if n.version == ip.version)
+
+
+def _peer_key(addr: str) -> str:
+    """Для лічильника невдалих спроб: IPv6 — уся підмережа /64 (адрес у ній мільярди)."""
+    try:
+        ip = ipaddress.ip_address(addr.split("%", 1)[0])
+    except ValueError:
+        return addr
+    if isinstance(ip, ipaddress.IPv6Address) and not ip.ipv4_mapped:
+        return str(ipaddress.ip_network(f"{ip}/64", strict=False))
+    return str(ip.ipv4_mapped or ip) if isinstance(ip, ipaddress.IPv6Address) else str(ip)
 
 
 def host_allowed(host: str | None) -> bool:
     """Host — IP-адреса, localhost або ім'я цього комп'ютера в .local (не чужий домен)."""
-    if not host:
+    if not host or not isinstance(host, str):
         return False
     h = host.strip().lower()
-    if h.startswith("["):                      # [IPv6]:порт
-        h = h[1:h.find("]")] if "]" in h else ""
-    elif h.count(":") == 1:
-        h = h.rsplit(":", 1)[0]
+    if h.startswith("["):                      # [IPv6]:порт — після «]» лише порт
+        m = re.fullmatch(r"\[([0-9a-f:.]+)\](?::\d{1,5})?", h)
+        if not m:
+            return False
+        h = m.group(1)
+    elif ":" in h:
+        m = re.fullmatch(r"([^:]+):\d{1,5}", h)
+        if not m:
+            return False
+        h = m.group(1)
     try:
         ipaddress.ip_address(h)
         return True
@@ -129,13 +156,16 @@ class RemoteServer:
         self.port = int(store.get("port") or DEFAULT_PORT)
         self.ip = "127.0.0.1"
         self.pair_secret = secrets.token_urlsafe(24)
+        self.secret_until = time.monotonic() + SECRET_TTL
         self.code: str | None = None
         self.code_until = 0.0
         self.code_fails = 0
         self.code_locked = False
         self._ip_fails: dict[str, list] = {}
         self._conns = 0
+        self._per_ip: dict[str, int] = {}
         self._cover: tuple[str | None, bytes | None] = (None, None)
+        self._cover_lock = asyncio.Lock()
 
     # ── керування ──
     @property
@@ -148,8 +178,10 @@ class RemoteServer:
         last = None
         for port in range(self.port, self.port + 20):
             try:
+                # на Windows reuse_address дозволив би двом програмам ділити порт
                 self.server = await asyncio.start_server(self._handle, host=None, port=port,
-                                                         limit=MAX_HEADER, reuse_address=True)
+                                                         limit=MAX_HEADER,
+                                                         reuse_address=not sysdeps.IS_WIN)
                 self.port = port
                 break
             except OSError as e:
@@ -157,6 +189,7 @@ class RemoteServer:
         if not self.server:
             raise last or OSError("no port")
         self.ip = lan_ip()
+        self.rotate_secret()
         self.store["port"] = self.port
         log(f"пульт: слухаю порт {self.port}, адреса {self.ip}")
 
@@ -170,7 +203,14 @@ class RemoteServer:
             self.server = None
             log("пульт: вимкнено")
 
+    def rotate_secret(self):
+        """Новий QR-код: старий більше не діє (на старті, при закритті вікна, раз на 10 хв)."""
+        self.pair_secret = secrets.token_urlsafe(24)
+        self.secret_until = time.monotonic() + SECRET_TTL
+
     def pair_url(self) -> str:
+        if time.monotonic() > self.secret_until:
+            self.rotate_secret()
         host = f"[{self.ip}]" if ":" in self.ip else self.ip
         return f"http://{host}:{self.port}/#p={self.pair_secret}"
 
@@ -194,7 +234,7 @@ class RemoteServer:
     def reset_pairing(self):
         """«Новий код»: усі телефони відключено, старі QR-код і код більше не діють."""
         self.store["devices"] = []
-        self.pair_secret = secrets.token_urlsafe(24)
+        self.rotate_secret()
         self.code = None
         self.save()
 
@@ -208,10 +248,17 @@ class RemoteServer:
 
     # ── допоміжне ──
     def _blocked(self, ip: str) -> bool:
-        f = self._ip_fails.get(ip)
+        f = self._ip_fails.get(_peer_key(ip))
         return bool(f and f[0] >= IP_FAIL_LIMIT and time.monotonic() - f[1] < IP_BLOCK)
 
     def _fail(self, ip: str):
+        now = time.monotonic()
+        if len(self._ip_fails) >= MAX_FAIL_ENTRIES:     # старі записи прибираємо, таблиця не росте без меж
+            for k in [k for k, v in self._ip_fails.items() if now - v[1] > IP_BLOCK]:
+                del self._ip_fails[k]
+            if len(self._ip_fails) >= MAX_FAIL_ENTRIES:
+                del self._ip_fails[min(self._ip_fails, key=lambda k: self._ip_fails[k][1])]
+        ip = _peer_key(ip)
         f = self._ip_fails.setdefault(ip, [0, 0.0])
         if time.monotonic() - f[1] > IP_BLOCK:
             f[0] = 0
@@ -234,26 +281,33 @@ class RemoteServer:
     # ── HTTP ──
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         peer = (writer.get_extra_info("peername") or [None])[0]
-        if self._conns >= MAX_CONN or not peer_allowed(peer):
+        key = _peer_key(peer) if isinstance(peer, str) else ""
+        if (self._conns >= MAX_CONN or not peer_allowed(peer)
+                or self._per_ip.get(key, 0) >= MAX_CONN_PER_IP):
             writer.close()
             return
         self._conns += 1
+        self._per_ip[key] = self._per_ip.get(key, 0) + 1
         try:
-            await asyncio.wait_for(self._serve(reader, writer, peer), IO_TIMEOUT)
+            await self._serve(reader, writer, peer)
         except (asyncio.TimeoutError, asyncio.IncompleteReadError, asyncio.LimitOverrunError,
-                ConnectionError, ValueError):
+                ConnectionError, ValueError, UnicodeError):
             pass
         except Exception as e:          # сервер не має падати через один кривий запит
-            log(f"пульт: помилка запиту: {e!r}")
+            log(f"пульт: помилка запиту: {type(e).__name__}")
         finally:
             self._conns -= 1
+            self._per_ip[key] -= 1
+            if self._per_ip[key] <= 0:
+                del self._per_ip[key]
             try:
                 writer.close()
             except Exception:
                 pass
 
     async def _serve(self, reader, writer, peer: str):
-        head = await reader.readuntil(b"\r\n\r\n")
+        # тайм-аути лише на читання запиту — саму команду (play_index тощо) не обриваємо
+        head = await asyncio.wait_for(reader.readuntil(b"\r\n\r\n"), HEADER_TIMEOUT)
         if len(head) > MAX_HEADER:
             return await self._send(writer, 431, b"")
         lines = head.decode("latin-1").split("\r\n")
@@ -265,7 +319,12 @@ class RemoteServer:
         for line in lines[1:]:
             if ":" in line:
                 k, v = line.split(":", 1)
-                headers[k.strip().lower()] = v.strip()
+                k = k.strip().lower()
+                if k in headers and k in ("host", "content-length", "authorization", "origin"):
+                    return await self._send(writer, 400, b"")      # подвійні заголовки — ні
+                headers[k] = v.strip()
+        if "transfer-encoding" in headers:
+            return await self._send(writer, 400, b"")
         if not host_allowed(headers.get("host")):
             return await self._send(writer, 421, b"")
         if self._blocked(peer):
@@ -275,13 +334,13 @@ class RemoteServer:
             origin = headers.get("origin")
             if origin and origin != f"http://{headers.get('host')}":
                 return await self._send(writer, 403, b"")
-            try:
-                n = int(headers.get("content-length", "0"))
-            except ValueError:
+            cl = headers.get("content-length", "0")
+            if not re.fullmatch(r"\d{1,7}", cl):
                 return await self._send(writer, 400, b"")
-            if n < 0 or n > MAX_BODY:
+            n = int(cl)
+            if n > MAX_BODY:
                 return await self._send(writer, 413, b"")
-            body = await reader.readexactly(n) if n else b""
+            body = await asyncio.wait_for(reader.readexactly(n), IO_TIMEOUT) if n else b""
         elif method != "GET":
             return await self._send(writer, 405, b"")
         url = urlsplit(target)
@@ -367,31 +426,39 @@ class RemoteServer:
         if not isinstance(req, dict):
             return await self._send(writer, 400, b"")
         secret, code = req.get("secret"), req.get("code")
-        ok = False
-        if isinstance(secret, str) and secret:
-            ok = hmac.compare_digest(secret, self.pair_secret)
-        elif isinstance(code, str) and code:
+        if (secret is not None and not isinstance(secret, str)) or (code is not None and not isinstance(code, str)) \
+                or (secret and code):
+            return await self._send(writer, 400, b"")
+        used = None
+        if secret:
+            if re.fullmatch(r"[A-Za-z0-9_-]{16,64}", secret) and time.monotonic() <= self.secret_until \
+                    and hmac.compare_digest(secret.encode(), self.pair_secret.encode()):
+                used = "secret"
+        elif code:
+            code = code.replace(" ", "")
             if self.code and not self.code_locked and time.monotonic() < self.code_until:
-                ok = hmac.compare_digest(code.strip().replace(" ", ""), self.code)
-                if not ok:
+                if re.fullmatch(r"\d{6}", code) and hmac.compare_digest(code.encode(), self.code.encode()):
+                    used = "code"
+                else:
                     self.code_fails += 1
                     if self.code_fails >= CODE_TRIES:
                         self.code_locked = True
                         self.code = None
                         self.host.remote_event("code_locked", "")
-        if not ok:
+        if used is None:
             self._fail(peer)
             return await self._send(writer, 403, b"")
+        devs = self.store.setdefault("devices", [])
+        if len(devs) >= MAX_DEVICES:         # нікого мовчки не витісняємо
+            return await self._send(writer, 409, "Too many phones — disconnect one in Plativka".encode())
         token = secrets.token_urlsafe(32)
         dev = {"id": secrets.token_hex(6), "name": device_name(headers.get("user-agent", "")),
                "hash": _hash(token), "added": int(time.time()), "seen": int(time.time())}
-        devs = self.store.setdefault("devices", [])
         devs.append(dev)
-        del devs[:-MAX_DEVICES]
-        if secret:
-            self.pair_secret = secrets.token_urlsafe(24)   # QR-код одноразовий
+        if used == "secret":
+            self.rotate_secret()                # QR-код одноразовий
         else:
-            self.code = None
+            self.code = None                    # і короткий код теж
         self.save()
         log(f"пульт: підключено {dev['name']} ({peer})")
         self.host.remote_event("paired", dev["name"])
@@ -401,8 +468,12 @@ class RemoteServer:
         path = self.host.remote_cover_path()
         if not path:
             return None
-        if self._cover[0] == path:
-            return self._cover[1]
+        async with self._cover_lock:            # одна обкладинка декодується один раз
+            if self._cover[0] == path:
+                return self._cover[1]
+            return await self._make_cover(path)
+
+    async def _make_cover(self, path: str) -> bytes | None:
 
         def make():
             im = load_cover(real_path(path))
@@ -422,13 +493,14 @@ class RemoteServer:
 
     async def _send(self, writer, status: int, body: bytes, ctype: str = "text/plain; charset=utf-8"):
         reason = {200: "OK", 400: "Bad Request", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found",
+                  409: "Conflict",
                   405: "Method Not Allowed", 413: "Payload Too Large", 421: "Misdirected Request",
                   429: "Too Many Requests", 431: "Request Header Fields Too Large"}.get(status, "")
         hdr = {"Content-Type": ctype, "Content-Length": str(len(body)), "Connection": "close",
                **SECURITY_HEADERS}
         writer.write((f"HTTP/1.1 {status} {reason}\r\n" + "".join(f"{k}: {v}\r\n" for k, v in hdr.items())
                       + "\r\n").encode() + body)
-        await writer.drain()
+        await asyncio.wait_for(writer.drain(), IO_TIMEOUT)
 
 
 class RemoteHost:

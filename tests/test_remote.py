@@ -191,3 +191,67 @@ def test_state_text_is_data_not_html():
     assert st["title"].startswith("<img")        # віддаємо як є — сторінка показує через textContent
     from plativka import remote_page
     assert "innerHTML" not in remote_page.JS and "insertAdjacentHTML" not in remote_page.JS
+
+
+@pytest.mark.asyncio
+async def test_review_findings_fixed(server):
+    srv, host, store = await server()
+    try:
+        # короткий код — одноразовий, і разом із «secret» не приймається
+        code = srv.new_code()
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"secret": 1, "code": code}).encode()))[0] == 400
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"code": code}).encode()))[0] == 200
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"code": code}).encode()))[0] == 403
+        # не-ASCII — звичайна невдала спроба, а не виняток
+        srv._ip_fails.clear()
+        code = srv.new_code()
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"code": "é12345"}).encode()))[0] == 403
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"secret": "ґ" * 20}).encode()))[0] == 403
+        assert srv.code_fails == 1 and srv._ip_fails
+        # переповнений список — нікого не витісняємо
+        srv._ip_fails.clear()
+        store["devices"] = [{"id": str(i), "hash": "x"} for i in range(remote.MAX_DEVICES)]
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"secret": srv.pair_secret}).encode()))[0] == 409
+        assert len(store["devices"]) == remote.MAX_DEVICES
+        # суворий розбір заголовків
+        base = f"Host: 127.0.0.1:{srv.port}\r\n".encode()
+        assert (await req(srv.port, "GET", "/", raw=b"GET / HTTP/1.1\r\n" + base + b"Host: evil.com\r\n\r\n"))[0] == 400
+        assert (await req(srv.port, "POST", "/api/pair", raw=b"POST /api/pair HTTP/1.1\r\n" + base
+                          + b"Content-Length: 1_0\r\n\r\n0123456789"))[0] == 400
+        assert (await req(srv.port, "POST", "/api/pair", raw=b"POST /api/pair HTTP/1.1\r\n" + base
+                          + b"Transfer-Encoding: chunked\r\n\r\n0\r\n\r\n"))[0] == 400
+        # QR-код змінюється сам і після закриття вікна
+        old = srv.pair_secret
+        srv.secret_until = 0
+        srv.pair_url()
+        assert srv.pair_secret != old
+    finally:
+        await srv.stop()
+
+
+@pytest.mark.asyncio
+async def test_connections_per_address_limited(server):
+    srv, host, _ = await server()
+    try:
+        held = [await asyncio.open_connection("127.0.0.1", srv.port) for _ in range(remote.MAX_CONN_PER_IP)]
+        for _, w in held:
+            w.write(b"GET / HTTP/1.1\r\n")          # «висячі» запити
+            await w.drain()
+        await asyncio.sleep(0.1)
+        r, w = await asyncio.open_connection("127.0.0.1", srv.port)
+        assert await asyncio.wait_for(r.read(), 2) == b""    # п'ятий — одразу закрито
+        w.close()
+        await asyncio.sleep(remote.HEADER_TIMEOUT + 0.5)      # висячі відпали за тайм-аутом
+        assert (await req(srv.port, "GET", "/"))[0] == 200
+        for _, w in held:
+            w.close()
+    finally:
+        await srv.stop()
+
+
+def test_ipv6_tricks_not_local():
+    for bad in ("2001:0:4136:e378:8000:63bf:3fff:fdd2", "2002:c0a8:101::1", "2001:db8::1", "192.0.2.1",
+                "198.18.0.1", "::ffff:198.18.0.1", "64:ff9b::c0a8:101"):
+        assert not remote.peer_allowed(bad), bad
+    for bad in ("[::1]@evil.com", "[::1]:80x", "127.0.0.1:80:90", "127.0.0.1:abc"):
+        assert not remote.host_allowed(bad), bad

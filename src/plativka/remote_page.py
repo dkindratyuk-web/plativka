@@ -111,14 +111,18 @@ JS = r"""
     badQr: "Цей QR-код уже використано. Відкрийте вікно пульта в Платівці ще раз.", noConn: "Немає зв'язку з Платівкою",
     sleep: "Таймер сну", sleepOff: "Вимк", min: "хв", afterTrack: "Після треку", sleepIn: "Сон: ", sleepTrack: "Сон: після треку",
     playlist: "Список відтворення", forget: "Відключити цей телефон", pick: "Оберіть, що послухати, у Платівці",
-    forgetQ: "Відключити цей телефон від Платівки?"
+    forgetQ: "Відключити цей телефон від Платівки?",
+    full: "Підключено забагато телефонів. Відключіть якийсь у вікні пульта в Платівці.",
+    wait: "Забагато невдалих спроб. Спробуйте за 10 хвилин."
   } : {
     title: "Plativka", pairHelp: "Scan the QR code in Plativka (the “Phone remote” menu) or enter the code it shows.",
     connect: "Connect", badCode: "The code is wrong or no longer valid. Show a new one in Plativka.",
     badQr: "This QR code was already used. Open the remote window in Plativka again.", noConn: "No connection to Plativka",
     sleep: "Sleep timer", sleepOff: "Off", min: "min", afterTrack: "After track", sleepIn: "Sleep: ", sleepTrack: "Sleep: after track",
     playlist: "Playlist", forget: "Disconnect this phone", pick: "Choose something to play in Plativka",
-    forgetQ: "Disconnect this phone from Plativka?"
+    forgetQ: "Disconnect this phone from Plativka?",
+    full: "Too many phones are connected. Disconnect one in the remote window in Plativka.",
+    wait: "Too many failed attempts. Try again in 10 minutes."
   };
   document.documentElement.lang = UK ? "uk" : "en";
   document.querySelectorAll("[data-t]").forEach(function (el) { el.textContent = S[el.dataset.t] || el.textContent; });
@@ -149,6 +153,8 @@ JS = r"""
 
   function pair(body, errMsg) {
     return api("POST", "/api/pair", body).then(function (r) {
+      if (r.status === 409) { errMsg = S.full; throw new Error(409); }
+      if (r.status === 429) { errMsg = S.wait; throw new Error(429); }
       if (!r.ok) throw new Error(r.status);
       return r.json();
     }).then(function (j) { save(j.token); showApp(); }).catch(function () {

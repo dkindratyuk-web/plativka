@@ -462,7 +462,12 @@ class RemoteDialog(QDialog):
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh)
         self.timer.start(1000)
+        self.finished.connect(self._closed)
         self.refresh()
+
+    def _closed(self, *_):
+        if self.win.remote:
+            self.win.remote.rotate_secret()     # показаний QR-код після закриття вікна не діє
 
     async def _toggle(self, on: bool):
         await self.win.set_remote(on)

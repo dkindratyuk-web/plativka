@@ -660,6 +660,10 @@ class RemoteScreen(ModalScreen):
         self.refresh_view()
         self.set_interval(1, self.refresh_view)
 
+    def on_unmount(self):
+        if self.app.remote:
+            self.app.remote.rotate_secret()     # показаний QR-код після закриття вікна не діє
+
     async def action_toggle_remote(self):
         r = self.app.remote
         await self.app.set_remote(not (r and r.running))

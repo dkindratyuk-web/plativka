@@ -50,11 +50,17 @@ T = {
              "Media keys and headphone buttons, Now Playing, MPRIS on Linux, track "
              "notifications with the album cover, a tray icon."),
             ("🎧", "Plays what you have",
-             "MP3, FLAC, M4A/AAC, OGG/Opus and WAV through mpv. Files without tags are "
+             "MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE and WavPack through mpv. Files without tags are "
              "named from the file name, old Windows-1251 tags are fixed automatically."),
+            ("💿", "Plays like an album",
+             "No pauses between tracks, so live albums and mixes flow on. Volume levelling by album "
+             "or by track (ReplayGain). One-file albums with a .cue sheet show up as separate tracks."),
+            ("🌙", "Sleep timer",
+             "Fall asleep to music: stop in 15–90 minutes or after the current track, "
+             "with a gentle fade-out instead of a sudden stop."),
             ("💾", "Remembers everything",
              "Playlist, position, volume, view and window size are there next time. "
-             "English and Ukrainian interface."),
+             "Tells you when a new version is out. English and Ukrainian interface."),
         ],
         "shots_h": "The same player on every system",
         "tabs": ["macOS", "Windows 11", "Linux"],
@@ -133,11 +139,17 @@ T = {
              "Медіаклавіші й кнопки навушників, «Зараз грає», MPRIS у Linux, сповіщення "
              "про трек з обкладинкою, іконка в треї."),
             ("🎧", "Грає те, що у вас є",
-             "MP3, FLAC, M4A/AAC, OGG/Opus і WAV через mpv. Файли без тегів підписуються "
+             "MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE і WavPack через mpv. Файли без тегів підписуються "
              "з назви файлу, старі теги у Windows-1251 виправляються самі."),
+            ("💿", "Грає як альбом",
+             "Без пауз між треками — концертні альбоми й мікси не розриваються. Вирівнювання "
+             "гучності за альбомом або за треком (ReplayGain). Альбом одним файлом з .cue — окремими треками."),
+            ("🌙", "Таймер сну",
+             "Засинайте під музику: зупинка через 15–90 хвилин або після поточного треку, "
+             "з м'яким стишуванням, а не різким обривом."),
             ("💾", "Усе пам'ятає",
              "Плейлист, позиція, гучність, вигляд і розмір вікна — наступного разу все "
-             "на місці. Українська й англійська мова інтерфейсу."),
+             "на місці. Підкаже, коли вийде нова версія. Українська й англійська мова інтерфейсу."),
         ],
         "shots_h": "Той самий плеєр на кожній системі",
         "tabs": ["macOS", "Windows 11", "Linux"],

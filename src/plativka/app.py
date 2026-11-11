@@ -35,6 +35,7 @@ from . import __version__, pickers, sysdeps, sysvol
 from .i18n import LANG, LANGS, _, file_manager_from, n_tracks
 from .core import *  # noqa: F401,F403  — ядро без інтерфейсу (спільне з віконною версією)
 from .core import _vinyl64  # noqa: F401
+from .remote import RemoteHost
 
 
 
@@ -615,6 +616,7 @@ class HelpScreen(ModalScreen):
             ("K", _("таймер сну: 15 · 30 · 45 · 60 · 90 хв · після треку · вимк")),
             ("G", _("вирівнювання гучності: за альбомом · за треком · вимк")),
             ("U", _("перевірити оновлення / завантажити нову версію")),
+            ("F3", _("пульт з телефона: QR-код, підключені телефони")),
             ("T", _("світла / темна тема")),
             ("F2", _("мова інтерфейсу")),
             *([("H", _("сховати в трей"))] if sysdeps.IS_WIN else []),
@@ -632,6 +634,103 @@ class HelpScreen(ModalScreen):
             t.append(f"{k:<12}", Style(bold=True, color=self.app.primary_hex))
             t.append(d + "\n")
         return t
+
+
+class RemoteScreen(ModalScreen):
+    """Пульт з телефона: QR-код прямо в терміналі, ручний код, підключені телефони."""
+    BINDINGS = [Binding("escape", "dismiss(None)", _("Закрити")),
+                Binding("space", "toggle_remote", show=False), Binding("c", "code", show=False),
+                Binding("d", "reset", show=False)]
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dlg", classes="remote"):
+            yield Static(_("Пульт з телефона"), classes="dlg-title")
+            yield Static(id="r-help", classes="dlg-help")
+            yield Static(id="r-qr")
+            yield Static(id="r-info")
+            with Horizontal(classes="dlg-buttons"):
+                yield Clickable("", "toggle_remote", classes="btn primary", id="r-on")
+                yield Clickable(_(" Код вручну (C) "), "code", classes="btn", id="r-code")
+                yield Clickable(_(" Відключити всіх (D) "), "reset", classes="btn danger", id="r-reset")
+                yield Static(classes="spacer")
+                yield Clickable(_(" Закрити "), "dismiss(None)", classes="btn")
+
+    def on_mount(self):
+        self._qr_for = None
+        self.refresh_view()
+        self.set_interval(1, self.refresh_view)
+
+    async def action_toggle_remote(self):
+        r = self.app.remote
+        await self.app.set_remote(not (r and r.running))
+        self.refresh_view()
+
+    def action_code(self):
+        if self.app.remote and self.app.remote.running:
+            self.app.remote.new_code()
+            self.refresh_view()
+
+    def action_reset(self):
+        if self.app.remote and self.app.remote.running:
+            self.app.remote.reset_pairing()
+            self.refresh_view()
+
+    def refresh_view(self):
+        r = self.app.remote
+        on = bool(r and r.running)
+        self.query_one("#r-on", Static).update(_(" Вимкнути (пробіл) ") if on else _(" Увімкнути (пробіл) "))
+        self.query_one("#r-code").display = on
+        self.query_one("#r-reset").display = on and bool(r.devices)
+        qr = self.query_one("#r-qr", Static)
+        if not on:
+            self.query_one("#r-help", Static).update(
+                _("Увімкніть — і керуйте Платівкою з телефона в тій самій Wi-Fi-мережі: пауза, наступний трек, "
+                  "гучність, таймер сну. Нічого встановлювати не треба. Працює лише в домашній мережі "
+                  "і лише поки відкрита Платівка; не вмикайте в публічних Wi-Fi."))
+            qr.update("")
+            self._qr_for = None
+            self.query_one("#r-info", Static).update("")
+            return
+        self.query_one("#r-help", Static).update(
+            _("Наведіть камеру телефона на QR-код і відкрийте посилання. Телефон запам'ятає підключення."))
+        url = r.pair_url()
+        if url != self._qr_for:
+            self._qr_for = url
+            qr.update(qr_text(url))
+        qr.display = self.app.size.height >= 36 and self.app.size.width >= 50
+        dim = Style(color=self.app.dim_hex)
+        t = Text()
+        if not qr.display:
+            t.append(_("QR-код не вміщається — розгорніть вікно термінала або скористайтеся кодом (C).") + "\n", dim)
+        t.append(_("Або відкрийте на телефоні {url} і введіть код").format(url=r.base_url()), dim)
+        left = r.code_left()
+        if left and r.code:
+            t.append("\n" + _("Код: "), dim)
+            t.append(f"{r.code[:3]} {r.code[3:]}", Style(bold=True, color=self.app.primary_hex))
+            t.append("  " + _("діє ще {t}").format(t=fmt_time(left)), dim)
+        t.append("\n\n" + _("Підключені телефони: "), dim)
+        devs = r.devices
+        t.append(", ".join(d.get("name", "?") for d in devs) if devs else _("поки жодного"))
+        self.query_one("#r-info", Static).update(t)
+
+
+def qr_text(url: str) -> Text:
+    """QR-код півблоками ▀: чорне на білому, з полем — телефон читає його з екрана термінала."""
+    import segno
+    m = [list(r) for r in segno.make(url, error="m").matrix]
+    n = len(m)
+    q = 2
+    rows = [[0] * (n + 2 * q) for _ in range(q)] + [[0] * q + r + [0] * q for r in m] \
+        + [[0] * (n + 2 * q) for _ in range(q)]
+    if len(rows) % 2:
+        rows.append([0] * (n + 2 * q))
+    t = Text(no_wrap=True)
+    chars = {(0, 0): " ", (1, 0): "▀", (0, 1): "▄", (1, 1): "█"}
+    for y in range(0, len(rows), 2):
+        line = "".join(chars[(a, b)] for a, b in zip(rows[y], rows[y + 1]))
+        t.append(line, Style(color="black", bgcolor="white"))
+        t.append("\n")
+    return t
 
 
 class FoldersScreen(ModalScreen):
@@ -821,6 +920,7 @@ class MainScreen(Screen):
         Binding("k", "sleep", _("Таймер сну"), show=False),
         Binding("g", "replaygain", _("Вирівнювання гучності"), show=False),
         Binding("u", "update", _("Оновлення"), show=False),
+        Binding("f3", "remote", _("Пульт"), show=False),
         Binding("m", "toggle_library", _("Медіатека"), show=False),
         Binding("w", "toggle_view", _("Вигляд"), show=False),
         Binding("e", "toggle_collapsed", _("Згорнути"), show=False),
@@ -933,6 +1033,7 @@ class MainScreen(Screen):
     def action_sleep(self): self.app.cycle_sleep()
     def action_replaygain(self): self.app.cycle_replaygain()
     def action_update(self): self.app.update_action()
+    def action_remote(self): self.app.push_screen(RemoteScreen())
     def action_theme(self): self.app.toggle_theme()
     def action_help(self): self.app.push_screen(HelpScreen())
     def action_toggle_view(self): self.app.toggle_view()
@@ -1129,6 +1230,8 @@ Footer { background: $primary 8%; }
 .kb:hover { background: $primary 25%; color: $foreground; }
 /* довідка і теки */
 #dlg.help { width: 86; }
+#dlg.remote { width: 84; }
+#r-qr { width: auto; margin: 0 0 1 0; }
 #help-url { color: $foreground 50%; margin-bottom: 1; }
 .help-h { text-style: bold; color: $primary; margin-top: 1; }
 .help-set { height: 1; }
@@ -1160,7 +1263,7 @@ NoMpvScreen { align: center middle; }
 """
 
 
-class Plativka(App, PlayerExtras):
+class Plativka(App, PlayerExtras, RemoteHost):
     CSS = CSS
     TITLE = APP_NAME
     ENABLE_COMMAND_PALETTE = False
@@ -1186,6 +1289,8 @@ class Plativka(App, PlayerExtras):
         self.replaygain: str = self.cfg.get("replaygain", "album")  # off | track | album
         self.check_updates: bool = bool(self.cfg.get("check_updates", True))
         self.update_info = None
+        self.remote = None                      # пульт з телефона (RemoteServer), коли увімкнено
+        self.remote_cfg: dict = self.cfg.setdefault("remote", {})
         self.base: str = self.cfg.get("theme", "light")
         self.lib_mode: str = self.cfg.get("lib_mode", "artists")
         self.show_library: bool = bool(self.cfg.get("show_library", True))
@@ -1412,6 +1517,8 @@ class Plativka(App, PlayerExtras):
             self.start_scan(quiet=True)
         if self.check_updates and not self.demo:
             self.run_worker(self.look_for_update(delay=3))
+        if self.remote_cfg.get("enabled"):
+            self.run_worker(self.set_remote(True))
         if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
             self.run_worker(self.play_index(self.current, start=float(self.cfg.get("position", 0)), paused=True))
         else:
@@ -1429,6 +1536,8 @@ class Plativka(App, PlayerExtras):
             self.mpris.stop()
         if self.smtc is not None:
             self.smtc.stop()
+        if self.remote:
+            await self.remote.stop()
         if self.player:
             await self.player.close()
         self.exit()
@@ -1833,6 +1942,33 @@ class Plativka(App, PlayerExtras):
         elif manual:
             self.notify(_("У вас найновіша версія ({v})").format(v=VERSION), timeout=4)
 
+    # ── пульт з телефона ──
+    async def set_remote(self, on: bool):
+        from .remote import RemoteServer
+        if on:
+            if self.remote is None:
+                self.remote = RemoteServer(self, self.remote_cfg, self.save_cfg)
+            try:
+                await self.remote.start()
+            except OSError as e:
+                self.notify(_("Не вдалося увімкнути пульт: {e}").format(e=e), severity="error", markup=False)
+                return
+        elif self.remote:
+            await self.remote.stop()
+        self.remote_cfg["enabled"] = on
+        self.update_status_line()
+        self.save_cfg()
+
+    def remote_accent(self) -> str:
+        return tune(self.cover_accent or (14, 124, 132), False)
+
+    def remote_event(self, kind: str, text: str):
+        msg = {"paired": _("Підключено пульт: {name}"), "left": _("Пульт відключився: {name}"),
+               "blocked": _("Пульт: адресу {name} заблоковано після невдалих спроб підключення"),
+               "code_locked": _("Пульт: забагато неправильних кодів — код вимкнено. Покажіть новий, якщо треба.")}
+        self.notify(msg.get(kind, "{name}").format(name=text), timeout=5, markup=False,
+                    severity="warning" if kind in ("blocked", "code_locked") else "information")
+
     def update_action(self):
         if self.update_info:
             self.open_url(self.update_info["url"])
@@ -2005,6 +2141,7 @@ class Plativka(App, PlayerExtras):
     def update_status_line(self):
         """Нижня рамка плеєра: демо-режим, таймер сну, нова версія."""
         parts = [_("демо, без звуку") if self.demo else "", self.sleep_label(),
+                 _("пульт") if self.remote and self.remote.running else "",
                  _("⬆ {v} — U").format(v=self.update_info["version"]) if self.update_info else ""]
         self.main.query_one("#main-win").border_subtitle = " · ".join(x for x in parts if x)
 

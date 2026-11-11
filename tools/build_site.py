@@ -422,6 +422,8 @@ def changelog(lang: str) -> list[tuple[str, str]]:
     out = []
     for block in re.split(r"^## ", text, flags=re.M)[1:]:
         ver, _, rest = block.partition("\n")
+        if ver.strip().lower().startswith("unreleased"):
+            continue                      # ще не випущене на сайт не потрапляє
         parts = re.split(r"^\*\*(?:English|Українська)\*\*\s*$", rest, flags=re.M)
         heads = re.findall(r"^(\*\*(?:English|Українська)\*\*)\s*$", rest, flags=re.M)
         body = dict(zip(heads, parts[1:])).get(want, rest)

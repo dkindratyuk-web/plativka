@@ -88,6 +88,24 @@ Tracks follow each other without a pause, as on the album — live recordings an
 
 If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plativka shows it as separate tracks with their own titles, and they play one after another without a gap. The `.cue` file can be in UTF-8 or in the old Windows encoding (Cyrillic `.cue` files from the 2000s too).
 
+## Phone remote
+
+Control Plativka from your phone while lying on the sofa: pause, next or previous track, seek, volume, the sleep timer and any track from the playlist. Nothing to install on the phone — it is a web page that Plativka itself serves in your home network.
+
+1. Open ☰ → **Playback → Phone remote…** (on a Mac — the **Playback** menu; or click **remote** next to shuffle and repeat once it is on) and tick **Allow control from a phone**.
+2. Point the phone's camera at the QR code and open the link. That's it — the phone is connected and remembers it: next time just open the same page (add it to the home screen: Safari → Share → **Add to Home Screen**, Chrome → ⋮ → **Add to Home screen**).
+3. If the camera cannot read the code from the screen, open the address shown next to it on the phone, press **Show a code to type in** and type the 6-digit code.
+
+The phone and the computer must be on the same Wi-Fi network. The first time, macOS or Windows may ask whether Plativka may accept incoming connections — allow it for private networks.
+
+**Security.** The remote is off until you turn it on, and works only while Plativka is open.
+
+- Only devices in your home network can reach it — requests from the internet are refused, even if a port is forwarded on the router.
+- A phone gets in only through the QR code (a long one-time key) or the short code you show yourself: it is valid for 2 minutes, and after 5 wrong tries it is switched off. An address that keeps guessing is blocked for 10 minutes.
+- Every phone has its own key; Plativka keeps only its fingerprint. The list of connected phones shows each of them; **Disconnect all and change the QR code** disconnects them all at once.
+- The remote can only control the music — it has no access to files, settings or anything else on the computer.
+- Inside the home network the page uses plain HTTP (a real certificate cannot be issued for a home address). That is fine on a Wi-Fi network with a password; do not turn the remote on in public Wi-Fi (cafés, hotels).
+
 ## Notifications, media keys, tray
 
 - **Track notifications** with the album cover appear when the window is in the background or collapsed to the mini player. **N** or the **notifications** switch turns them off.

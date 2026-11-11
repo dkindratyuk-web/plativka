@@ -20,7 +20,7 @@ python -m PyInstaller --noconfirm --clean --onedir --console --name plativka `
   --icon "$Root\packaging\icons\plativka.ico" `
   --distpath "$Work\dist" --workpath "$Work\pyi" --specpath "$Work" `
   --collect-all textual --collect-all textual_image --collect-data plativka `
-  --collect-submodules plativka --collect-submodules rich --collect-submodules pystray `
+  --collect-submodules plativka --collect-submodules rich --hidden-import segno --collect-submodules pystray `
   --collect-submodules comtypes --collect-submodules pycaw --collect-all winrt `
   --hidden-import pystray._win32 `
   --exclude-module numpy --exclude-module yaml --exclude-module chardet `

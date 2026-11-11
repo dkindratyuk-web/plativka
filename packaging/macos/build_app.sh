@@ -24,7 +24,7 @@ python3 -m pip install -q "$ROOT"
 python3 -m PyInstaller --noconfirm --clean --onedir --name plativka \
   --distpath "$WORK/dist" --workpath "$WORK/pyi" --specpath "$WORK" \
   --collect-all textual --collect-all textual_image --collect-data plativka \
-  --collect-submodules plativka --collect-submodules rich \
+  --collect-submodules plativka --collect-submodules rich --hidden-import segno \
   --exclude-module numpy --exclude-module yaml --exclude-module chardet \
   --exclude-module charset_normalizer --exclude-module tkinter --exclude-module pytest \
   "$ROOT/packaging/pyinstaller/plativka_entry.py"

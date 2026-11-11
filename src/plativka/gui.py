@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
                                QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from . import sysdeps, sysvol
+from .remote import RemoteHost
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
                    SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
                    check_update, clamp, fmt_time, load_cover, log, read_track, real_path, rgb_hex, rotate_log,
@@ -400,6 +401,155 @@ class LibraryTree(QTreeWidget):
         super().keyPressEvent(e)
 
 
+class RemoteDialog(QDialog):
+    """Пульт з телефона: увімкнути, QR-код, ручний код, підключені телефони."""
+
+    def __init__(self, win: "MainWindow"):
+        super().__init__(win)
+        self.win = win
+        self.setWindowTitle(_("Пульт з телефона"))
+        self.resize(460, 600)
+        lay = QVBoxLayout(self)
+        self.on = QCheckBox(_("Дозволити керування з телефона"))
+        self.on.setChecked(win.remote is not None and win.remote.running)
+        self.on.toggled.connect(lambda v: win.spawn(self._toggle(v)))
+        lay.addWidget(self.on)
+        self.hint = QLabel()
+        self.hint.setWordWrap(True)
+        self.hint.setObjectName("dim")
+        lay.addWidget(self.hint)
+        row = QHBoxLayout()
+        self.qr = QLabel()
+        self.qr.setFixedSize(176, 176)
+        self.qr.setAlignment(Qt.AlignCenter)
+        row.addWidget(self.qr)
+        side = QVBoxLayout()
+        self.how = QLabel()
+        self.how.setWordWrap(True)
+        self.how.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        side.addWidget(self.how)
+        self.code_btn = QPushButton(_("Показати код для введення вручну"))
+        self.code_btn.clicked.connect(self._code)
+        side.addWidget(self.code_btn)
+        self.code = QLabel()
+        self.code.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        side.addWidget(self.code)
+        side.addStretch()
+        row.addLayout(side, 1)
+        lay.addLayout(row)
+        lay.addWidget(QLabel(_("Підключені телефони")))
+        self.list = QListWidget()
+        lay.addWidget(self.list, 1)
+        brow = QHBoxLayout()
+        self.forget_btn = QPushButton(_("Відключити вибраний"))
+        self.forget_btn.clicked.connect(self._forget)
+        self.reset_btn = QPushButton(_("Відключити всіх і змінити QR-код"))
+        self.reset_btn.clicked.connect(self._reset)
+        brow.addWidget(self.forget_btn)
+        brow.addStretch()
+        brow.addWidget(self.reset_btn)
+        lay.addLayout(brow)
+        note = QLabel(_("Працює лише у вашій домашній мережі і лише поки відкрита Платівка. "
+                        "Не вмикайте в публічних Wi-Fi (кафе, готель)."))
+        note.setWordWrap(True)
+        note.setObjectName("dim")
+        lay.addWidget(note)
+        bb = QDialogButtonBox(QDialogButtonBox.Close)
+        bb.rejected.connect(self.reject)
+        bb.button(QDialogButtonBox.Close).setText(_("Закрити"))
+        lay.addWidget(bb)
+        self._qr_for = None
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh)
+        self.timer.start(1000)
+        self.refresh()
+
+    async def _toggle(self, on: bool):
+        await self.win.set_remote(on)
+        self.refresh()
+
+    def _code(self):
+        if self.win.remote and self.win.remote.running:
+            self.win.remote.new_code()
+            self.refresh()
+
+    def _forget(self):
+        it = self.list.currentItem()
+        if it is not None and self.win.remote:
+            self.win.remote.forget(it.data(Qt.UserRole))
+            self.refresh()
+
+    def _reset(self):
+        if self.win.remote:
+            self.win.remote.reset_pairing()
+            self.refresh()
+
+    def refresh(self):
+        r = self.win.remote
+        on = bool(r and r.running)
+        if self.on.isChecked() != on:
+            self.on.blockSignals(True)
+            self.on.setChecked(on)
+            self.on.blockSignals(False)
+        for w in (self.qr, self.how, self.code_btn, self.code, self.list, self.forget_btn, self.reset_btn):
+            w.setEnabled(on)
+        if not on:
+            self.hint.setText(_("Увімкніть — і керуйте Платівкою з телефона в тій самій Wi-Fi-мережі: "
+                                "пауза, наступний трек, гучність, таймер сну. Нічого встановлювати не треба."))
+            self.qr.clear()
+            self._qr_for = None
+            self.how.setText("")
+            self.code.setText("")
+            self.list.clear()
+            return
+        self.hint.setText(_("Наведіть камеру телефона на QR-код і відкрийте посилання. "
+                            "Телефон запам'ятає підключення — наступного разу просто відкрийте сторінку."))
+        url = r.pair_url()
+        if url != self._qr_for:
+            self._qr_for = url
+            self.qr.setPixmap(qr_pixmap(url, 176))
+        self.how.setText(_("Або відкрийте на телефоні адресу\n{url}\nі введіть код.").format(url=r.base_url()))
+        left = r.code_left()
+        self.code.setText(_("Код: {code}  ·  діє ще {t}").format(code=f"{r.code[:3]} {r.code[3:]}", t=fmt_time(left))
+                          if left and r.code else "")
+        devs = r.devices
+        ids = [self.list.item(i).data(Qt.UserRole) for i in range(self.list.count())]
+        if ids != [d["id"] for d in devs] or not devs:
+            cur = self.list.currentRow()
+            self.list.clear()
+            for d in devs:
+                ago = max(0, int(time.time()) - int(d.get("seen", 0)))
+                when = _("щойно") if ago < 90 else _("{n} хв тому").format(n=ago // 60) if ago < 3600 \
+                    else _("{n} год тому").format(n=ago // 3600) if ago < 86400 else _("{n} дн тому").format(n=ago // 86400)
+                it = QListWidgetItem(f"{d.get('name', '?')}   ·   {when}")
+                it.setData(Qt.UserRole, d["id"])
+                self.list.addItem(it)
+            if not devs:
+                it = QListWidgetItem(_("Поки жодного"))
+                it.setFlags(Qt.NoItemFlags)
+                self.list.addItem(it)
+            self.list.setCurrentRow(min(cur, self.list.count() - 1))
+        self.forget_btn.setEnabled(bool(devs))
+        self.reset_btn.setEnabled(bool(devs))
+
+
+def qr_pixmap(text: str, size: int) -> QPixmap:
+    """QR-код як картинка (чорне на білому, з полем — так його читає будь-яка камера)."""
+    import segno
+    m = segno.make(text, error="m").matrix
+    n = len(m) + 8
+    k = max(1, size // n)
+    img = QImage(n * k, n * k, QImage.Format_RGB32)
+    img.fill(QColor("white"))
+    p = QPainter(img)
+    for y, row in enumerate(m):
+        for x, v in enumerate(row):
+            if v:
+                p.fillRect((x + 4) * k, (y + 4) * k, k, k, QColor("black"))
+    p.end()
+    return QPixmap.fromImage(img).scaled(size, size, Qt.KeepAspectRatio, Qt.FastTransformation)
+
+
 class FoldersDialog(QDialog):
     """Теки медіатеки: позначити й прибрати, прибрати всі, додати ще."""
 
@@ -499,7 +649,7 @@ class Bridge(QObject):
 
 
 # ═══════════════════════════════ головне вікно ═══════════════════════════════
-class MainWindow(QMainWindow, PlayerExtras):
+class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
     def __init__(self, demo: bool = False):
         super().__init__()
         self.demo = demo
@@ -520,6 +670,8 @@ class MainWindow(QMainWindow, PlayerExtras):
         self.replaygain = self.cfg.get("replaygain", "album")
         self.check_updates = bool(self.cfg.get("check_updates", True))
         self.update_info = None
+        self.remote = None              # пульт з телефона (RemoteServer), коли увімкнено
+        self.remote_cfg = self.cfg.setdefault("remote", {})
         self.base = self.cfg.get("theme", "auto")
         self.view = self.cfg.get("view", "full") if self.cfg.get("view") in ("full", "compact") else "full"
         self.collapsed = bool(self.cfg.get("collapsed", False))
@@ -671,11 +823,15 @@ class MainWindow(QMainWindow, PlayerExtras):
         self.f_sleep.setObjectName("flagon")
         self.f_sleep.clicked.connect(lambda: self.choose_sleep(None))
         self.f_sleep.hide()
+        self.f_remote = Clickable()         # пульт увімкнено: клік — вікно пульта
+        self.f_remote.setObjectName("flagon")
+        self.f_remote.clicked.connect(self.open_remote)
+        self.f_remote.hide()
         self.f_update = Clickable()         # «вийшла нова версія»: клік — сторінка завантаження
         self.f_update.setObjectName("flagon")
         self.f_update.clicked.connect(self.open_update)
         self.f_update.hide()
-        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_sleep, self.f_update):
+        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_sleep, self.f_remote, self.f_update):
             flags.addWidget(w)
         flags.addStretch()
         lv.addLayout(flags)
@@ -923,10 +1079,11 @@ class MainWindow(QMainWindow, PlayerExtras):
                                 self.choose_replaygain)
         self.a_autoupd = act(_("Перевіряти оновлення автоматично"), self.toggle_check_updates, None, True)
         a_upd = act(_("Перевірити оновлення…"), lambda: self.spawn(self.look_for_update(manual=True)))
+        a_remote = act(_("Пульт з телефона…"), self.open_remote)
         menus = [
             (_("Файл"), [a_add, a_folders, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
-                                 None, m_sleep, m_rg]),
+                                 None, m_sleep, m_rg, None, a_remote]),
             (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, a_theme, self.a_popups, a_lang, None, a_find]
              + ([self.a_tray] if not sysdeps.IS_MAC else [])),
             (_("Довідка"), [a_gh, a_bug, None, a_upd, self.a_autoupd, None, a_about]),
@@ -1535,6 +1692,10 @@ class MainWindow(QMainWindow, PlayerExtras):
         for key, a in self.a_rg.items():
             a.setChecked(key == self.replaygain)
         self.a_autoupd.setChecked(self.check_updates)
+        on = bool(self.remote and self.remote.running)
+        self.f_remote.setText(_("пульт"))
+        self.f_remote.setToolTip(_("Пульт з телефона увімкнено — клацніть, щоб відкрити"))
+        self.f_remote.setVisible(on)
         u = self.update_info
         self.f_update.setVisible(bool(u))
         if u:
@@ -1586,6 +1747,38 @@ class MainWindow(QMainWindow, PlayerExtras):
             self.toast(_("Вийшла Платівка {v} — натисніть «⬆ {v}», щоб завантажити").format(v=info["version"]))
         elif manual:
             self.toast(_("У вас найновіша версія ({v})").format(v=VERSION))
+
+    # ── пульт з телефона ──
+    def open_remote(self):
+        RemoteDialog(self).exec()
+
+    async def set_remote(self, on: bool):
+        from .remote import RemoteServer
+        if on:
+            if self.remote is None:
+                self.remote = RemoteServer(self, self.remote_cfg, self.save_cfg)
+            try:
+                await self.remote.start()
+            except OSError as e:
+                self.toast(_("Не вдалося увімкнути пульт: {e}").format(e=e))
+                return
+        elif self.remote:
+            await self.remote.stop()
+        self.remote_cfg["enabled"] = on
+        self.update_flags()
+        self.save_cfg()
+
+    def remote_accent(self) -> str:
+        return tune(self.accent_rgb, False)
+
+    def remote_event(self, kind: str, text: str):
+        msg = {"paired": _("Підключено пульт: {name}"), "left": _("Пульт відключився: {name}"),
+               "blocked": _("Пульт: адресу {name} заблоковано після невдалих спроб підключення"),
+               "code_locked": _("Пульт: забагато неправильних кодів — код вимкнено. Покажіть новий, якщо треба.")}
+        text = msg.get(kind, "{name}").format(name=text)
+        self.toast(text)
+        if not self.isActiveWindow() and kind in ("paired", "blocked"):
+            self._tray_message(APP_NAME, text)
 
     def open_update(self):
         if self.update_info:
@@ -2147,6 +2340,11 @@ class MainWindow(QMainWindow, PlayerExtras):
 
         async def bye():
             try:
+                if self.remote:
+                    await asyncio.wait_for(self.remote.stop(), 2)
+            except Exception:
+                pass
+            try:
                 if self.player:
                     await asyncio.wait_for(self.player.close(), 2)
             except Exception:
@@ -2196,6 +2394,8 @@ def main():
         await win.start_player()
         if win.lib.folders:
             win.start_scan()
+        if win.remote_cfg.get("enabled"):
+            await win.set_remote(True)
         if win.check_updates and not win.demo:
             await asyncio.sleep(3)
             await win.look_for_update()

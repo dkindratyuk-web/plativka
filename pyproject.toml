@@ -16,6 +16,7 @@ dependencies = [
     "mutagen>=1.45",
     "pillow>=9.0",
     "textual-image>=0.8",
+    "segno>=1.5",
     "dbus-next>=0.2.3; sys_platform == 'linux'",
     "pystray>=0.19; sys_platform == 'win32'",
     "pycaw>=20230407; sys_platform == 'win32'",

@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## Unreleased / Ще не випущено
+
+**English**
+
+- Phone remote: control Plativka from a phone on the same Wi-Fi — scan the QR code, nothing to install. Pause, previous/next, seek, volume, sleep timer and any track from the playlist. Off until you turn it on; only phones you paired and only from your home network. Plativka Desktop: ☰ → Playback → Phone remote; terminal: `F3`.
+
+**Українська**
+
+- Пульт з телефона: керуйте Платівкою з телефона в тій самій Wi-Fi-мережі — відскануйте QR-код, нічого встановлювати не треба. Пауза, назад/далі, перемотування, гучність, таймер сну і будь-який трек зі списку. Вимкнено, доки ви не ввімкнете; лише телефони, які ви підключили, і лише з домашньої мережі. Віконна версія: ☰ → Відтворення → Пульт з телефона; консольна: `F3`.
+
 ## 1.3.6
 
 **English**

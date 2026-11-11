@@ -18,7 +18,7 @@ python -m pip install -q "$Root[desktop]"
 python -m PyInstaller --noconfirm --clean --onedir --windowed --name Plativka `
   --icon "$Root\packaging\icons\plativka.ico" `
   --distpath "$Work\dist" --workpath "$Work\pyi" --specpath "$Work" `
-  --collect-data plativka --collect-submodules plativka `
+  --collect-data plativka --collect-submodules plativka --hidden-import segno `
   --collect-submodules comtypes --collect-submodules pycaw --collect-all winrt `
   --exclude-module textual --exclude-module textual_image --exclude-module rich --exclude-module pystray `
   --exclude-module numpy --exclude-module yaml --exclude-module tkinter --exclude-module pytest `

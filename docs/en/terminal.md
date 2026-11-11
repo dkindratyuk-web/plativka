@@ -88,6 +88,7 @@ In the playlist: **Enter** or a double-click plays a track, **Delete** removes i
 | `K` | sleep timer: 15 · 30 · 45 · 60 · 90 min · after this track · off |
 | `G` | volume levelling: by album → by track → off |
 | `U` | check for updates / open the download page |
+| `F3` | phone remote: QR code, connected phones |
 
 **Volume** mirrors the system volume: the volume keys on your keyboard (F11/F12 or the speaker keys on a Mac, the volume keys or the Windows/Linux sound slider) move the player's volume bar, and `+` `−` in the player change the system volume. If you prefer a separate player volume, switch it in **F1 → Volume**. On Linux this needs PipeWire (`wpctl`) or PulseAudio (`pactl`), which every modern desktop has.
 
@@ -126,6 +127,24 @@ System notifications show the **album cover**:
 - **macOS** (the DMG): the notification comes from "Plativka" with the cover on the right. The first time macOS asks whether Plativka may show notifications — allow it. In Terminal.app and other terminals the notification is shown by "Script Editor" (a system component), without a cover.
 - **Windows** (installed with the installer): a Windows notification with the cover; a new track replaces the previous notification. Without the installer the tray icon shows a notification without a cover.
 - **Linux**: the cover is shown as the notification icon (GNOME, KDE and most desktops).
+
+## Phone remote
+
+Control Plativka from your phone while lying on the sofa: pause, next or previous track, seek, volume, the sleep timer and any track from the playlist. Nothing to install on the phone — it is a web page that Plativka itself serves in your home network.
+
+1. Press `F3` and then `Space` to turn the remote on; the QR code is drawn right in the terminal (make the window at least 36 rows tall).
+2. Point the phone's camera at the QR code and open the link. That's it — the phone is connected and remembers it: next time just open the same page (add it to the home screen: Safari → Share → **Add to Home Screen**, Chrome → ⋮ → **Add to Home screen**).
+3. If the camera cannot read the code from the screen, open the address shown next to it on the phone, press **C** and type the 6-digit code.
+
+The phone and the computer must be on the same Wi-Fi network. The first time, macOS or Windows may ask whether Plativka may accept incoming connections — allow it for private networks.
+
+**Security.** The remote is off until you turn it on, and works only while Plativka is open.
+
+- Only devices in your home network can reach it — requests from the internet are refused, even if a port is forwarded on the router.
+- A phone gets in only through the QR code (a long one-time key) or the short code you show yourself: it is valid for 2 minutes, and after 5 wrong tries it is switched off. An address that keeps guessing is blocked for 10 minutes.
+- Every phone has its own key; Plativka keeps only its fingerprint. The list of connected phones shows each of them; **D** disconnects them all at once.
+- The remote can only control the music — it has no access to files, settings or anything else on the computer.
+- Inside the home network the page uses plain HTTP (a real certificate cannot be issued for a home address). That is fine on a Wi-Fi network with a password; do not turn the remote on in public Wi-Fi (cafés, hotels).
 
 ## System integration
 

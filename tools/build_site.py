@@ -353,7 +353,7 @@ cd plativka-*-linux
 
 <footer class="foot">
   <div class="wrap foot-in">
-    <p><a href="{REPO}">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="{REPO}/blob/main/CHANGELOG.md">{t['foot'][0]}</a> · <a href="{REPO}/issues">{t['foot'][1]}</a> · <a href="{REPO}/blob/main/{t['readme']}">{t['foot'][2]}</a></p>
+    <p><a href="{REPO}">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="https://alternativeto.net/software/plativka/about/">AlternativeTo</a> · <a href="{REPO}/blob/main/CHANGELOG.md">{t['foot'][0]}</a> · <a href="{REPO}/issues">{t['foot'][1]}</a> · <a href="{REPO}/blob/main/{t['readme']}">{t['foot'][2]}</a></p>
     <p class="muted">{t['foot_note']}</p>
   </div>
 </footer>

@@ -1,4 +1,6 @@
 """Альбом одним файлом + .cue: треки, назви, межі, кодування cp1251."""
+import os
+
 from plativka import core
 
 
@@ -43,7 +45,7 @@ def test_plain_files_untouched(tmp_path):
     (tmp_path / "a.mp3").write_bytes(b"\0")
     (tmp_path / "b.mp3").write_bytes(b"\0")
     (tmp_path / "x.cue").write_text('FILE "missing.wav" WAVE\n  TRACK 01 AUDIO\n    INDEX 01 00:00:00\n')
-    assert [p.split("/")[-1].split("\\\\")[-1] for p in core.scan_dir(str(tmp_path))] == ["a.mp3", "b.mp3"]
+    assert [os.path.basename(p) for p in core.scan_dir(str(tmp_path))] == ["a.mp3", "b.mp3"]
     assert core.real_path(str(tmp_path / "a.mp3")) == str(tmp_path / "a.mp3")
 
 

@@ -74,6 +74,20 @@ In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or
 
 "Previous" goes to the start of the current track if more than 3 seconds have played, otherwise to the previous track (with shuffle — to the one that actually played before). At the end of the playlist Plativka stops; turn on **repeat: all** to loop.
 
+### Sleep timer
+
+Plativka can stop the music for you: in ☰ → **Playback → Sleep timer** (on a Mac — the **Playback** menu) pick 15, 30, 45, 60 or 90 minutes, or **after this track**. While the timer runs, the time left is shown next to shuffle and repeat (**sleep: 29:41**; click it to cancel). When it runs out, the music fades out over a few seconds and pauses.
+
+### Gapless playback and volume levelling
+
+Tracks follow each other without a pause, as on the album — live recordings and DJ mixes are not cut into pieces. Nothing to turn on: it just works.
+
+**Volume levelling (ReplayGain)** makes quiet and loud albums play at the same volume, if the files carry ReplayGain tags (most rips and many shops add them; foobar2000, MusicBrainz Picard and others can add them). Choose it in ☰ → **Playback → Volume levelling (ReplayGain)**: by album (default), by track or off. **By album** keeps the difference between quiet and loud songs of one album, as the artist intended; **by track** makes every song equally loud. Files without the tags play as they are.
+
+### Albums as one file with a .cue sheet
+
+If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plativka shows it as separate tracks with their own titles, and they play one after another without a gap. The `.cue` file can be in UTF-8 or in the old Windows encoding (Cyrillic `.cue` files from the 2000s too).
+
 ## Notifications, media keys, tray
 
 - **Track notifications** with the album cover appear when the window is in the background or collapsed to the mini player. **N** or the **notifications** switch turns them off.
@@ -82,6 +96,10 @@ In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or
   - Linux: the cover is the notification icon.
 - **Media keys** ⏮ ⏯ ⏭ and headphone buttons work on all three systems; **Now Playing** (macOS), the Windows media overlay and the GNOME/KDE media widget (MPRIS) show the track and cover.
 - **Tray icon**: a click shows the window; right-click for play/pause, next, previous and quit. On Windows and Linux, **☰ → View → Minimize to tray** makes ✕ and minimising hide the window to the tray instead of quitting.
+
+## Updates
+
+Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.x.x** appears next to shuffle and repeat — click it to open the download page. Nothing is downloaded or installed by itself, and nothing about you is sent. To check right now or to turn the check off: ☰ → **Help → Check for updates…** / **Check for updates automatically** (on a Mac — the **Help** menu in the menu bar).
 
 ## Language
 

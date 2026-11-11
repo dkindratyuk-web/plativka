@@ -5,6 +5,7 @@
 import asyncio
 import os
 from pathlib import Path
+from .core import real_path
 
 from dbus_next import PropertyAccess, Variant
 from dbus_next.aio import MessageBus
@@ -241,7 +242,7 @@ class Mpris:
                     "xesam:title": Variant("s", track.title or ""),
                     "xesam:artist": Variant("as", [track.artist] if track.artist else []),
                     "xesam:album": Variant("s", track.album or ""),
-                    "xesam:url": Variant("s", Path(track.path).as_uri()),
+                    "xesam:url": Variant("s", Path(real_path(track.path)).as_uri()),
                 }
                 if dur:
                     meta["mpris:length"] = Variant("x", int(dur * 1e6))

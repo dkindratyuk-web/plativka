@@ -33,7 +33,7 @@ VERSION = __version__
 CONF_DIR = sysdeps.config_dir()
 CACHE_DIR = sysdeps.cache_dir()
 AUDIO_EXT = {".mp3", ".flac", ".m4a", ".aac", ".ogg", ".oga", ".opus", ".wav",
-             ".aiff", ".aif", ".wma", ".alac", ".mp2"}
+             ".aiff", ".aif", ".wma", ".alac", ".mp2", ".ape", ".wv"}
 COVER_NAMES = ("cover", "folder", "front", "album", "albumart", "albumartsmall", "artwork")
 IMG_EXT = (".jpg", ".jpeg", ".png", ".webp", ".bmp")
 
@@ -127,6 +127,12 @@ class Track:
     channels: int = 0
     mtime: float = 0.0
     size: int = 0
+    start: float = 0.0      # трек з CUE: початок і кінець у спільному файлі (0 — до кінця файлу)
+    end: float = 0.0
+
+    @property
+    def segment(self):
+        return (self.start, self.end) if (self.start or self.end) else None
 
     @property
     def display(self) -> str:
@@ -134,7 +140,7 @@ class Track:
 
     @property
     def fmt(self) -> str:
-        return Path(self.path).suffix.lstrip(".").upper()
+        return Path(real_path(self.path)).suffix.lstrip(".").upper()
 
     @property
     def sort_key(self):
@@ -142,6 +148,8 @@ class Track:
 
 
 def read_track(path: str) -> Track:
+    if is_cue_path(path):
+        return read_cue_track(path)
     p = Path(path)
     t = Track(path=str(p))
     try:
@@ -211,9 +219,198 @@ def name_from_file(stem: str):
 def scan_dir(folder: str):
     for root, dirs, files in os.walk(folder):
         dirs[:] = sorted(d for d in dirs if not d.startswith("."))
-        for fn in sorted(files):
-            if not fn.startswith(".") and Path(fn).suffix.lower() in AUDIO_EXT:
-                yield os.path.join(root, fn)
+        audio = [os.path.join(root, fn) for fn in sorted(files)
+                 if not fn.startswith(".") and Path(fn).suffix.lower() in AUDIO_EXT]
+        split = {}
+        for fn in files:
+            if fn.lower().endswith(".cue") and not fn.startswith("."):
+                for f, n in cue_tracks(os.path.join(root, fn), audio):
+                    split.setdefault(f, []).append(n)
+        for f in audio:
+            if f in split:
+                yield from (cue_path(f, n) for n in sorted(split[f]))
+            else:
+                yield f
+
+
+# ═══════════════════════════════════ CUE ═══════════════════════════════════
+# Альбом одним файлом (FLAC/APE/WAV) + .cue з розбивкою: кожен трек — «віртуальний»
+# шлях «файл#track03». Грає той самий файл з потрібного місця до потрібного.
+_CUE_RE = re.compile(r"^(.*)#track(\d{1,3})$")
+
+
+def cue_path(file: str, n: int) -> str:
+    return f"{file}#track{n:02d}"
+
+
+def is_cue_path(p: str) -> bool:
+    return bool(_CUE_RE.match(p)) and not os.path.exists(p)
+
+
+def real_path(p: str) -> str:
+    """Справжній файл для шляху (для треку з CUE — спільний файл альбому)."""
+    m = _CUE_RE.match(p)
+    return m.group(1) if m and not os.path.exists(p) else p
+
+
+def _read_text(path: str) -> str:
+    raw = Path(path).read_bytes()
+    for enc in ("utf-8-sig", "cp1251"):
+        try:
+            return raw.decode(enc)
+        except UnicodeDecodeError:
+            pass
+    return raw.decode("latin-1")
+
+
+def _cue_val(rest: str) -> str:
+    rest = rest.strip()
+    if rest.startswith('"'):
+        end = rest.find('"', 1)
+        return rest[1:end if end > 0 else None]
+    return rest
+
+
+_cue_cache: dict[str, tuple] = {}
+
+
+def parse_cue(cue: str, audio: list[str] | None = None) -> dict:
+    """{файл: {"album", "performer", "date", "tracks": {n: {title, performer, start}}}}.
+
+    Беремо лише файли, що справді лежать поруч (часто .cue каже «album.wav», а лежить
+    album.flac — тоді шукаємо за назвою без розширення або беремо єдиний аудіофайл у теці).
+    """
+    try:
+        st = os.stat(cue)
+        key = (st.st_mtime, st.st_size, tuple(audio or ()))
+        if cue in _cue_cache and _cue_cache[cue][0] == key:
+            return _cue_cache[cue][1]
+        text = _read_text(cue)
+    except OSError:
+        return {}
+    folder = os.path.dirname(cue)
+    if audio is None:
+        try:
+            audio = [os.path.join(folder, f) for f in sorted(os.listdir(folder))
+                     if Path(f).suffix.lower() in AUDIO_EXT and not f.startswith(".")]
+        except OSError:
+            audio = []
+
+    def locate(name: str) -> str | None:
+        cand = os.path.join(folder, name.replace("\\", "/"))
+        if os.path.isfile(cand) and Path(cand).suffix.lower() in AUDIO_EXT:
+            return cand
+        stem = Path(name.replace("\\", "/")).stem.lower()
+        same = [a for a in audio if Path(a).stem.lower() == stem]
+        if same:
+            return same[0]
+        return audio[0] if len(audio) == 1 else None
+
+    album = {"album": "", "performer": "", "date": ""}
+    out: dict = {}
+    cur_file = None
+    tr = None
+    for line in text.splitlines():
+        parts = line.strip().split(None, 1)
+        if not parts:
+            continue
+        kw, rest = parts[0].upper(), (parts[1] if len(parts) > 1 else "")
+        if kw == "REM":
+            sub = rest.split(None, 1)
+            if sub and sub[0].upper() == "DATE" and len(sub) > 1:
+                album["date"] = _cue_val(sub[1])[:4]
+        elif kw == "FILE":
+            if rest.strip().startswith('"'):
+                name = _cue_val(rest)
+            else:  # FILE name.flac WAVE — без лапок
+                name = rest.rsplit(None, 1)[0] if len(rest.split()) > 1 else rest
+            cur_file = locate(name)
+            if cur_file:
+                out.setdefault(cur_file, {"tracks": {}})
+            tr = None
+        elif kw == "TRACK":
+            try:
+                n = int(rest.split()[0])
+            except (ValueError, IndexError):
+                tr = None
+                continue
+            tr = {"title": "", "performer": "", "start": None}
+            if cur_file:
+                out[cur_file]["tracks"][n] = tr
+        elif kw in ("TITLE", "PERFORMER"):
+            val = fix_text(_cue_val(rest))
+            if tr is not None:
+                tr["title" if kw == "TITLE" else "performer"] = val
+            else:
+                album["album" if kw == "TITLE" else "performer"] = val
+        elif kw == "INDEX" and tr is not None:
+            sub = rest.split()
+            if len(sub) == 2 and sub[0] in ("01", "1"):
+                try:
+                    mm, ss, ff = (int(x) for x in sub[1].split(":"))
+                    tr["start"] = mm * 60 + ss + ff / 75
+                except ValueError:
+                    pass
+    for f, d in out.items():
+        d.update(album)
+        d["tracks"] = {n: t for n, t in d["tracks"].items() if t["start"] is not None}
+    out = {f: d for f, d in out.items() if len(d["tracks"]) >= 2}
+    _cue_cache[cue] = (key, out)
+    return out
+
+
+def cue_tracks(cue: str, audio: list[str] | None = None):
+    for f, d in parse_cue(cue, audio).items():
+        for n in d["tracks"]:
+            yield f, n
+
+
+def _cue_for(file: str):
+    folder = os.path.dirname(file)
+    try:
+        cues = [os.path.join(folder, f) for f in os.listdir(folder) if f.lower().endswith(".cue")]
+    except OSError:
+        return None
+    for c in sorted(cues, key=lambda c: Path(c).stem.lower() != Path(file).stem.lower()):
+        d = parse_cue(c).get(file)
+        if d:
+            return d
+    return None
+
+
+_base_cache: dict = {}
+
+
+def read_cue_track(path: str) -> Track:
+    m = _CUE_RE.match(path)
+    file, n = m.group(1), int(m.group(2))
+    try:
+        st = os.stat(file)
+        key = (file, st.st_mtime, st.st_size)
+    except OSError:
+        key = (file, 0, 0)
+    if _base_cache.get("key") != key:   # усі треки альбому читають один і той самий файл
+        _base_cache.update(key=key, track=read_track(file))
+    base = _base_cache["track"]
+    d = _cue_for(file)
+    t = Track(path=path, album=base.album, albumartist=base.albumartist, year=base.year,
+              bitrate=base.bitrate, samplerate=base.samplerate, channels=base.channels,
+              mtime=base.mtime, size=base.size, track=n, disc=base.disc)
+    if not d or n not in d["tracks"]:
+        t.title = f"Track {n:02d}"
+        return t
+    info = d["tracks"][n]
+    starts = sorted((k, v["start"]) for k, v in d["tracks"].items())
+    t.start = info["start"]
+    later = [s for k, s in starts if k > n]
+    t.end = later[0] if later else 0.0
+    t.length = max(0.0, (t.end or base.length) - t.start)
+    t.title = info["title"] or f"Track {n:02d}"
+    t.artist = info["performer"] or d["performer"] or base.artist
+    t.album = d["album"] or base.album
+    t.albumartist = d["performer"] or base.albumartist
+    t.year = d["date"] or base.year
+    return t
 
 
 class Library:
@@ -225,7 +422,7 @@ class Library:
         self.cache_file = CACHE_DIR / "library.json"
         try:
             data = json.loads(self.cache_file.read_text("utf-8"))
-            if data.get("v") != 3:
+            if data.get("v") not in (3, 4):
                 data = {}
             for d in data.get("tracks", []):
                 tr = Track(**d)
@@ -237,7 +434,7 @@ class Library:
         try:
             CACHE_DIR.mkdir(parents=True, exist_ok=True)
             tmp = self.cache_file.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"v": 3, "tracks": [asdict(t) for t in self.tracks.values()]},
+            tmp.write_text(json.dumps({"v": 4, "tracks": [asdict(t) for t in self.tracks.values()]},
                                       ensure_ascii=False), "utf-8")
             tmp.replace(self.cache_file)
         except OSError:
@@ -253,7 +450,7 @@ class Library:
         for i, path in enumerate(paths):
             old = self.tracks.get(path)
             try:
-                st = os.stat(path)
+                st = os.stat(real_path(path))
             except OSError:
                 continue
             if old and old.mtime == st.st_mtime and old.size == st.st_size:
@@ -274,6 +471,7 @@ class Library:
 
 # ═══════════════════════════════════ ОБКЛАДИНКИ ═══════════════════════════════════
 def find_cover(path: str) -> bytes | None:
+    path = real_path(path)
     try:
         f = MutagenFile(path)
     except Exception:
@@ -412,6 +610,9 @@ class BasePlayer:
         self.levels = [0.0, 0.0]
         self.peaks = [0.0, 0.0]
         self.vu_ok = True
+        self.replaygain = "album"     # off | track | album
+        self.on_advance = None        # gapless: mpv сам перейшов до наступного файлу (шлях)
+        self.seg = None               # трек з CUE: (початок, кінець) у спільному файлі
 
     def _decay(self, l, r):
         for i, v in enumerate((l, r)):
@@ -430,6 +631,11 @@ class MpvPlayer(BasePlayer):
         self._dir = None
         self.entry_id = None          # який файл зараз завантажено в mpv
         self._want_pause = None       # пауза, яку ми самі просили (решта — «ззовні»)
+        self.path = None              # який файл грає (справжній, для CUE — файл альбому)
+        self.abs_pos = 0.0            # позиція у файлі (time_pos — у межах треку CUE)
+        self._dur_abs = 0.0
+        self._seg_done = False
+        self._next = None             # gapless: (шлях, id у плейлисті mpv), уже доданий наступним
 
     @staticmethod
     def find_exe() -> str | None:
@@ -450,6 +656,8 @@ class MpvPlayer(BasePlayer):
         args = [exe, "--no-config", "--idle=yes", "--no-video", "--no-terminal", "--audio-display=no",
                 f"--input-conf={conf}", "--input-media-keys=yes",
                 f"--volume={volume}", "--volume-max=100",
+                "--gapless-audio=weak", "--prefetch-playlist=yes",
+                f"--replaygain={self.replaygain if self.replaygain in ('track', 'album') else 'no'}",
                 f"--log-file={CACHE_DIR / 'mpv.log'}",
                 *shlex.split(os.environ.get("PLATIVKA_MPV_ARGS", ""))]
         quiet = dict(stdin=asyncio.subprocess.DEVNULL, stdout=asyncio.subprocess.DEVNULL,
@@ -535,9 +743,14 @@ class MpvPlayer(BasePlayer):
             if ev == "property-change":
                 n, d = msg.get("name"), msg.get("data")
                 if n == "time-pos":
-                    self.time_pos = d or 0.0
+                    self.abs_pos = d or 0.0
+                    self.time_pos = self.abs_pos - (self.seg[0] if self.seg else 0.0)
+                    if self.seg and self.seg[1] and not self._seg_done and self.abs_pos >= self.seg[1] - 0.02:
+                        self._seg_done = True     # кінець треку з CUE — файл грає далі, а ми йдемо до наступного
+                        self.on_eof(None)
                 elif n == "duration":
-                    self.duration = d or 0.0
+                    self._dur_abs = d or 0.0
+                    self._set_duration()
                 elif n == "pause":
                     self.paused = bool(d)
                     if self._want_pause is not None and self.paused != self._want_pause:
@@ -559,6 +772,20 @@ class MpvPlayer(BasePlayer):
                     f"pos={self.time_pos:.1f} dur={self.duration:.1f} {msg.get('file_error') or ''}")
                 if eid is not None and self.entry_id is not None and eid != self.entry_id:
                     continue  # подія від попереднього файлу — ігноруємо
+                if reason == "eof" and self._next:
+                    # gapless: mpv уже грає наступний файл, який ми додали заздалегідь
+                    path, nid = self._next
+                    self._next = None
+                    self.entry_id, self.path, self.seg = nid, path, None
+                    self.time_pos = self.abs_pos = 0.0
+                    self._dur_abs = self.duration = 0.0
+                    log(f"gapless → {path}")
+                    if self.on_advance:
+                        self.on_advance(path)
+                    continue
+                if reason == "eof" and self._seg_done:
+                    self.active = False
+                    continue      # кінець треку з CUE ми вже обробили
                 if reason == "eof":
                     self.active = False
                     early = None
@@ -577,15 +804,56 @@ class MpvPlayer(BasePlayer):
         except Exception:
             return None
 
-    async def load(self, path: str, start: float = 0.0, paused: bool = False):
-        self._seek_on_load = start if start > 1 else None
-        self.time_pos, self.duration = start, 0.0
+    def _set_duration(self):
+        if self.seg:
+            s, e = self.seg
+            self.duration = max(0.0, (e or self._dur_abs) - s) if (e or self._dur_abs) else 0.0
+        else:
+            self.duration = self._dur_abs
+
+    async def load(self, path: str, start: float = 0.0, paused: bool = False, seg=None):
+        """seg=(початок, кінець) — трек з CUE усередині файлу path."""
+        prev_seg, prev_path = self.seg, self.path
+        self._next = None
         self._want_pause = paused
+        # наступний трек з CUE того самого файлу, що вже грає: просто йдемо далі, без перезавантаження
+        if (seg and prev_seg and prev_path == path and self.active and not paused and start < 1
+                and prev_seg[1] and abs(seg[0] - prev_seg[1]) < 0.5 and abs(self.abs_pos - seg[0]) < 3):
+            self.seg, self._seg_done = seg, False
+            self.time_pos = self.abs_pos - seg[0]
+            self._set_duration()
+            await self._safe("set_property", "pause", False)
+            log(f"cue → {seg[0]:.1f}–{seg[1]:.1f} {path}")
+            return
+        self.seg, self._seg_done, self.path = seg, False, path
+        off = seg[0] if seg else 0.0
+        self._seek_on_load = (off + start) if (off + start) > 1 else None
+        self.time_pos, self.abs_pos = start, off + start
+        self._dur_abs = self.duration = 0.0
         await self._safe("set_property", "pause", paused)
         res = await self._safe("loadfile", path, "replace")
         if isinstance(res, dict) and res.get("playlist_entry_id") is not None:
             self.entry_id = res["playlist_entry_id"]
-        log(f"load entry={self.entry_id} start={start:.0f} paused={paused} {path}")
+        log(f"load entry={self.entry_id} start={start:.0f} paused={paused} seg={seg} {path}")
+
+    async def preload(self, path: str | None):
+        """Gapless: заздалегідь додати наступний файл у mpv, щоб він заграв без паузи.
+
+        None — прибрати те, що було додано (змінився порядок, таймер сну тощо).
+        Для треків з CUE не потрібно: вони й так грають з одного файлу.
+        """
+        if self._next:
+            await self._safe("playlist-clear")
+            self._next = None
+        if not path or not self.path or self.seg:
+            return
+        res = await self._safe("loadfile", path, "append")
+        nid = res.get("playlist_entry_id") if isinstance(res, dict) else None
+        self._next = (path, nid)
+
+    async def set_replaygain(self, mode: str):
+        self.replaygain = mode
+        await self._safe("set_property", "replaygain", mode if mode in ("track", "album") else "no")
 
     async def set_pause(self, p: bool):
         self._want_pause = p
@@ -593,13 +861,18 @@ class MpvPlayer(BasePlayer):
 
     async def stop(self):
         log("stop")
+        self._next = None
         await self._safe("stop")
         self.active = False
         self.time_pos = 0.0
 
     async def seek(self, t: float):
         if self.active:
-            await self._safe("seek", max(0.0, t), "absolute")
+            off = self.seg[0] if self.seg else 0.0
+            if self.seg and self.seg[1]:
+                t = min(t, self.seg[1] - off - 0.5)
+            self._seg_done = False
+            await self._safe("seek", max(0.0, t) + off, "absolute")
 
     async def set_volume(self, v: int):
         await self._safe("set_property", "volume", v)
@@ -649,10 +922,11 @@ class DemoPlayer(BasePlayer):
     async def start(self, volume):
         pass
 
-    async def load(self, path, start=0.0, paused=False):
+    async def load(self, path, start=0.0, paused=False, seg=None):
         self._path = path
         tr = read_track(path)
-        self.duration = tr.length or 200.0
+        self.duration = ((seg[1] or tr.length) - seg[0]) if seg else (tr.length or 200.0)
+        self.duration = self.duration or 200.0
         self.time_pos = start
         self.paused = paused
         self.active = True
@@ -678,6 +952,12 @@ class DemoPlayer(BasePlayer):
     async def set_volume(self, v):
         pass
 
+    async def preload(self, path):
+        pass
+
+    async def set_replaygain(self, mode):
+        self.replaygain = mode
+
     async def poll_levels(self):
         self._tick()
         if self.active and not self.paused:
@@ -689,3 +969,158 @@ class DemoPlayer(BasePlayer):
 
     async def close(self):
         pass
+
+
+# ═══════════════════════════════════ ОНОВЛЕННЯ ═══════════════════════════════════
+RELEASES_API = "https://api.github.com/repos/dkindratyuk-web/plativka/releases/latest"
+
+
+def version_tuple(v: str) -> tuple:
+    return tuple(int(x) for x in re.findall(r"\d+", v)[:3])
+
+
+def check_update(force: bool = False, every: float = 20 * 3600) -> dict | None:
+    """Чи вийшла новіша Платівка. Не частіше ніж раз на добу; без мережі — тихо None.
+
+    Повертає {"version": "1.3.6", "url": сторінка випуску}, якщо новіша за поточну.
+    Запит лише один — до GitHub, про останній випуск; нічого про вас не надсилається.
+    """
+    import urllib.request
+    state_file = CACHE_DIR / "update.json"
+    try:
+        state = json.loads(state_file.read_text("utf-8"))
+    except Exception:
+        state = {}
+    if not force and time.time() - state.get("checked", 0) < every:
+        latest = state.get("latest")
+    else:
+        try:
+            req = urllib.request.Request(RELEASES_API, headers={
+                "Accept": "application/vnd.github+json", "User-Agent": f"Plativka/{VERSION}"})
+            with urllib.request.urlopen(req, timeout=8) as r:
+                rel = json.loads(r.read().decode("utf-8"))
+            latest = {"version": str(rel.get("tag_name", "")).lstrip("v"),
+                      "url": rel.get("html_url") or GITHUB_URL + "/releases/latest"}
+        except Exception as e:
+            log(f"перевірка оновлень: {e}")
+            return None
+        try:
+            CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            state_file.write_text(json.dumps({"checked": time.time(), "latest": latest}), "utf-8")
+        except OSError:
+            pass
+    if latest and latest.get("version") and version_tuple(latest["version"]) > version_tuple(VERSION):
+        return latest
+    return None
+
+
+# ═══════════════════════════════ СПІЛЬНЕ ДЛЯ ОБОХ ВЕРСІЙ ═══════════════════════════════
+SLEEP_CHOICES = (15, 30, 45, 60, 90)   # хвилин; ще є «після цього треку»
+FADE_SECONDS = 8
+
+
+class PlayerExtras:
+    """Gapless, треки з CUE і таймер сну — однаково для консольної й віконної версії.
+
+    Потрібні від класу: self.player, self.playlist, self.current, self.track(path),
+    self.next_index(auto), self.history.
+    """
+
+    _preload_idx = None
+    sleep_until: float | None = None    # time.monotonic(), коли зупинитися
+    sleep_after_track = False
+    sleep_minutes = None
+    _fading = False
+
+    async def load_track(self, path: str, start: float = 0.0, paused: bool = False):
+        t = self.track(path)
+        await self.player.load(real_path(path), start=start, paused=paused, seg=t.segment)
+        await self.refresh_preload()
+
+    async def refresh_preload(self):
+        """Наперед сказати mpv, що грати далі (gapless). Викликати, коли змінився порядок."""
+        p = self.player
+        if p is None or not hasattr(p, "preload"):
+            return
+        j = None
+        if not self.sleep_after_track and 0 <= self.current < len(self.playlist):
+            j = self.next_index(True)
+        self._preload_idx = j
+        nxt = None
+        if j is not None:
+            path = self.playlist[j]
+            cur = self.track(self.playlist[self.current])
+            if not self.track(path).segment and not cur.segment:
+                nxt = real_path(path)
+        await p.preload(nxt)
+
+    def gapless_index(self, path: str) -> int | None:
+        """Який рядок плейлиста заграв сам (gapless) — щоб показати його поточним."""
+        j = self._preload_idx
+        self._preload_idx = None
+        if j is not None and 0 <= j < len(self.playlist) and real_path(self.playlist[j]) == path:
+            return j
+        for k, q in enumerate(self.playlist):
+            if real_path(q) == path:
+                return k
+        return None
+
+    def mark_advanced(self, j: int):
+        if self.current != j and self.current >= 0:
+            self.history = (self.history + [self.current])[-200:]
+        self.current = j
+
+    # ── таймер сну ──
+    def set_sleep(self, minutes):
+        """minutes: число хвилин, "track" — після поточного треку, None — вимкнути."""
+        timed = isinstance(minutes, (int, float)) and not isinstance(minutes, bool)
+        self.sleep_until = time.monotonic() + minutes * 60 if timed else None
+        self.sleep_minutes = minutes if timed else None
+        self.sleep_after_track = minutes == "track"
+
+    @property
+    def sleep_left(self) -> float | None:
+        return max(0.0, self.sleep_until - time.monotonic()) if self.sleep_until else None
+
+    def sleep_label(self) -> str:
+        if self.sleep_after_track:
+            return _("сон: після треку")
+        left = self.sleep_left
+        if left is None:
+            return ""
+        return _("сон: {t}").format(t=fmt_time(left))
+
+    def sleep_consume_eof(self) -> bool:
+        """Кінець треку: якщо таймер «після цього треку» — зупиняємось замість наступного."""
+        if self.sleep_after_track:
+            self.set_sleep(None)
+            return True
+        return False
+
+    async def sleep_tick(self) -> bool:
+        """Викликати щосекунди. True — таймер щойно спрацював і музику поставлено на паузу."""
+        left = self.sleep_left
+        if left is None or self._fading or left > 0:
+            return False
+        self._fading = True
+        try:
+            p = self.player
+            if p is None or not p.active or p.paused:
+                return True
+            base = None
+            try:
+                base = await p.cmd("get_property", "volume") if hasattr(p, "cmd") else None
+            except Exception:
+                base = None
+            if isinstance(base, (int, float)) and base > 0:
+                steps = FADE_SECONDS * 5
+                for i in range(1, steps + 1):   # м'яко стишуємо, а не обриваємо
+                    await p._safe("set_property", "volume", base * (1 - i / steps))
+                    await asyncio.sleep(0.2)
+            await p.set_pause(True)
+            if isinstance(base, (int, float)):
+                await p._safe("set_property", "volume", base)
+            return True
+        finally:
+            self.set_sleep(None)
+            self._fading = False

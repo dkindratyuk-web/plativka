@@ -12,7 +12,8 @@ async def test_ui_keys_do_not_crash(size):
     async with app.run_test(size=size) as pilot:
         await pilot.pause(0.5)
         assert app.main is not None
-        for key in ["x", "c", "s", "r", "r", "r", "n", "o", "o", "o", "t", "t", "m", "m", "f2", "f2", "left", "right"]:
+        for key in ["x", "c", "s", "r", "r", "r", "n", "o", "o", "o", "t", "t", "m", "m", "f2", "f2", "left", "right",
+                    "k", "k", "g", "g", "g"]:
             await pilot.press(key)
             await pilot.pause(0.05)
         await pilot.press("j")
@@ -132,3 +133,20 @@ async def test_compact_view_and_collapse():
         await pilot.press("w")
         await pilot.pause(0.2)
         assert not s.has_class("compact") and s.query_one("#lcd-row").display
+
+
+@pytest.mark.asyncio
+async def test_sleep_timer_and_update_flags():
+    app = Plativka(demo=True)
+    async with app.run_test(size=(120, 34)) as pilot:
+        await pilot.pause(0.5)
+        await pilot.press("k")
+        await pilot.pause(0.1)
+        sub = app.main.query_one("#main-win").border_subtitle
+        assert app.sleep_minutes == 15 and ("сон" in sub or "sleep" in sub)
+        app.choose_sleep("track")
+        assert app.sleep_after_track and app.sleep_consume_eof() and not app.sleep_after_track
+        app.update_info = {"version": "99.0", "url": "https://example.invalid"}
+        app.update_flags()
+        await pilot.pause(0.1)
+        assert "99.0" in app.main.query_one("#main-win").border_subtitle

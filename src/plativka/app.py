@@ -612,6 +612,9 @@ class HelpScreen(ModalScreen):
             ("M", _("показати / сховати медіатеку")),
             ("O", _("обкладинка: звичайна → велика → вимкнена")),
             ("N", _("сповіщення про трек")),
+            ("K", _("таймер сну: 15 · 30 · 45 · 60 · 90 хв · після треку · вимк")),
+            ("G", _("вирівнювання гучності: за альбомом · за треком · вимк")),
+            ("U", _("перевірити оновлення / завантажити нову версію")),
             ("T", _("світла / темна тема")),
             ("F2", _("мова інтерфейсу")),
             *([("H", _("сховати в трей"))] if sysdeps.IS_WIN else []),
@@ -815,6 +818,9 @@ class MainScreen(Screen):
         Binding("s", "shuffle", _("Перемішати"), show=False),
         Binding("r", "repeat", _("Повтор"), show=False),
         Binding("n", "popups", _("Сповіщення"), show=False),
+        Binding("k", "sleep", _("Таймер сну"), show=False),
+        Binding("g", "replaygain", _("Вирівнювання гучності"), show=False),
+        Binding("u", "update", _("Оновлення"), show=False),
         Binding("m", "toggle_library", _("Медіатека"), show=False),
         Binding("w", "toggle_view", _("Вигляд"), show=False),
         Binding("e", "toggle_collapsed", _("Згорнути"), show=False),
@@ -924,6 +930,9 @@ class MainScreen(Screen):
     def action_shuffle(self): self.app.toggle_shuffle()
     def action_repeat(self): self.app.cycle_repeat()
     def action_popups(self): self.app.cycle_popups()
+    def action_sleep(self): self.app.cycle_sleep()
+    def action_replaygain(self): self.app.cycle_replaygain()
+    def action_update(self): self.app.update_action()
     def action_theme(self): self.app.toggle_theme()
     def action_help(self): self.app.push_screen(HelpScreen())
     def action_toggle_view(self): self.app.toggle_view()
@@ -1151,7 +1160,7 @@ NoMpvScreen { align: center middle; }
 """
 
 
-class Plativka(App):
+class Plativka(App, PlayerExtras):
     CSS = CSS
     TITLE = APP_NAME
     ENABLE_COMMAND_PALETTE = False
@@ -1174,6 +1183,9 @@ class Plativka(App):
         self.repeat: str = self.cfg.get("repeat", "off")
         self.remaining: bool = bool(self.cfg.get("remaining", False))
         self.popups: str = self.cfg.get("popups", "app")  # off | app | system
+        self.replaygain: str = self.cfg.get("replaygain", "album")  # off | track | album
+        self.check_updates: bool = bool(self.cfg.get("check_updates", True))
+        self.update_info = None
         self.base: str = self.cfg.get("theme", "light")
         self.lib_mode: str = self.cfg.get("lib_mode", "artists")
         self.show_library: bool = bool(self.cfg.get("show_library", True))
@@ -1218,7 +1230,8 @@ class Plativka(App):
                         repeat=self.repeat, remaining=self.remaining, theme=self.base, popups=self.popups,
                         lib_mode=self.lib_mode, show_library=self.show_library, cover_mode=self.cover_mode,
                         view=self.view, collapsed=self.collapsed, compact_tab=self.compact_tab, expanded_rows=self.expanded_rows,
-                        minimize_to_tray=self.minimize_to_tray)
+                        minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
+                        check_updates=self.check_updates)
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
             tmp = CONF_DIR / "config.tmp"
@@ -1251,6 +1264,7 @@ class Plativka(App):
         rotate_log()
         log(f"--- старт {APP_NAME} {VERSION}, demo={self.demo}")
         self.player = cls(self._mpv_eof, self._mpv_error, self._mpv_message, self._mpv_external_pause)
+        self.player.replaygain, self.player.on_advance = self.replaygain, self._mpv_advance
         if not self.demo and not MpvPlayer.find_exe():
             await self.push_screen(NoMpvScreen())
             return
@@ -1396,7 +1410,9 @@ class Plativka(App):
         self.set_interval(5, self.save_cfg)
         if self.lib.folders:
             self.start_scan(quiet=True)
-        if 0 <= self.current < len(self.playlist) and os.path.exists(self.playlist[self.current]):
+        if self.check_updates and not self.demo:
+            self.run_worker(self.look_for_update(delay=3))
+        if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
             self.run_worker(self.play_index(self.current, start=float(self.cfg.get("position", 0)), paused=True))
         else:
             self.current = -1
@@ -1478,7 +1494,7 @@ class Plativka(App):
         self.current = i
         self.stopped = False
         path = self.playlist[i]
-        await self.player.load(path, start=start, paused=paused)
+        await self.load_track(path, start=start, paused=paused)
         if not paused:
             self.announce(path)
         self.update_now_playing()
@@ -1655,8 +1671,30 @@ class Plativka(App):
             self.notify(_("Трек обірвався на {pos} з {dur}: файл, схоже, обрізаний або пошкоджений. "
                           "Вмикаю наступний.").format(pos=fmt_time(pos), dur=fmt_time(dur)),
                         severity="warning", timeout=6)
+        if self.sleep_consume_eof():
+            self.run_worker(self.stop())
+            self.update_flags()
+            self.notify(_("Таймер сну: трек закінчився, музику зупинено"), timeout=5)
+            return
         log(f"eof → наступний (early={early})")
         self.run_worker(self.next(auto=True))
+
+    def _mpv_advance(self, path: str):
+        """Gapless: mpv сам перейшов до наступного файлу — показуємо його поточним."""
+        self.run_worker(self._advanced(path))
+
+    async def _advanced(self, path: str):
+        j = self.gapless_index(path)
+        if j is None:
+            return
+        self.mark_advanced(j)
+        self.stopped = False
+        self.announce(self.playlist[j])
+        self.update_now_playing()
+        self.mark_current()
+        self.load_cover_bg(self.playlist[j])
+        self.save_cfg()
+        await self.refresh_preload()
 
     def _mpv_external_pause(self, paused: bool):
         if paused:
@@ -1745,10 +1783,62 @@ class Plativka(App):
     def toggle_shuffle(self):
         self.shuffle = not self.shuffle
         self.update_flags()
+        self.run_worker(self.refresh_preload())
 
     def cycle_repeat(self):
         self.repeat = {"off": "all", "all": "one", "one": "off"}[self.repeat]
         self.update_flags()
+        self.run_worker(self.refresh_preload())
+
+    # ── таймер сну, вирівнювання гучності, оновлення ──
+    def cycle_sleep(self):
+        order = [None, *SLEEP_CHOICES, "track"]
+        cur = "track" if self.sleep_after_track else (self.sleep_minutes if self.sleep_until else None)
+        self.choose_sleep(order[(order.index(cur) + 1) % len(order)] if cur in order else SLEEP_CHOICES[0])
+
+    def choose_sleep(self, minutes):
+        self.set_sleep(minutes)
+        self.update_flags()
+        self.run_worker(self.refresh_preload())
+        if minutes is None:
+            msg = _("Таймер сну вимкнено")
+        elif minutes == "track":
+            msg = _("Таймер сну: зупиню після цього треку")
+        else:
+            msg = _("Таймер сну: зупиню через {n} хв").format(n=minutes)
+        self.notify(msg + ("" if minutes is None else _(" · K — змінити")), timeout=3)
+
+    async def _sleep_fire(self):
+        if await self.sleep_tick():
+            self.update_flags()
+            self.notify(_("Таймер сну: музику поставлено на паузу"), timeout=6)
+
+    def cycle_replaygain(self):
+        self.replaygain = {"album": "track", "track": "off", "off": "album"}.get(self.replaygain, "album")
+        self.run_worker(self.player.set_replaygain(self.replaygain))
+        self.notify({"album": _("Вирівнювання гучності: за альбомом"),
+                     "track": _("Вирівнювання гучності: за треком"),
+                     "off": _("Вирівнювання гучності вимкнено")}[self.replaygain], timeout=3)
+        self.save_cfg()
+
+    async def look_for_update(self, manual: bool = False, delay: float = 0):
+        if delay:
+            await asyncio.sleep(delay)
+        info = await asyncio.to_thread(check_update, manual)
+        self.update_info = info
+        self.update_flags()
+        if info:
+            self.notify(_("Вийшла Платівка {v}. Клавіша U — відкрити сторінку завантаження").format(v=info["version"]),
+                        timeout=8)
+        elif manual:
+            self.notify(_("У вас найновіша версія ({v})").format(v=VERSION), timeout=4)
+
+    def update_action(self):
+        if self.update_info:
+            self.open_url(self.update_info["url"])
+        else:
+            self.notify(_("Перевіряю оновлення…"), timeout=2)
+            self.run_worker(self.look_for_update(manual=True))
 
     def toggle_remaining(self):
         self.remaining = not self.remaining
@@ -1838,8 +1928,12 @@ class Plativka(App):
             return
         try:
             self._ui_tick()
+            if self.sleep_until:
+                self.update_status_line()
         except NoMatches:
             pass
+        if self.sleep_until and self.sleep_left == 0:
+            self.run_worker(self._sleep_fire())
         self._platform_tick()
 
     def _ui_tick(self):
@@ -1906,7 +2000,13 @@ class Plativka(App):
             s.query_one("#c-sub", Static).update(_("оберіть, що послухати"))
             s.query_one("#c-fmt", Static).update("")
             s.query_one("#info", Static).update("")
-        s.query_one("#main-win").border_subtitle = _("демо, без звуку") if self.demo else ""
+        self.update_status_line()
+
+    def update_status_line(self):
+        """Нижня рамка плеєра: демо-режим, таймер сну, нова версія."""
+        parts = [_("демо, без звуку") if self.demo else "", self.sleep_label(),
+                 _("⬆ {v} — U").format(v=self.update_info["version"]) if self.update_info else ""]
+        self.main.query_one("#main-win").border_subtitle = " · ".join(x for x in parts if x)
 
     def update_flags(self):
         if not self.main:
@@ -1920,6 +2020,7 @@ class Plativka(App):
         pp = s.query_one("#f-popups", Static)
         pp.update({"off": _("сповіщ: вимк"), "app": _("сповіщ: плеєр"), "system": _("сповіщ: {os}").format(os=sysdeps.OS_NAME)}[self.popups])
         pp.set_class(self.popups != "off", "on")
+        self.update_status_line()
         s.query_one("#tab-artists").set_class(self.lib_mode == "artists", "on")
         s.query_one("#tab-folders").set_class(self.lib_mode == "folders", "on")
         self.save_cfg()
@@ -2031,6 +2132,8 @@ class Plativka(App):
             f"{n_tracks(n)} · {fmt_time(total)}" if n else ""
         if n:
             tbl.move_cursor(row=clamp(cur, 0, n - 1), animate=False)
+        if self.player is not None:
+            self.run_worker(self.refresh_preload())
 
     def _row_cells(self, i: int, t: Track):
         playing = i == self.current
@@ -2148,7 +2251,7 @@ class Plativka(App):
                             if nxt not in nodes:
                                 nodes[nxt] = nodes[cur].add(Text(part), data=("group", []), expand=False)
                             cur = nxt
-                    nodes[d].add_leaf(Text(Path(t.path).stem), data=("track", t.path))
+                    nodes[d].add_leaf(Text(t.title if t.segment else Path(t.path).stem), data=("track", t.path))
                 # шляхи для груп-тек (усе, що всередині)
                 for d, node in nodes.items():
                     if node is not rn:

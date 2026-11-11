@@ -33,8 +33,9 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
 
 from . import sysdeps, sysvol
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
-                   DemoPlayer, Library, MpvPlayer, Track, accent_from, clamp, fmt_time, load_cover, log,
-                   read_track, rgb_hex, rotate_log, scan_dir, tune)
+                   SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
+                   check_update, clamp, fmt_time, load_cover, log, read_track, real_path, rgb_hex, rotate_log,
+                   scan_dir, tune)
 from .i18n import LANG, _, n_tracks
 
 DEFAULT_ACCENT = (14, 124, 132)
@@ -498,7 +499,7 @@ class Bridge(QObject):
 
 
 # ═══════════════════════════════ головне вікно ═══════════════════════════════
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow, PlayerExtras):
     def __init__(self, demo: bool = False):
         super().__init__()
         self.demo = demo
@@ -516,6 +517,9 @@ class MainWindow(QMainWindow):
         self.shuffle = bool(self.cfg.get("shuffle", False))
         self.repeat = self.cfg.get("repeat", "off")
         self.popups = bool(self.cfg.get("popups", True))
+        self.replaygain = self.cfg.get("replaygain", "album")
+        self.check_updates = bool(self.cfg.get("check_updates", True))
+        self.update_info = None
         self.base = self.cfg.get("theme", "auto")
         self.view = self.cfg.get("view", "full") if self.cfg.get("view") in ("full", "compact") else "full"
         self.collapsed = bool(self.cfg.get("collapsed", False))
@@ -592,7 +596,8 @@ class MainWindow(QMainWindow):
                         shuffle=self.shuffle, repeat=self.repeat, popups=self.popups, theme=self.base,
                         view=self.view, collapsed=self.collapsed, on_top=self.on_top, lib_mode=self.lib_mode,
                         tab=self.tab, remaining=self.remaining, expanded_h=self._expanded_h,
-                        minimize_to_tray=self.minimize_to_tray,
+                        minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
+                        check_updates=self.check_updates,
                         geometry=[g.x(), g.y(), g.width(), g.height()])
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
@@ -662,7 +667,15 @@ class MainWindow(QMainWindow):
         self.f_repeat.clicked.connect(self.cycle_repeat)
         self.f_popups = Clickable()
         self.f_popups.clicked.connect(self.toggle_popups)
-        for w in (self.f_shuffle, self.f_repeat, self.f_popups):
+        self.f_sleep = Clickable()          # таймер сну: видно, лише коли увімкнено; клік — вимкнути
+        self.f_sleep.setObjectName("flagon")
+        self.f_sleep.clicked.connect(lambda: self.choose_sleep(None))
+        self.f_sleep.hide()
+        self.f_update = Clickable()         # «вийшла нова версія»: клік — сторінка завантаження
+        self.f_update.setObjectName("flagon")
+        self.f_update.clicked.connect(self.open_update)
+        self.f_update.hide()
+        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_sleep, self.f_update):
             flags.addWidget(w)
         flags.addStretch()
         lv.addLayout(flags)
@@ -890,18 +903,44 @@ class MainWindow(QMainWindow):
         act("del", self.remove_selected, ["Delete"])
         act("esc", self.escape, ["Escape"])
 
+        def group(title, choices, fn):
+            m = QMenu(title, self)
+            g = QActionGroup(m)
+            out = {}
+            for key, text in choices:
+                a = m.addAction(text)
+                a.setCheckable(True)
+                g.addAction(a)
+                a.triggered.connect(lambda _c=False, k=key: fn(k))
+                out[key] = a
+            return m, out
+
+        m_sleep, self.a_sleep = group(_("Таймер сну"), [(None, _("Вимкнено"))]
+                                      + [(n, _("Через {n} хв").format(n=n)) for n in SLEEP_CHOICES]
+                                      + [("track", _("Після цього треку"))], self.choose_sleep)
+        m_rg, self.a_rg = group(_("Вирівнювання гучності (ReplayGain)"),
+                                [("off", _("Вимкнено")), ("track", _("За треком")), ("album", _("За альбомом"))],
+                                self.choose_replaygain)
+        self.a_autoupd = act(_("Перевіряти оновлення автоматично"), self.toggle_check_updates, None, True)
+        a_upd = act(_("Перевірити оновлення…"), lambda: self.spawn(self.look_for_update(manual=True)))
         menus = [
             (_("Файл"), [a_add, a_folders, None, a_quit]),
-            (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat]),
+            (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
+                                 None, m_sleep, m_rg]),
             (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, a_theme, self.a_popups, a_lang, None, a_find]
              + ([self.a_tray] if not sysdeps.IS_MAC else [])),
-            (_("Довідка"), [a_gh, a_bug, None, a_about]),
+            (_("Довідка"), [a_gh, a_bug, None, a_upd, self.a_autoupd, None, a_about]),
         ]
         popup = QMenu(self)
         for title, items in menus:
             m = self.menuBar().addMenu(title) if sysdeps.IS_MAC else popup.addMenu(title)
             for a in items:
-                m.addSeparator() if a is None else m.addAction(a)
+                if a is None:
+                    m.addSeparator()
+                elif isinstance(a, QMenu):
+                    m.addMenu(a)
+                else:
+                    m.addAction(a)
         if sysdeps.IS_MAC:
             self.menu_btn.hide()
         else:
@@ -1194,6 +1233,7 @@ class MainWindow(QMainWindow):
     async def start_player(self):
         cls = DemoPlayer if self.demo else MpvPlayer
         self.player = cls(self._mpv_eof, self._mpv_error, self._mpv_message, self._mpv_external_pause)
+        self.player.replaygain, self.player.on_advance = self.replaygain, self._mpv_advance
         try:
             await self.player.start(self.player_volume)
         except FileNotFoundError:
@@ -1203,7 +1243,7 @@ class MainWindow(QMainWindow):
             await self.player.start(self.player_volume)
         if self.volume_mode == "system" and not self.demo:
             self._init_sysvol()
-        if 0 <= self.current < len(self.playlist) and os.path.exists(self.playlist[self.current]):
+        if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
             await self.play_index(self.current, start=float(self.cfg.get("position", 0)), paused=True)
         else:
             self.current = -1
@@ -1222,7 +1262,7 @@ class MainWindow(QMainWindow):
             self.current = i
             self.stopped = False
             path = self.playlist[i]
-            await self.player.load(path, start=start, paused=paused)
+            await self.load_track(path, start=start, paused=paused)
             if not paused:
                 self.announce(path)
             self.update_now_playing()
@@ -1308,7 +1348,29 @@ class MainWindow(QMainWindow):
             pos, dur = early
             self.toast(_("Трек обірвався на {pos} з {dur}: файл, схоже, обрізаний або пошкоджений. "
                          "Вмикаю наступний.").format(pos=fmt_time(pos), dur=fmt_time(dur)))
+        if self.sleep_consume_eof():
+            self.spawn(self.stop())
+            self.update_flags()
+            self.toast(_("Таймер сну: трек закінчився, музику зупинено"))
+            return
         self.spawn(self.next(auto=True))
+
+    def _mpv_advance(self, path: str):
+        """Gapless: mpv сам перейшов до наступного файлу — показуємо його поточним."""
+        self.spawn(self._advanced(path))
+
+    async def _advanced(self, path: str):
+        j = self.gapless_index(path)
+        if j is None:
+            return
+        self.mark_advanced(j)
+        self.stopped = False
+        self.announce(self.playlist[j])
+        self.update_now_playing()
+        self.mark_current()
+        self.load_cover(self.playlist[j])
+        self.save_cfg()
+        await self.refresh_preload()
 
     def _mpv_error(self, err):
         name = Path(self.playlist[self.current]).name if 0 <= self.current < len(self.playlist) else ""
@@ -1409,6 +1471,10 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{self._now_title} — {APP_NAME}" if p.active and self._now_title else APP_NAME)
         if self.tray is not None:
             self.tray.setToolTip(f"{APP_NAME}\n{self._now_title}" if self._now_title else APP_NAME)
+        if self.sleep_until:
+            self.f_sleep.setText(self.sleep_label())
+            if self.sleep_left == 0:
+                self.spawn(self._sleep_fire())
         self._platform_tick()
 
     async def vu_tick(self):
@@ -1459,14 +1525,75 @@ class MainWindow(QMainWindow):
         self.a_shuffle.setChecked(self.shuffle)
         self.a_popups.setChecked(self.popups)
         self.a_tray.setChecked(self.minimize_to_tray)
+        sl = self.sleep_label()
+        self.f_sleep.setText(sl)
+        self.f_sleep.setToolTip(_("Клацніть, щоб вимкнути таймер сну"))
+        self.f_sleep.setVisible(bool(sl))
+        cur = "track" if self.sleep_after_track else (self.sleep_minutes if self.sleep_until else None)
+        for key, a in self.a_sleep.items():
+            a.setChecked(key == cur)
+        for key, a in self.a_rg.items():
+            a.setChecked(key == self.replaygain)
+        self.a_autoupd.setChecked(self.check_updates)
+        u = self.update_info
+        self.f_update.setVisible(bool(u))
+        if u:
+            self.f_update.setText("⬆ " + u["version"])
+            self.f_update.setToolTip(_("Вийшла нова версія — клацніть, щоб завантажити"))
 
     def toggle_shuffle(self):
         self.shuffle = not self.shuffle
         self.update_flags()
         self.save_cfg()
+        self.spawn(self.refresh_preload())
+
+    # ── таймер сну, вирівнювання гучності, оновлення ──
+    def choose_sleep(self, minutes):
+        self.set_sleep(minutes)
+        self.update_flags()
+        self.spawn(self.refresh_preload())
+        if minutes is None:
+            self.toast(_("Таймер сну вимкнено"))
+        elif minutes == "track":
+            self.toast(_("Таймер сну: зупиню після цього треку"))
+        else:
+            self.toast(_("Таймер сну: зупиню через {n} хв").format(n=minutes))
+
+    async def _sleep_fire(self):
+        if await self.sleep_tick():
+            self.update_flags()
+            self.toast(_("Таймер сну: музику поставлено на паузу"))
+
+    def choose_replaygain(self, mode: str):
+        self.replaygain = mode
+        if self.player:
+            self.spawn(self.player.set_replaygain(mode))
+        self.update_flags()
+        self.save_cfg()
+
+    def toggle_check_updates(self):
+        self.check_updates = not self.check_updates
+        self.update_flags()
+        self.save_cfg()
+        if self.check_updates:
+            self.spawn(self.look_for_update())
+
+    async def look_for_update(self, manual: bool = False):
+        info = await asyncio.to_thread(check_update, manual)
+        self.update_info = info
+        self.update_flags()
+        if info:
+            self.toast(_("Вийшла Платівка {v} — натисніть «⬆ {v}», щоб завантажити").format(v=info["version"]))
+        elif manual:
+            self.toast(_("У вас найновіша версія ({v})").format(v=VERSION))
+
+    def open_update(self):
+        if self.update_info:
+            self.open_url(self.update_info["url"])
 
     def cycle_repeat(self):
         self.repeat = {"off": "all", "all": "one", "one": "off"}[self.repeat]
+        self.spawn(self.refresh_preload())
         self.update_flags()
         self.save_cfg()
 
@@ -1598,6 +1725,8 @@ class MainWindow(QMainWindow):
         self.pl_count.setText(f"{n_tracks(len(self.playlist))} · {fmt_time(total)}" if has else "")
         self.mark_current()
         self.apply_filter(self.search.text())
+        if self.player is not None:
+            self.spawn(self.refresh_preload())
 
     def mark_current(self):
         if not hasattr(self, "_acc"):
@@ -1738,7 +1867,7 @@ class MainWindow(QMainWindow):
                             if nxt not in nodes:
                                 nodes[nxt] = item(nodes[cur], part, "", ("group", []))
                             cur = nxt
-                    item(nodes[d], Path(t.path).stem, fmt_time(t.length), ("track", t.path))
+                    item(nodes[d], t.title if t.segment else Path(t.path).stem, fmt_time(t.length), ("track", t.path))
                 for d, node in nodes.items():
                     if node is not rn:
                         pre = d + os.sep
@@ -2067,6 +2196,9 @@ def main():
         await win.start_player()
         if win.lib.folders:
             win.start_scan()
+        if win.check_updates and not win.demo:
+            await asyncio.sleep(3)
+            await win.look_for_update()
     with loop:
         loop.create_task(boot())
         loop.run_forever()

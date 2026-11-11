@@ -85,12 +85,29 @@ In the playlist: **Enter** or a double-click plays a track, **Delete** removes i
 | `+` `−` | volume |
 | `S` | shuffle on/off |
 | `R` | repeat: off → all → one |
+| `K` | sleep timer: 15 · 30 · 45 · 60 · 90 min · after this track · off |
+| `G` | volume levelling: by album → by track → off |
+| `U` | check for updates / open the download page |
 
 **Volume** mirrors the system volume: the volume keys on your keyboard (F11/F12 or the speaker keys on a Mac, the volume keys or the Windows/Linux sound slider) move the player's volume bar, and `+` `−` in the player change the system volume. If you prefer a separate player volume, switch it in **F1 → Volume**. On Linux this needs PipeWire (`wpctl`) or PulseAudio (`pactl`), which every modern desktop has.
 
 At the end of the playlist Plativka stops and says so. Turn on **repeat: all** to loop.
 
 "Previous" goes to the start of the current track if more than 3 seconds have played, otherwise to the previous track (in shuffle mode — to the one that actually played before).
+
+### Sleep timer
+
+Plativka can stop the music for you: press `K` repeatedly to go through 15, 30, 45, 60 or 90 minutes, or **after this track**. While the timer runs, the time left is shown next to shuffle and repeat (**sleep: 29:41**; click it to cancel). When it runs out, the music fades out over a few seconds and pauses.
+
+### Gapless playback and volume levelling
+
+Tracks follow each other without a pause, as on the album — live recordings and DJ mixes are not cut into pieces. Nothing to turn on: it just works.
+
+**Volume levelling (ReplayGain)** makes quiet and loud albums play at the same volume, if the files carry ReplayGain tags (most rips and many shops add them; foobar2000, MusicBrainz Picard and others can add them). `G` switches it: by album (default) → by track → off. **By album** keeps the difference between quiet and loud songs of one album, as the artist intended; **by track** makes every song equally loud. Files without the tags play as they are.
+
+### Albums as one file with a .cue sheet
+
+If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plativka shows it as separate tracks with their own titles, and they play one after another without a gap. The `.cue` file can be in UTF-8 or in the old Windows encoding (Cyrillic `.cue` files from the 2000s too).
 
 ## Covers and colours
 
@@ -116,6 +133,10 @@ System notifications show the **album cover**:
 - **Windows — tray icon**: play/pause, next, previous, show the player, Plativka on GitHub, quit. **H** hides the window to the tray; the **Minimize to tray** option in the tray menu makes minimising do the same. Closing the window with ✕ quits.
 - **Linux — MPRIS**: media keys, the GNOME/KDE media widget and `playerctl` control Plativka and show the track and cover.
 - **macOS — media keys**: ⏮ ⏯ ⏭ (F7 F8 F9) and headphone buttons control Plativka, and the **Now Playing** widget in Control Center shows the track and cover. macOS sends these keys to the app that started playing most recently — if a browser or Music played something after Plativka, press play in Plativka once and the keys come back.
+
+## Updates
+
+Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.x.x — U** appears in the player — press `U` to open the download page. Nothing is downloaded or installed by itself, and nothing about you is sent. `U` also checks right away. To turn the daily check off, set `"check_updates": false` in `config.json`.
 
 ## Themes and language
 

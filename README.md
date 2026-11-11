@@ -48,6 +48,8 @@ It comes in two editions; install either one or both — the first time Plativka
 - **Folders**: add them with the usual system folder dialog or drag them into the window; the **Folders…** window lists them with track counts.
 - **System integration**: media keys ⏮ ⏯ ⏭ and headphone buttons, Now Playing / the Windows media overlay / MPRIS on Linux, track notifications **with the album cover**, a tray icon, the volume mirrors the system volume (your keyboard's volume keys move the slider).
 - **Windows 11**: the translucent Mica background, tinted by the cover.
+- **Plays like an album**: no pauses between tracks (gapless), volume levelling with ReplayGain (by album or by track), albums as one FLAC/APE/WAV file with a `.cue` sheet shown as separate tracks.
+- **Sleep timer**: stop after 15–90 minutes or after the current track, with a gentle fade-out.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.
 - **Remembers everything**: playlist, position, volume, view, window size and library.
 - **English and Ukrainian**, chosen from your system language.
@@ -169,6 +171,9 @@ The original edition: the same player as a text interface in a terminal window. 
 | `←` `→` | seek 5 seconds |
 | `+` `−` | volume (same as the system volume keys) |
 | `S` / `R` | shuffle / repeat (off → all → one) |
+| `K` | sleep timer: 15 · 30 · 45 · 60 · 90 min · after this track · off |
+| `G` | volume levelling (ReplayGain): by album → by track → off |
+| `U` | check for updates / open the download page |
 | `J` or `/` | find a track |
 | `L` | add a folder to the library (system folder dialog) |
 | `Shift+P` | put the whole library in the playlist |

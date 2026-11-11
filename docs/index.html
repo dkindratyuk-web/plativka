@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plativka — a Winamp-style music player for macOS, Windows and Linux</title>
+<meta name="description" content="Free, open-source Winamp-style music player for the music on your disk. Colours from the album cover, compact view and mini player, media keys, notifications with covers. For macOS, Windows and Linux.">
+<link rel="canonical" href="https://dkindratyuk-web.github.io/plativka/">
+<link rel="alternate" hreflang="en" href="https://dkindratyuk-web.github.io/plativka/">
+<link rel="alternate" hreflang="uk" href="https://dkindratyuk-web.github.io/plativka/uk/">
+<link rel="alternate" hreflang="x-default" href="https://dkindratyuk-web.github.io/plativka/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Plativka — a Winamp-style music player for macOS, Windows and Linux">
+<meta property="og:description" content="Free, open-source Winamp-style music player for the music on your disk. Colours from the album cover, compact view and mini player, media keys, notifications with covers. For macOS, Windows and Linux.">
+<meta property="og:url" content="https://dkindratyuk-web.github.io/plativka/">
+<meta property="og:image" content="https://dkindratyuk-web.github.io/plativka/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f6f3ee">
+<link rel="icon" type="image/png" href="img/favicon.png">
+<link rel="apple-touch-icon" href="img/icon-256.png">
+<link rel="stylesheet" href="site.css">
+<script type="application/ld+json">{"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Plativka", "alternateName": "Платівка", "applicationCategory": "MultimediaApplication", "operatingSystem": "macOS, Windows, Linux", "description": "Free, open-source Winamp-style music player for the music on your disk. Colours from the album cover, compact view and mini player, media keys, notifications with covers. For macOS, Windows and Linux.", "url": "https://dkindratyuk-web.github.io/plativka/", "downloadUrl": "https://github.com/dkindratyuk-web/plativka/releases/latest", "license": "https://opensource.org/licenses/MIT", "image": "https://dkindratyuk-web.github.io/plativka/img/og.png", "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"}, "author": {"@type": "Person", "name": "dkindratyuk-web", "url": "https://github.com/dkindratyuk-web"}}</script>
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="./"><img src="img/icon-256.png" alt="" width="32" height="32">Plativka</a>
+    <nav aria-label="Main">
+      <a href="#features">Features</a><a href="#screenshots">Screenshots</a><a href="#download">Download</a><a href="#terminal">Terminal edition</a>
+    </nav>
+    <a class="lang" href="uk/" hreflang="uk">Українська</a>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="wrap hero-in">
+    <div class="hero-text">
+      <h1>Your music,<br>Winamp-style.</h1>
+      <p class="lead">A free player for the music already on your disk — for macOS, Windows and Linux. Offline, fast, no account, no ads.</p>
+      <div class="cta">
+        <a class="btn btn-primary btn-big" id="hero-dl" href="#download">Download</a>
+        <a class="btn btn-ghost btn-big" href="https://github.com/dkindratyuk-web/plativka">Source on GitHub</a>
+      </div>
+      <p class="hero-note"><span data-version-label>Latest version</span> <b data-version>…</b> · Free and open source · MIT license</p>
+    </div>
+    <div class="hero-shots" aria-hidden="false"><img src="img/desk-mac-en-full.png" alt="Full view, macOS" width="760" height="907" class="h1-shot"><img src="img/desk-win-full-dark.png" alt="Dark theme, Windows 11" width="760" height="807" class="h2-shot"><img src="img/desk-mac-en-mini.png" alt="Mini player, macOS" width="760" height="353" class="h3-shot"></div>
+  </div>
+</section>
+
+<section id="features" class="wrap sec">
+  <h2>What it can do</h2>
+  <ul class="features">
+<li><span class="f-ico" aria-hidden="true">🎨</span><h3>Colour from the cover</h3><p>The clock, the level meter, the window and the playlist take their colour from the album art and change with every album. Light, dark or system theme.</p></li>
+<li><span class="f-ico" aria-hidden="true">🗔</span><h3>Three sizes</h3><p>The full Winamp view, a compact view with large type, and a mini player that can stay on top of all windows.</p></li>
+<li><span class="f-ico" aria-hidden="true">📚</span><h3>Playlist and library</h3><p>Your library by artist and album or by folder, instant search, drag folders into the window, play a whole album with a double-click.</p></li>
+<li><span class="f-ico" aria-hidden="true">⌨️</span><h3>Fits into your system</h3><p>Media keys and headphone buttons, Now Playing, MPRIS on Linux, track notifications with the album cover, a tray icon.</p></li>
+<li><span class="f-ico" aria-hidden="true">🎧</span><h3>Plays what you have</h3><p>MP3, FLAC, M4A/AAC, OGG/Opus and WAV through mpv. Files without tags are named from the file name, old Windows-1251 tags are fixed automatically.</p></li>
+<li><span class="f-ico" aria-hidden="true">💾</span><h3>Remembers everything</h3><p>Playlist, position, volume, view and window size are there next time. English and Ukrainian interface.</p></li>
+  </ul>
+</section>
+
+<section id="screenshots" class="sec sec-tint">
+  <div class="wrap">
+    <h2>The same player on every system</h2>
+    <div class="tabs" role="tablist"><button role="tab" data-tab="mac" aria-selected="true">macOS</button><button role="tab" data-tab="win" aria-selected="false">Windows 11</button><button role="tab" data-tab="linux" aria-selected="false">Linux</button></div>
+    <div class="shots" data-panel="mac"><figure><img src="img/desk-mac-en-full.png" alt="Full view, macOS" width="760" height="907" loading="lazy"><figcaption>Full view, macOS</figcaption></figure><figure><img src="img/desk-mac-en-compact.png" alt="Compact view, macOS" width="760" height="907" loading="lazy"><figcaption>Compact view, macOS</figcaption></figure><figure><img src="img/desk-mac-en-compact-dark.png" alt="Compact view, dark theme, macOS" width="760" height="907" loading="lazy"><figcaption>Compact view, dark theme, macOS</figcaption></figure></div><div class="shots" data-panel="win" hidden><figure><img src="img/desk-win-full.png" alt="Full view with the Mica background, Windows 11" width="760" height="807" loading="lazy"><figcaption>Full view with the Mica background, Windows 11</figcaption></figure><figure><img src="img/desk-win-full-dark.png" alt="Dark theme, Windows 11" width="760" height="807" loading="lazy"><figcaption>Dark theme, Windows 11</figcaption></figure><figure><img src="img/desk-win-compact.png" alt="Compact view, Windows 11" width="760" height="807" loading="lazy"><figcaption>Compact view, Windows 11</figcaption></figure></div><div class="shots" data-panel="linux" hidden><figure><img src="img/desk-linux-en-full.png" alt="Full view, Kubuntu" width="646" height="732" loading="lazy"><figcaption>Full view, Kubuntu</figcaption></figure><figure><img src="img/desk-linux-en-full-dark.png" alt="Dark theme, Kubuntu" width="648" height="732" loading="lazy"><figcaption>Dark theme, Kubuntu</figcaption></figure><figure><img src="img/desk-linux-en-compact.png" alt="Compact view, Kubuntu" width="646" height="732" loading="lazy"><figcaption>Compact view, Kubuntu</figcaption></figure></div>
+    <div class="shots shots-mini"><figure><img src="img/desk-mac-en-mini.png" alt="Mini player, macOS" width="760" height="353" loading="lazy"><figcaption>Mini player, macOS</figcaption></figure><figure><img src="img/desk-mac-en-mini-dark.png" alt="Mini player, dark theme, macOS" width="760" height="350" loading="lazy"><figcaption>Mini player, dark theme, macOS</figcaption></figure></div>
+    <p class="cap">The mini player — just the player strip, pinned above other windows.</p>
+  </div>
+</section>
+
+<section id="download" class="wrap sec">
+  <h2>Download <span class="ver" data-version></span></h2>
+  <p class="sub">Plativka Desktop is the main edition. The terminal edition is for people who live in the terminal; you can install both.</p>
+  <div class="dl-grid">
+    <article class="dl-card" data-os="mac">
+      <h3>macOS</h3>
+      <h4>Plativka Desktop</h4>
+      <a class="btn btn-primary" data-asset="desk-mac-arm" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Apple Silicon (M1 and newer)</span><small>.dmg</small></a>
+      <a class="btn" data-asset="desk-mac-intel" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Intel Mac</span><small>.dmg</small></a>
+      <h4>Terminal edition</h4>
+      <div class="row"><a class="btn" data-asset="term-mac-arm" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Apple Silicon</span></a><a class="btn" data-asset="term-mac-intel" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Intel</span></a></div>
+      <p class="note">macOS 12 or newer. On the first launch macOS asks for confirmation: System Settings → Privacy &amp; Security → <b>Open Anyway</b>.</p>
+      <a class="more" href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-macos.md">Step-by-step guide →</a>
+    </article>
+    <article class="dl-card" data-os="win">
+      <h3>Windows</h3>
+      <h4>Plativka Desktop</h4>
+      <a class="btn btn-primary" data-asset="desk-win" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Installer, 64-bit</span><small>.exe</small></a>
+      <h4>Terminal edition</h4>
+      <a class="btn" data-asset="term-win" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Installer, 64-bit</span><small>.exe</small></a>
+      <p class="note">Windows 10 and 11. If SmartScreen appears, click <b>More info</b> → <b>Run anyway</b> — it shows up for every free program without a paid certificate.</p>
+      <a class="more" href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-windows.md">Step-by-step guide →</a>
+    </article>
+    <article class="dl-card" data-os="linux">
+      <h3>Linux</h3>
+      <h4>Plativka Desktop + terminal edition</h4>
+      <a class="btn btn-primary" data-asset="linux" href="https://github.com/dkindratyuk-web/plativka/releases/latest"><span>Archive for all distributions</span><small>.tar.gz</small></a>
+      <p class="note">Debian, Ubuntu, Mint, Fedora, Arch, Manjaro, openSUSE and others. Unpack and run the installer:</p>
+      <pre><code>tar -xzf plativka-*-linux.tar.gz
+cd plativka-*-linux
+./install.sh --desktop</code></pre>
+      <a class="more" href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-linux.md">Step-by-step guide →</a>
+    </article>
+  </div>
+  <p class="dl-foot"><a href="https://github.com/dkindratyuk-web/plativka/releases/latest">All downloads</a> · <a data-asset="sums" href="https://github.com/dkindratyuk-web/plativka/releases/latest">Checksums</a></p>
+</section>
+
+<section id="terminal" class="sec sec-tint">
+  <div class="wrap term">
+    <div>
+      <h2>Plativka for the terminal</h2>
+      <p>The same player as a text interface: the Winamp layout, real album covers in kitty, Ghostty, iTerm2 and WezTerm (pixel-art covers elsewhere), a mini player that shrinks the terminal window, and everything controlled from the keyboard.</p>
+      <a class="more" href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/terminal.md">About the terminal edition →</a>
+    </div>
+    <div class="shots shots-two"><figure><img src="img/macos-en-winamp.png" alt="Terminal edition, Winamp layout" width="1250" height="1300" loading="lazy"><figcaption>Terminal edition, Winamp layout</figcaption></figure><figure><img src="img/macos-en-dark2.png" alt="Terminal edition, dark theme" width="1250" height="1300" loading="lazy"><figcaption>Terminal edition, dark theme</figcaption></figure></div>
+  </div>
+</section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p><a href="https://github.com/dkindratyuk-web/plativka">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="https://github.com/dkindratyuk-web/plativka/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/dkindratyuk-web/plativka/issues">Report a problem</a> · <a href="https://github.com/dkindratyuk-web/plativka/blob/main/README.md">Documentation</a></p>
+    <p class="muted">Plativka is free software under the MIT license.</p>
+  </div>
+</footer>
+<script>window.PLATIVKA = {dlFor: {"mac": "Download for macOS", "win": "Download for Windows", "linux": "Download for Linux", "other": "Download"}, noList: "Could not load the list of files — open the release page."};</script>
+<script src="site.js" defer></script>
+</body>
+</html>

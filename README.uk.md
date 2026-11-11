@@ -14,7 +14,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/dkindratyuk-web/plativka/releases/latest"><b>⬇ Завантажити останню версію</b></a>
+  <a href="https://github.com/dkindratyuk-web/plativka/releases/latest"><b>⬇ Завантажити останню версію</b></a> · <a href="https://dkindratyuk-web.github.io/plativka/uk/">Сайт</a>
 </p>
 
 <p align="center">

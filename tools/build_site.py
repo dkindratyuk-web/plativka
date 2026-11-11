@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,7 +27,15 @@ T = {
         "desc": "Free, open-source Winamp-style music player for the music on your disk. "
                 "Colours from the album cover, compact view and mini player, media keys, "
                 "notifications with covers. For macOS, Windows and Linux.",
-        "nav": ["Features", "Screenshots", "Download", "Terminal edition"],
+        "nav": ["Features", "Screenshots", "Download", "What's new", "Help"],
+        "cl_title": "What's new in Plativka",
+        "cl_lead": "Every version with its new features and fixes, newest first.",
+        "cl_latest": "latest",
+        "cl_dl": "Download the latest version",
+        "help_title": "Help: common problems and how to fix them",
+        "help_lead": "Something does not work as expected? Find your case below.",
+        "help_toc": "On this page",
+        "help_more": "Did not find your problem? <a href=\"{issues}\">Tell us about it on GitHub</a> — attach the logs, it helps a lot.",
         "h1": "Your music,<br>Winamp-style.",
         "lead": "A free player for the music already on your disk — for macOS, Windows and Linux. "
                 "Offline, fast, no account, no ads.",
@@ -115,7 +124,15 @@ T = {
         "desc": "Безплатний плеєр з відкритим кодом у дусі Winamp для музики на вашому диску. "
                 "Колір з обкладинки, компактний вигляд і міні-плеєр, медіаклавіші, "
                 "сповіщення з обкладинкою. Для macOS, Windows і Linux.",
-        "nav": ["Можливості", "Знімки", "Завантажити", "Для термінала"],
+        "nav": ["Можливості", "Знімки", "Завантажити", "Що нового", "Допомога"],
+        "cl_title": "Що нового в Платівці",
+        "cl_lead": "Кожна версія з новими можливостями й виправленнями, найновіша — вгорі.",
+        "cl_latest": "остання",
+        "cl_dl": "Завантажити останню версію",
+        "help_title": "Допомога: поширені проблеми та як їх розв'язати",
+        "help_lead": "Щось працює не так, як очікували? Знайдіть свій випадок нижче.",
+        "help_toc": "На цій сторінці",
+        "help_more": "Не знайшли своєї проблеми? <a href=\"{issues}\">Напишіть про неї на GitHub</a> і додайте журнали — це дуже допомагає.",
         "h1": "Ваша музика —<br>як у Winamp.",
         "lead": "Безплатний плеєр для музики, яка вже є на вашому диску, — для macOS, Windows і Linux. "
                 "Офлайн, швидкий, без акаунтів і реклами.",
@@ -244,44 +261,7 @@ def page(t: dict) -> str:
     hero_shots = (img(p, t["shots"]["mac"][0][0], t["shots"]["mac"][0][1], "h1-shot", lazy=False)
                   + img(p, "desk-win-full-dark.png", t["shots"]["win"][1][1], "h2-shot", lazy=False)
                   + img(p, t["mini"][0][0], t["mini"][0][1], "h3-shot", lazy=False))
-    dl_for = json.dumps(t["dl_for"], ensure_ascii=False)
-    return f"""<!doctype html>
-<html lang="{t['lang']}">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{t['title']}</title>
-<meta name="description" content="{html.escape(t['desc'])}">
-<link rel="canonical" href="{url}">
-<link rel="alternate" hreflang="{t['lang']}" href="{url}">
-<link rel="alternate" hreflang="{'uk' if t['lang'] == 'en' else 'en'}" href="{other}">
-<link rel="alternate" hreflang="x-default" href="{SITE}">
-<meta property="og:type" content="website">
-<meta property="og:title" content="{html.escape(t['title'])}">
-<meta property="og:description" content="{html.escape(t['desc'])}">
-<meta property="og:url" content="{url}">
-<meta property="og:image" content="{SITE}img/og.png">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="theme-color" content="#f6f3ee">
-<link rel="icon" type="image/png" href="{p}img/favicon.png">
-<link rel="apple-touch-icon" href="{p}img/icon-256.png">
-<link rel="stylesheet" href="{p}site.css">
-<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>
-</head>
-<body>
-<header class="top">
-  <div class="wrap top-in">
-    <a class="brand" href="{p}{t['path'] or './'}"><img src="{p}img/icon-256.png" alt="" width="32" height="32">Plativka</a>
-    <nav aria-label="Main">
-      <a href="#features">{t['nav'][0]}</a><a href="#screenshots">{t['nav'][1]}</a><a href="#download">{t['nav'][2]}</a><a href="#terminal">{t['nav'][3]}</a>
-    </nav>
-    <a class="lang" href="{p}{t['other']}" hreflang="{'uk' if t['lang'] == 'en' else 'en'}">{t['other_label']}</a>
-  </div>
-</header>
-
-<main>
+    body = f"""<main>
 <section class="hero">
   <div class="wrap hero-in">
     <div class="hero-text">
@@ -362,18 +342,134 @@ cd plativka-*-linux
   </div>
 </section>
 </main>
+"""
+    return shell(t, "", t["title"], t["desc"], body, ld=ld, page_js=True)
 
+
+SUBPAGES = ("", "whats-new/", "help/")
+
+
+def shell(t: dict, sub: str, title: str, desc: str, body: str, ld: dict | None = None, page_js=False) -> str:
+    depth = (1 if t["path"] else 0) + (1 if sub else 0)
+    p = "../" * depth                       # до кореня сайту
+    home = p + t["path"]                    # головна сторінка цієї мови
+    url = SITE + t["path"] + sub
+    other = SITE + t["other"] + sub
+    olang = "uk" if t["lang"] == "en" else "en"
+    nav = t["nav"]
+    cur = {"whats-new/": 3, "help/": 4}.get(sub)
+    links = [(home or "./") + "#features", (home or "./") + "#screenshots", (home or "./") + "#download",
+             home + "whats-new/", home + "help/"]
+    if not sub:
+        links[:3] = ["#features", "#screenshots", "#download"]
+    nav_html = "".join(f'<a href="{h}"{" aria-current=\"page\"" if i == cur else ""}>{n}</a>'
+                       for i, (h, n) in enumerate(zip(links, nav)))
+    dl_for = json.dumps(t["dl_for"], ensure_ascii=False)
+    ld_html = f'<script type="application/ld+json">{json.dumps(ld, ensure_ascii=False)}</script>\n' if ld else ""
+    js = (f'<script>window.PLATIVKA = {{dlFor: {dl_for}, noList: {json.dumps(t["js_no"], ensure_ascii=False)}}};</script>\n'
+          f'<script src="{p}site.js" defer></script>\n') if page_js else ""
+    return f"""<!doctype html>
+<html lang="{t['lang']}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{html.escape(title)}</title>
+<meta name="description" content="{html.escape(desc)}">
+<link rel="canonical" href="{url}">
+<link rel="alternate" hreflang="{t['lang']}" href="{url}">
+<link rel="alternate" hreflang="{olang}" href="{other}">
+<link rel="alternate" hreflang="x-default" href="{SITE + sub}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{html.escape(title)}">
+<meta property="og:description" content="{html.escape(desc)}">
+<meta property="og:url" content="{url}">
+<meta property="og:image" content="{SITE}img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f6f3ee">
+<link rel="icon" type="image/png" href="{p}img/favicon.png">
+<link rel="apple-touch-icon" href="{p}img/icon-256.png">
+<link rel="stylesheet" href="{p}site.css">
+{ld_html}</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="{home or './'}"><img src="{p}img/icon-256.png" alt="" width="32" height="32">Plativka</a>
+    <nav aria-label="Main">{nav_html}</nav>
+    <a class="lang" href="{p}{t['other']}{sub}" hreflang="{olang}">{t['other_label']}</a>
+  </div>
+</header>
+
+{body}
 <footer class="foot">
   <div class="wrap foot-in">
-    <p><a href="{REPO}">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="https://alternativeto.net/software/plativka/about/">AlternativeTo</a> · <a href="{REPO}/blob/main/CHANGELOG.md">{t['foot'][0]}</a> · <a href="{REPO}/issues">{t['foot'][1]}</a> · <a href="{REPO}/blob/main/{t['readme']}">{t['foot'][2]}</a></p>
+    <p><a href="{REPO}">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="https://alternativeto.net/software/plativka/about/">AlternativeTo</a> · <a href="{home}whats-new/">{nav[3]}</a> · <a href="{home}help/">{nav[4]}</a> · <a href="{REPO}/issues">{t['foot'][1]}</a> · <a href="{REPO}/blob/main/{t['readme']}">{t['foot'][2]}</a></p>
     <p class="muted">{t['foot_note']}</p>
   </div>
 </footer>
-<script>window.PLATIVKA = {{dlFor: {dl_for}, noList: {json.dumps(t['js_no'], ensure_ascii=False)}}};</script>
-<script src="{p}site.js" defer></script>
-</body>
+{js}</body>
 </html>
 """
+
+
+# ───────────── «Що нового» з CHANGELOG.md ─────────────
+def changelog(lang: str) -> list[tuple[str, str]]:
+    """[(версія, html списку змін)] мовою lang, найновіша перша."""
+    import markdown
+    text = (ROOT / "CHANGELOG.md").read_text("utf-8")
+    want = "**English**" if lang == "en" else "**Українська**"
+    out = []
+    for block in re.split(r"^## ", text, flags=re.M)[1:]:
+        ver, _, rest = block.partition("\n")
+        parts = re.split(r"^\*\*(?:English|Українська)\*\*\s*$", rest, flags=re.M)
+        heads = re.findall(r"^(\*\*(?:English|Українська)\*\*)\s*$", rest, flags=re.M)
+        body = dict(zip(heads, parts[1:])).get(want, rest)
+        out.append((ver.strip(), markdown.markdown(body.strip())))
+    return out
+
+
+def page_changelog(t: dict) -> str:
+    items = []
+    for i, (ver, body) in enumerate(changelog(t["lang"])):
+        badge = f' <span class="badge">{t["cl_latest"]}</span>' if i == 0 else ""
+        items.append(f'<section class="ver-block" id="v{ver}"><h2>{ver}{badge}</h2>{body}</section>')
+    body = f"""<main class="wrap sec prose">
+  <h1>{t['cl_title']}</h1>
+  <p class="sub">{t['cl_lead']} <a href="{LATEST}">{t['cl_dl']} →</a></p>
+  {''.join(items)}
+</main>
+"""
+    return shell(t, "whats-new/", t["cl_title"] + " — Plativka", t["cl_lead"], body)
+
+
+# ───────────── «Допомога» з docs/<мова>/troubleshooting.md ─────────────
+def page_help(t: dict) -> str:
+    import markdown
+    md = (DOCS / t["lang"] / "troubleshooting.md").read_text("utf-8")
+    md = re.sub(r"\A# .*\n+(\[.*\n+)?", "", md)       # заголовок і рядок «мова · назад»
+    base = f"{REPO}/blob/main/docs/{t['lang']}/"
+
+    def fix(m):
+        href = m.group(2)
+        if re.match(r"[a-z]+://|#|mailto:", href):
+            return m.group(0)
+        if href.startswith("../../"):
+            return f"]({REPO}/blob/main/{href[6:]})"
+        return f"]({base}{href})"
+    md = re.sub(r"\]\((([^)]+))\)", fix, md)
+    m = markdown.Markdown(extensions=["toc", "fenced_code", "tables"], extension_configs={"toc": {"toc_depth": "2"}})
+    body_html = m.convert(md)
+    toc = "".join(f'<li><a href="#{e["id"]}">{e["name"]}</a></li>' for e in m.toc_tokens)
+    body = f"""<main class="wrap sec prose">
+  <h1>{t['help_title']}</h1>
+  <p class="sub">{t['help_lead']}</p>
+  <nav class="toc" aria-label="{t['help_toc']}"><h2>{t['help_toc']}</h2><ul>{toc}</ul></nav>
+  {body_html}
+  <p class="help-more">{t['help_more'].format(issues=REPO + "/issues/new/choose")}</p>
+</main>
+"""
+    return shell(t, "help/", t["help_title"] + " — Plativka", t["help_lead"], body)
 
 
 def main():
@@ -381,12 +477,15 @@ def main():
     (DOCS / "uk").mkdir(exist_ok=True)
     for t in T.values():
         (DOCS / t["path"] / "index.html").write_text(page(t), encoding="utf-8")
+        for sub, fn in (("whats-new/", page_changelog), ("help/", page_help)):
+            (DOCS / t["path"] / sub).mkdir(parents=True, exist_ok=True)
+            (DOCS / t["path"] / sub / "index.html").write_text(fn(t), encoding="utf-8")
     (DOCS / ".nojekyll").write_text("")
     (DOCS / "robots.txt").write_text(f"User-agent: *\nAllow: /\nSitemap: {SITE}sitemap.xml\n")
     urls = "".join(
-        f"  <url><loc>{SITE}{t['path']}</loc>"
-        + "".join(f'<xhtml:link rel="alternate" hreflang="{o["lang"]}" href="{SITE}{o["path"]}"/>' for o in T.values())
-        + "</url>\n" for t in T.values())
+        f"  <url><loc>{SITE}{t['path']}{sub}</loc>"
+        + "".join(f'<xhtml:link rel="alternate" hreflang="{o["lang"]}" href="{SITE}{o["path"]}{sub}"/>' for o in T.values())
+        + "</url>\n" for sub in SUBPAGES for t in T.values())
     (DOCS / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" '

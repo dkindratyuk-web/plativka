@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Help: common problems and how to fix them — Plativka</title>
+<meta name="description" content="Something does not work as expected? Find your case below.">
+<link rel="canonical" href="https://dkindratyuk-web.github.io/plativka/help/">
+<link rel="alternate" hreflang="en" href="https://dkindratyuk-web.github.io/plativka/help/">
+<link rel="alternate" hreflang="uk" href="https://dkindratyuk-web.github.io/plativka/uk/help/">
+<link rel="alternate" hreflang="x-default" href="https://dkindratyuk-web.github.io/plativka/help/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Help: common problems and how to fix them — Plativka">
+<meta property="og:description" content="Something does not work as expected? Find your case below.">
+<meta property="og:url" content="https://dkindratyuk-web.github.io/plativka/help/">
+<meta property="og:image" content="https://dkindratyuk-web.github.io/plativka/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f6f3ee">
+<link rel="icon" type="image/png" href="../img/favicon.png">
+<link rel="apple-touch-icon" href="../img/icon-256.png">
+<link rel="stylesheet" href="../site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="../"><img src="../img/icon-256.png" alt="" width="32" height="32">Plativka</a>
+    <nav aria-label="Main"><a href="../#features">Features</a><a href="../#screenshots">Screenshots</a><a href="../#download">Download</a><a href="../whats-new/">What's new</a><a href="../help/" aria-current="page">Help</a></nav>
+    <a class="lang" href="../uk/help/" hreflang="uk">Українська</a>
+  </div>
+</header>
+
+<main class="wrap sec prose">
+  <h1>Help: common problems and how to fix them</h1>
+  <p class="sub">Something does not work as expected? Find your case below.</p>
+  <nav class="toc" aria-label="On this page"><h2>On this page</h2><ul><li><a href="#a-track-stops-before-its-end-and-the-next-one-starts">A track stops before its end and the next one starts</a></li><li><a href="#the-music-paused-by-itself">The music paused by itself</a></li><li><a href="#music-stopped-after-the-last-track">Music stopped after the last track</a></li><li><a href="#a-track-shows-000-in-the-playlist">A track shows 0:00 in the playlist</a></li><li><a href="#the-cover-is-an-empty-square-terminal">The cover is an empty square (terminal)</a></li><li><a href="#covers-look-blocky-terminal">Covers look blocky (terminal)</a></li><li><a href="#macos-plativka-desktop-plativka-cannot-be-opened-developer-cannot-be-verified">macOS: "Plativka Desktop" / "Plativka" cannot be opened, developer cannot be verified</a></li><li><a href="#windows-windows-protected-your-pc">Windows: "Windows protected your PC"</a></li><li><a href="#windows-the-installer-says-deletefile-failed-code-5-access-is-denied">Windows: the installer says "DeleteFile failed; code 5. Access is denied"</a></li><li><a href="#windows-11-no-translucent-background-desktop">Windows 11: no translucent background (desktop)</a></li><li><a href="#windows-h-does-not-hide-the-player-to-the-tray-terminal">Windows: H does not hide the player to the tray (terminal)</a></li><li><a href="#linux-no-sound-mpv-is-required">Linux: no sound / "mpv is required"</a></li><li><a href="#linux-plativka-desktop-does-not-open">Linux: Plativka Desktop does not open</a></li><li><a href="#linux-media-keys-dont-work">Linux: media keys don't work</a></li><li><a href="#no-system-notifications">No system notifications</a></li><li><a href="#macos-the-help-menu-at-the-top-of-the-screen-opens-the-wrong-site-terminal">macOS: the "Help" menu at the top of the screen opens the wrong site (terminal)</a></li><li><a href="#the-volume-keys-dont-change-the-players-volume">The volume keys don't change the player's volume</a></li><li><a href="#l-shows-a-folder-list-inside-the-player-instead-of-a-system-window-terminal">L shows a folder list inside the player instead of a system window (terminal)</a></li><li><a href="#macos-media-keys-dont-work-in-any-app-plativka-music-youtube">macOS: media keys don't work in any app (Plativka, Music, YouTube)</a></li><li><a href="#macos-in-control-center-work-but-the-keyboard-keys-dont">macOS: ⏮ ⏯ ⏭ in Control Center work, but the keyboard keys don't</a></li><li><a href="#logs">Logs</a></li></ul></nav>
+  <p>Sections marked <em>(terminal)</em> or <em>(desktop)</em> apply only to that edition of Plativka; the rest apply to both.</p>
+<h2 id="a-track-stops-before-its-end-and-the-next-one-starts">A track stops before its end and the next one starts</h2>
+<p>The file is truncated or damaged — this is common with "leaked" releases. The file claims to be longer than the sound it actually contains, so the player reaches the real end earlier. Plativka shows a message like <em>"The track stopped at 0:09 of 0:40: the file looks truncated or damaged"</em> and moves on. Re-download the file from another source.</p>
+<h2 id="the-music-paused-by-itself">The music paused by itself</h2>
+<p>Usually something outside the player paused it: AirPods and many headphones pause when you take one out, a media key was pressed, or another app started playing sound. Plativka shows <em>"Paused from outside…"</em> in that case.</p>
+<h2 id="music-stopped-after-the-last-track">Music stopped after the last track</h2>
+<p>That is the end of the playlist. Turn on <strong>repeat: all</strong> with <strong>R</strong> to loop it.</p>
+<h2 id="a-track-shows-000-in-the-playlist">A track shows 0:00 in the playlist</h2>
+<p>The duration could not be read from the file's tags. Plativka shows an estimate and takes the exact duration from mpv as soon as the track starts playing.</p>
+<h2 id="the-cover-is-an-empty-square-terminal">The cover is an empty square <em>(terminal)</em></h2>
+<p>Your terminal said it can show pictures, but something went wrong. Start Plativka with <code>plativka --no-images</code> and tell us your terminal and its version in an <a href="https://github.com/dkindratyuk-web/plativka/issues">issue</a>.</p>
+<h2 id="covers-look-blocky-terminal">Covers look blocky <em>(terminal)</em></h2>
+<p>Your terminal cannot show pictures (Terminal.app on macOS, the classic Windows console, GNOME Terminal…), so covers are drawn with coloured blocks. The macOS DMG and the Linux script open the terminal edition in its own window that shows real covers. Or press <strong>O</strong> twice to replace covers with a record — or use <a href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/desktop.md">Plativka Desktop</a>, which shows real covers everywhere.</p>
+<h2 id="macos-plativka-desktop-plativka-cannot-be-opened-developer-cannot-be-verified">macOS: "Plativka Desktop" / "Plativka" cannot be opened, developer cannot be verified</h2>
+<p>Expected for a free app without a paid Apple certificate. See <a href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-macos.md#3-first-launch-one-time-only">first launch</a>.</p>
+<h2 id="windows-windows-protected-your-pc">Windows: "Windows protected your PC"</h2>
+<p>Expected for a free program without a paid certificate: <strong>More info → Run anyway</strong>. See <a href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-windows.md">installing on Windows</a>.</p>
+<h2 id="windows-the-installer-says-deletefile-failed-code-5-access-is-denied">Windows: the installer says "DeleteFile failed; code 5. Access is denied"</h2>
+<p>Plativka was still running, so Windows would not let the installer replace it. Quit it (tray icon → <strong>Quit Plativka</strong>) and click <strong>Retry</strong>. Installers from version 1.3.4 on close Plativka by themselves.</p>
+<h2 id="windows-11-no-translucent-background-desktop">Windows 11: no translucent background <em>(desktop)</em></h2>
+<p>The Mica background needs <strong>Settings → Personalization → Colors → Transparency effects</strong> turned on. In some virtual machines transparency is not available at all — then the window simply has a solid background.</p>
+<h2 id="windows-h-does-not-hide-the-player-to-the-tray-terminal">Windows: H does not hide the player to the tray <em>(terminal)</em></h2>
+<p>Hiding works only in the player's own window, which the <strong>Plativka</strong> shortcut opens. If you started <code>plativka.exe</code> inside Windows Terminal, use the shortcut instead. In Plativka Desktop use <strong>☰ → View → Minimize to tray</strong>.</p>
+<h2 id="linux-no-sound-mpv-is-required">Linux: no sound / "mpv is required"</h2>
+<p>Install mpv with your package manager (see <a href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-linux.md#what-exactly-happens-on-each-system">installing on Linux</a>). On Fedora mpv may need the RPM Fusion repository.</p>
+<h2 id="linux-plativka-desktop-does-not-open">Linux: Plativka Desktop does not open</h2>
+<p>Start <code>plativka-desktop</code> in a terminal to see the error. <em>"Could not load the Qt platform plugin xcb"</em> means Qt's system libraries are missing — install them (<code>sudo apt install libxcb-cursor0 libxkbcommon-x11-0 libegl1</code> on Debian/Ubuntu/Kubuntu; see <a href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/install-linux.md#what-exactly-happens-on-each-system">installing on Linux</a> for other systems) or run <code>./install.sh --desktop</code> again.</p>
+<h2 id="linux-media-keys-dont-work">Linux: media keys don't work</h2>
+<p>They need a desktop session with D-Bus (GNOME, KDE, Xfce, Cinnamon… — practically all of them). Check with <code>playerctl -l</code> — <code>plativka.instance…</code> should be listed.</p>
+<h2 id="no-system-notifications">No system notifications</h2>
+<p>First check that notifications are on in Plativka (<code>N</code>, the <strong>notifications</strong> switch). Plativka Desktop only shows them when its window is in the background or collapsed to the mini player.</p>
+<ul>
+<li><strong>macOS</strong>: System Settings → Notifications → <strong>Plativka Desktop</strong> (for the terminal edition: <strong>Plativka</strong>, or <strong>Script Editor</strong> if you run it in Terminal.app) → allow notifications.</li>
+<li><strong>Windows</strong>: Settings → System → Notifications → make sure notifications and <strong>Plativka Desktop</strong> / <strong>Plativka</strong> are on. Notifications with a cover need the Start-menu shortcut made by the installer.</li>
+<li><strong>Linux</strong>: install <code>libnotify-bin</code> (Debian/Ubuntu) or <code>libnotify</code> (Fedora/Arch).</li>
+</ul>
+<h2 id="macos-the-help-menu-at-the-top-of-the-screen-opens-the-wrong-site-terminal">macOS: the "Help" menu at the top of the screen opens the wrong site <em>(terminal)</em></h2>
+<p>The menu bar in the macOS DMG belongs to kitty, the window Plativka runs in, so its <strong>Help</strong> menu leads to kitty's website. Plativka's own help is <strong>F1</strong> (or <strong>?</strong>) inside the player — it has the keys, the settings and links to Plativka's GitHub page.</p>
+<h2 id="the-volume-keys-dont-change-the-players-volume">The volume keys don't change the player's volume</h2>
+<p>The player's volume mirrors the system volume. On Linux this needs PipeWire's <code>wpctl</code> or PulseAudio's <code>pactl</code>; without them the player uses its own volume. In the terminal edition check <strong>F1 → Volume</strong>: if it says <em>unavailable</em>, the system volume can't be read (on Linux install PipeWire's <code>wpctl</code> or PulseAudio's <code>pactl</code>), and the player uses its own volume. You can also switch to a separate player volume there on purpose.</p>
+<h2 id="l-shows-a-folder-list-inside-the-player-instead-of-a-system-window-terminal">L shows a folder list inside the player instead of a system window <em>(terminal)</em></h2>
+<p>The system folder dialog is used when one is available. On Linux it needs <code>zenity</code> (GNOME and most desktops) or <code>kdialog</code> (KDE) — the install script installs zenity; or install it yourself, e.g. <code>sudo apt install zenity</code>. Over SSH there is no system dialog, so the in-player picker is used.</p>
+<h2 id="macos-media-keys-dont-work-in-any-app-plativka-music-youtube">macOS: media keys don't work in any app (Plativka, Music, YouTube)</h2>
+<p>If ⏮ ⏯ ⏭ in Control Center's <strong>Now Playing</strong> work, but F7 F8 F9 on the keyboard do nothing anywhere while volume keys work, the system service that handles media keys (<code>rcd</code>) may be turned off for your user — an old "stop media keys from opening iTunes" tip or a utility could have done that. Check in Terminal:</p>
+<pre><code>launchctl print-disabled gui/$(id -u) | grep -i rcd
+</code></pre>
+<p>If it says <code>"com.apple.rcd" =&gt; disabled</code>, turn it back on:</p>
+<pre><code>launchctl enable gui/$(id -u)/com.apple.rcd
+launchctl bootstrap gui/$(id -u) /System/Library/LaunchAgents/com.apple.rcd.plist
+</code></pre>
+<p>(or log out and back in after the first command).</p>
+<h2 id="macos-in-control-center-work-but-the-keyboard-keys-dont">macOS: ⏮ ⏯ ⏭ in Control Center work, but the keyboard keys don't</h2>
+<p>Some keyboards (most non-Apple ones, or a Mac with "Use F1, F2, etc. keys as standard function keys" turned on) send F7 F8 F9 as plain function keys instead of media keys. Since 1.1.2 Plativka treats F7 F8 F9 as previous · pause · next while its window is in front. To control it from other apps too, use the media keys (on Apple keyboards — without Fn, or with Fn if that setting is on).</p>
+<h2 id="logs">Logs</h2>
+<p>If something goes wrong, the logs show what happened:</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Folder</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS, Linux</td>
+<td><code>~/.cache/plativka/</code></td>
+</tr>
+<tr>
+<td>Windows</td>
+<td><code>%LOCALAPPDATA%\Plativka\cache\</code></td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><code>plativka.log</code> — what the player did: which file it loaded, why a track ended, pauses from outside.</li>
+<li><code>mpv.log</code> — the audio engine's own log.</li>
+</ul>
+<p>Both editions write to the same files.</p>
+<p>Attach both files to an <a href="https://github.com/dkindratyuk-web/plativka/issues/new/choose">issue</a> — it makes the problem much easier to find.</p>
+  <p class="help-more">Did not find your problem? <a href="https://github.com/dkindratyuk-web/plativka/issues/new/choose">Tell us about it on GitHub</a> — attach the logs, it helps a lot.</p>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p><a href="https://github.com/dkindratyuk-web/plativka">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="https://alternativeto.net/software/plativka/about/">AlternativeTo</a> · <a href="../whats-new/">What's new</a> · <a href="../help/">Help</a> · <a href="https://github.com/dkindratyuk-web/plativka/issues">Report a problem</a> · <a href="https://github.com/dkindratyuk-web/plativka/blob/main/README.md">Documentation</a></p>
+    <p class="muted">Plativka is free software under the MIT license.</p>
+  </div>
+</footer>
+</body>
+</html>

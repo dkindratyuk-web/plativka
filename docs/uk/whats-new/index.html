@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Що нового в Платівці — Plativka</title>
+<meta name="description" content="Кожна версія з новими можливостями й виправленнями, найновіша — вгорі.">
+<link rel="canonical" href="https://dkindratyuk-web.github.io/plativka/uk/whats-new/">
+<link rel="alternate" hreflang="uk" href="https://dkindratyuk-web.github.io/plativka/uk/whats-new/">
+<link rel="alternate" hreflang="en" href="https://dkindratyuk-web.github.io/plativka/whats-new/">
+<link rel="alternate" hreflang="x-default" href="https://dkindratyuk-web.github.io/plativka/whats-new/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Що нового в Платівці — Plativka">
+<meta property="og:description" content="Кожна версія з новими можливостями й виправленнями, найновіша — вгорі.">
+<meta property="og:url" content="https://dkindratyuk-web.github.io/plativka/uk/whats-new/">
+<meta property="og:image" content="https://dkindratyuk-web.github.io/plativka/img/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#f6f3ee">
+<link rel="icon" type="image/png" href="../../img/favicon.png">
+<link rel="apple-touch-icon" href="../../img/icon-256.png">
+<link rel="stylesheet" href="../../site.css">
+</head>
+<body>
+<header class="top">
+  <div class="wrap top-in">
+    <a class="brand" href="../../uk/"><img src="../../img/icon-256.png" alt="" width="32" height="32">Plativka</a>
+    <nav aria-label="Main"><a href="../../uk/#features">Можливості</a><a href="../../uk/#screenshots">Знімки</a><a href="../../uk/#download">Завантажити</a><a href="../../uk/whats-new/" aria-current="page">Що нового</a><a href="../../uk/help/">Допомога</a></nav>
+    <a class="lang" href="../../whats-new/" hreflang="en">English</a>
+  </div>
+</header>
+
+<main class="wrap sec prose">
+  <h1>Що нового в Платівці</h1>
+  <p class="sub">Кожна версія з новими можливостями й виправленнями, найновіша — вгорі. <a href="https://github.com/dkindratyuk-web/plativka/releases/latest">Завантажити останню версію →</a></p>
+  <section class="ver-block" id="v1.3.6"><h2>1.3.6 <span class="badge">остання</span></h2><ul>
+<li>Без пауз між треками (gapless): треки йдуть один за одним, як на альбомі (обидві версії).</li>
+<li>Вирівнювання гучності за ReplayGain: за альбомом (типово), за треком або вимкнено — у віконній версії ☰ → Відтворення, у консольній — <code>G</code>.</li>
+<li>Альбоми одним файлом з <code>.cue</code> (FLAC, APE, WAV, WavPack) показуються окремими треками й грають без пауз; <code>.cue</code> в UTF-8 або Windows-1251.</li>
+<li>Таймер сну: 15–90 хвилин або після поточного треку, з м'яким стишуванням — у віконній версії ☰ → Відтворення → Таймер сну, у консольній — <code>K</code>.</li>
+<li>Перевірка оновлень: раз на добу Платівка питає GitHub, чи вийшла нова версія, і показує «⬆ 1.x.x» поруч із перемішуванням і повтором. Можна вимкнути.</li>
+<li>Тепер розпізнаються файли APE і WavPack.</li>
+<li>macOS: іконка програми тепер такого ж розміру, як інші в доці (зі стандартними полями й тінню).</li>
+</ul></section><section class="ver-block" id="v1.3.5"><h2>1.3.5</h2><ul>
+<li>Віконна Платівка: меню ☰, контекстні меню, діалоги й підказки тепер у кольорах теми — у темній темі текст меню був білим на білому (Windows, Linux).</li>
+<li>Linux: після <code>./install.sh --desktop</code> скрипт підказує шукати в меню «Платівка (вікно)».</li>
+<li>Документація: інструкції зі встановлення обох версій для кожної системи, новий посібник для віконної Платівки, окремий посібник для консольної версії.</li>
+</ul></section><section class="ver-block" id="v1.3.4"><h2>1.3.4</h2><ul>
+<li>Інсталятори для Windows (обидві версії) самі закривають запущену Платівку перед оновленням — більше немає помилки «DeleteFile збій; код 5. Access is denied».</li>
+</ul></section><section class="ver-block" id="v1.3.3"><h2>1.3.3</h2><ul>
+<li>Віконна Платівка на macOS: у сповіщеннях про трек знову є обкладинка — тепер їх надсилає сама програма («Plativka Desktop»), а не «Редактор скриптів». Уперше macOS спитає дозвіл на сповіщення.</li>
+</ul></section><section class="ver-block" id="v1.3.2"><h2>1.3.2</h2><ul>
+<li>Віконна Платівка: нова візуалізація звуку — вертикальні «світлодіодні» стовпчики (ліворуч лівий канал, праворуч правий, найсвіжіше — посередині), і у великому, і в компактному вигляді.</li>
+<li>Тепер усе вікно, а не лише табло, бере колір з обкладинки.</li>
+<li>Компактний вигляд і міні-плеєр значно щільніші: менше порожнього місця, назва, кнопки й повзунки одного масштабу.</li>
+<li>macOS: рядки списку тим самим компактним шрифтом, що й решта; порожня сіра смуга внизу вікна зникла.</li>
+</ul></section><section class="ver-block" id="v1.3.1"><h2>1.3.1</h2><ul>
+<li>Віконна Платівка: набагато компактніша — менші шрифти, кнопки, рядки, обкладинка й годинник, ближче до консольної версії.</li>
+<li>Панель списку/медіатеки й виділений рядок тепер теж беруть колір з обкладинки.</li>
+<li>Однакові намальовані значки кнопок на всіх системах (без кольорових емодзі на Windows).</li>
+<li>Windows 11: напівпрозорий фон Mica вмикається до появи вікна (у 1.3.0 він не з'являвся).</li>
+</ul></section><section class="ver-block" id="v1.3.0"><h2>1.3.0</h2><ul>
+<li><strong>Нове: віконна Платівка (бета)</strong> — той самий плеєр у звичайному вікні (Qt): справжні обкладинки на всіх системах, годинник-табло й індикатор рівня, вкладки списку й медіатеки з пошуком, компактний вигляд (<code>W</code>), міні-плеєр (<code>E</code>) з «поверх усіх вікон», світла/темна/системна тема з кольором обкладинки, фон Mica на Windows 11, трей, медіаклавіші, сповіщення з обкладинками, дзеркало системної гучності, перетягування тек. Завантаження: <code>Plativka-Desktop-…</code> DMG / інсталятор; на Linux — <code>./install.sh --desktop</code>.</li>
+<li>Консольна версія не змінилась; її ядро (медіатека, теги, обкладинки, mpv) тепер спільне з віконною.</li>
+</ul></section><section class="ver-block" id="v1.2.1"><h2>1.2.1</h2><ul>
+<li>Міні-плеєр: більше немає смуги прокрутки й обрізаного рядка вкладок, коли вікно виходить на рядок нижчим, ніж просили (kitty з відступами); рядок клавіш у міні-плеєрі схований, тож смужка на рядок нижча.</li>
+<li>Знімки зі справжнього Mac на сторінці GitHub.</li>
+</ul></section><section class="ver-block" id="v1.2.0"><h2>1.2.0</h2><ul>
+<li><strong>Компактний вигляд</strong> (<code>W</code>), натхненний плеєром Sonata: невелика смужка плеєра (обкладинка, назва, виконавець — альбом, індикатор рівня в один рядок, смуга перемотування з часом, кнопки, гучність), під нею список і медіатека у вкладках.</li>
+<li><strong>Міні-плеєр</strong> (<code>E</code>): згортає компактний вигляд до смужки й зменшує вікно (вікно Платівки на macOS і Linux, класична консоль Windows, Термінал macOS, iTerm2, xterm); розгортання повертає попередню висоту.</li>
+<li>Вигляд, вкладка й згорнутий стан запам'ятовуються. Linux: запустіть скрипт встановлення ще раз, щоб вікно могло саме змінювати розмір.</li>
+</ul></section><section class="ver-block" id="v1.1.2"><h2>1.1.2</h2><ul>
+<li><strong>F7 F8 F9</strong> = назад · пауза · далі, коли вікно Платівки попереду, — для клавіатур, що надсилають ці клавіші як звичайні F-клавіші, а не медіаклавіші.</li>
+</ul></section><section class="ver-block" id="v1.1.1"><h2>1.1.1</h2><ul>
+<li><strong>Медіаклавіші на macOS</strong>: ⏯ (F8) тепер ставить на паузу й продовжує — macOS надсилає її іншою клавішею, ніж Linux/Windows, і Платівка лише продовжувала гру.</li>
+<li><strong>Обкладинки в системних сповіщеннях</strong>: macOS (у DMG — сповіщення тепер від «Платівки» з обкладинкою), Windows (версія з інсталятора — сповіщення Windows з обкладинкою), Linux (обкладинка як іконка сповіщення).</li>
+</ul></section><section class="ver-block" id="v1.1.0"><h2>1.1.0</h2><ul>
+<li><strong>Клавіші гучності</strong>: гучність плеєра тепер дзеркалить системну — клавіші гучності на клавіатурі (F11/F12 на Mac) і системний повзунок рухають її, а <code>+</code> <code>−</code> у плеєрі змінюють системну гучність. Окрему гучність плеєра можна обрати в F1.</li>
+<li><strong>Медіаклавіші на Windows</strong>: ⏯ ⏭ ⏮ на клавіатурі й навушниках, а також панель мультимедіа Windows із треком і обкладинкою.</li>
+<li><strong>Додавання тек</strong> відкриває звичайне системне вікно вибору (Finder / Windows / GNOME, KDE); на macOS і Linux — кілька тек одразу. Вибір усередині плеєра лишився як запасний.</li>
+<li>Вікно <strong>Теки…</strong>: усі теки медіатеки з кількістю треків; прибрати позначені чи всі, додати ще.</li>
+<li><strong>Зрозуміла навігація</strong>: Tab / Shift+Tab / 1 / 2 — перехід між списком і медіатекою; активна панель має жирну рамку й ●.</li>
+<li><strong>Довідка (F1 або ?)</strong>: версія, автор, кнопки GitHub і «Повідомити про помилку», налаштування гучності й мови, усі клавіші. У меню трею на Windows теж є посилання на GitHub.</li>
+<li>Нижній рядок клавіш і шкала гучності підлаштовуються під ширину вікна.</li>
+<li>Скрипт встановлення на Linux ставить і <code>zenity</code> (вікно вибору теки).</li>
+</ul></section><section class="ver-block" id="v1.0.1"><h2>1.0.1</h2><ul>
+<li>Медіатека: у вікні <strong>− Тека</strong> з'явився пункт <strong>✕ Прибрати всі теки</strong> — спорожнює медіатеку одним рухом (після підтвердження). Файли на диску й список відтворення не чіпає.</li>
+</ul></section><section class="ver-block" id="v1.0.0"><h2>1.0.0</h2><p>Перший публічний реліз.</p>
+<ul>
+<li>Розкладка Winamp: головне вікно з великим годинником, індикатором рівня й біжучим рядком; список відтворення; медіатека.</li>
+<li>macOS (DMG з усім усередині, справжні обкладинки у власному вікні), Windows (інсталятор, іконка в треї), Linux (скрипт для Debian/Ubuntu, Fedora, Arch, openSUSE; медіаклавіші й віджет робочого столу через MPRIS).</li>
+<li>Медіатека з тек за виконавцями → альбомами або за теками; перетягування; швидкий пошук; уся медіатека в список.</li>
+<li>Кольори під обкладинку альбому; справжні обкладинки в терміналах, що вміють картинки; платівка, що крутиться, коли обкладинки вимкнено.</li>
+<li>Сповіщення про трек у плеєрі або системні.</li>
+<li>Теги з імен файлів для треків без тегів; автоматичне виправлення тегів у Windows-1251.</li>
+<li>Розпізнає обрізані файли й паузу ззовні та пояснює, що сталося.</li>
+<li>Інтерфейс англійською та українською.</li>
+</ul></section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-in">
+    <p><a href="https://github.com/dkindratyuk-web/plativka">GitHub</a> · <a href="https://sourceforge.net/projects/plativka/">SourceForge</a> · <a href="https://alternativeto.net/software/plativka/about/">AlternativeTo</a> · <a href="../../uk/whats-new/">Що нового</a> · <a href="../../uk/help/">Допомога</a> · <a href="https://github.com/dkindratyuk-web/plativka/issues">Повідомити про проблему</a> · <a href="https://github.com/dkindratyuk-web/plativka/blob/main/README.uk.md">Документація</a></p>
+    <p class="muted">Платівка — вільна програма під ліцензією MIT.</p>
+  </div>
+</footer>
+</body>
+</html>

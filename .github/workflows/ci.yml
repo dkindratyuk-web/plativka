@@ -22,3 +22,21 @@ jobs:
         run: python -m pip install . pytest pytest-asyncio
       - name: Tests (demo mode, no sound)
         run: python -m pytest -q tests
+
+  site:
+    # Сайт (docs/) збирається з CHANGELOG.md і docs/*/troubleshooting.md:
+    # якщо їх змінили, а сайт не перезібрали (python tools/build_site.py) — нагадати.
+    name: Website is up to date
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - run: python -m pip install pillow markdown
+      - run: python tools/build_site.py
+      - name: Compare
+        run: |
+          git diff --stat -- 'docs/*.html' 'docs/**/*.html' docs/sitemap.xml
+          git diff --quiet -- 'docs/*.html' 'docs/**/*.html' docs/sitemap.xml || {
+            echo "::error::Run 'python tools/build_site.py' and commit the website (docs/)."; exit 1; }

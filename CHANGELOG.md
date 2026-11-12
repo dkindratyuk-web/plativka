@@ -8,6 +8,7 @@
 - Phone remote: the protection against guessing the code now only stops new phones from connecting; the page and phones that are already connected keep working.
 - The remote window: the QR code no longer touches the "Connected phones" label.
 - The log (`plativka.log`) now says why a phone was refused, to make remote problems easier to sort out.
+- A like or unlike made in the other edition at the same moment is no longer missed.
 
 **Українська**
 
@@ -15,6 +16,7 @@
 - Пульт з телефона: захист від вгадування коду тепер не пускає лише нові телефони; сторінка й уже підключені телефони працюють далі.
 - Вікно пульта: QR-код більше не злипається з написом «Підключені телефони».
 - У журналі (`plativka.log`) тепер видно, чому телефону відмовлено, — так простіше розібратися з пультом.
+- Лайк чи зняття лайка в іншій версії Платівки в ту саму мить більше не губиться.
 
 ## 1.5.0
 

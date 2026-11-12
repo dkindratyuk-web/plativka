@@ -44,12 +44,18 @@ class _Store:
         self.data: dict = {}
         self.reload()
 
+    def _stamp(self):
+        """Відбиток файлу: час (у нс), розмір і inode — час на деяких дисках грубий (Windows, FAT),
+        і зміна з другої версії Платівки в ту саму мить інакше лишилась би непоміченою."""
+        try:
+            st = self.path.stat()
+            return (st.st_mtime_ns, st.st_size, st.st_ino)
+        except OSError:
+            return None
+
     def reload(self):
         """Друга версія Платівки могла змінити файл — перечитуємо, якщо він новіший."""
-        try:
-            m = self.path.stat().st_mtime
-        except OSError:
-            m = None
+        m = self._stamp()
         if m == self._mtime and self.data:
             return
         try:
@@ -65,7 +71,7 @@ class _Store:
             tmp = self.path.with_suffix(".tmp")
             tmp.write_text(json.dumps(self.data, ensure_ascii=False), "utf-8")
             tmp.replace(self.path)
-            self._mtime = self.path.stat().st_mtime
+            self._mtime = self._stamp()
         except OSError as e:
             log(f"{self.path.name}: {e}")
 

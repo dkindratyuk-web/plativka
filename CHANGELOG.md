@@ -1,5 +1,17 @@
 # Changelog / Історія змін
 
+## 1.4.1
+
+**English**
+
+- Phone remote: the page no longer stays white or shows “cannot connect to the server” when you come back to it. The phone opens several connections at once, and the protection added in 1.3.7 cut the extra ones; now they wait for their turn.
+- If the remote page ever can't load, it says so and asks you to reload instead of staying blank.
+
+**Українська**
+
+- Пульт з телефона: сторінка більше не лишається білою й не пише «не вдалося під'єднатися до сервера», коли повертаєтеся до неї. Телефон відкриває кілька з'єднань водночас, а захист, доданий у 1.3.7, обривав зайві; тепер вони чекають своєї черги.
+- Якщо сторінка пульта все ж не завантажилась, вона про це пише й просить оновити її, а не лишається порожньою.
+
 ## 1.4.0
 
 **English**

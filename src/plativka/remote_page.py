@@ -26,6 +26,7 @@ INDEX = """<!doctype html>
 <script src="/app.js" defer></script>
 </head>
 <body>
+<p id="boot" class="boot">Plativka…<br><small>Якщо сторінка не з'являється — оновіть її. · If the page doesn't appear, reload it.</small></p>
 <main id="pair" hidden>
   <img class="logo" src="/icon.png" alt="" width="72" height="72">
   <h1 data-t="title">Plativka</h1>
@@ -68,6 +69,7 @@ CSS = """
 html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif}
 main{max-width:460px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
 [hidden]{display:none!important}
+.boot{text-align:center;color:var(--muted);padding-top:30vh;font-size:1.2rem}.boot small{font-size:.8rem}
 .muted{color:var(--muted)}.small{font-size:.85rem}.up{text-transform:uppercase;letter-spacing:.06em}
 h1{font-size:1.6rem;margin:.4em 0 .2em}h3{margin:26px 0 8px}
 #pair{text-align:center;padding-top:12vh}.logo{border-radius:16px}
@@ -128,6 +130,7 @@ JS = r"""
     wait: "Too many failed attempts. Try again in 10 minutes."
   };
   document.documentElement.lang = UK ? "uk" : "en";
+  var boot = document.getElementById("boot"); if (boot) boot.remove();
   document.querySelectorAll("[data-t]").forEach(function (el) { el.textContent = S[el.dataset.t] || el.textContent; });
   var $ = function (id) { return document.getElementById(id); };
   var KEY = "plativka-token";
@@ -272,6 +275,7 @@ JS = r"""
     }).catch(function () { if (++fails > 2) { $("conn").className = "dot off"; $("conn").title = S.noConn; } });
   }
   document.addEventListener("visibilitychange", poll);
+  window.addEventListener("pageshow", function () { if (token) showApp(); });   // повернулися на сторінку — оживляємо
 
   var m = /#p=([A-Za-z0-9_-]{16,})/.exec(location.hash);
   if (m) {

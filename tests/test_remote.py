@@ -233,19 +233,22 @@ async def test_review_findings_fixed(server):
 
 
 @pytest.mark.asyncio
-async def test_connections_per_address_limited(server):
+async def test_connections_per_address_limited_but_not_dropped(server):
     srv, host, _ = await server()
     try:
+        # телефон відкриває багато з'єднань водночас — усі мають отримати відповідь, а не обрив
+        paths = ["/", "/app.js", "/app.css", "/icon.png", "/manifest.webmanifest"] * 4
+        res = await asyncio.gather(*[req(srv.port, "GET", p) for p in paths])
+        assert [r[0] for r in res] == [200] * len(paths)
+        # «висячі» з'єднання займають місця лише до тайм-ауту заголовків, потім черга рушає
         held = [await asyncio.open_connection("127.0.0.1", srv.port) for _ in range(remote.MAX_CONN_PER_IP)]
         for _, w in held:
-            w.write(b"GET / HTTP/1.1\r\n")          # «висячі» запити
+            w.write(b"GET / HTTP/1.1\r\n")
             await w.drain()
         await asyncio.sleep(0.1)
-        r, w = await asyncio.open_connection("127.0.0.1", srv.port)
-        assert await asyncio.wait_for(r.read(), 2) == b""    # п'ятий — одразу закрито
-        w.close()
-        await asyncio.sleep(remote.HEADER_TIMEOUT + 0.5)      # висячі відпали за тайм-аутом
+        t0 = asyncio.get_running_loop().time()
         assert (await req(srv.port, "GET", "/"))[0] == 200
+        assert asyncio.get_running_loop().time() - t0 < remote.HEADER_TIMEOUT + 2
         for _, w in held:
             w.close()
     finally:

@@ -31,7 +31,8 @@ DEFAULT_PORT = 8765
 MAX_HEADER = 8 * 1024
 MAX_BODY = 4 * 1024
 MAX_CONN = 32
-MAX_CONN_PER_IP = 4
+MAX_CONN_PER_IP = 8          # браузер телефона відкриває до 6 з'єднань водночас
+SLOT_WAIT = 5                 # зайві з'єднання чекають своєї черги, а не обриваються
 HEADER_TIMEOUT = 3        # секунд на заголовки (повільні «висячі» запити відкидаємо швидко)
 IO_TIMEOUT = 10
 SECRET_TTL = 600          # QR-код живе 10 хвилин, потім змінюється сам
@@ -282,10 +283,17 @@ class RemoteServer:
     async def _handle(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter):
         peer = (writer.get_extra_info("peername") or [None])[0]
         key = _peer_key(peer) if isinstance(peer, str) else ""
-        if (self._conns >= MAX_CONN or not peer_allowed(peer)
-                or self._per_ip.get(key, 0) >= MAX_CONN_PER_IP):
+        if not peer_allowed(peer):
             writer.close()
             return
+        # забагато з'єднань: зачекати, поки звільниться місце (висячі відпадають за HEADER_TIMEOUT),
+        # і лише потім здатися — інакше сторінка на телефоні вантажилась би наполовину
+        deadline = time.monotonic() + SLOT_WAIT
+        while self._conns >= MAX_CONN or self._per_ip.get(key, 0) >= MAX_CONN_PER_IP:
+            if time.monotonic() > deadline:
+                writer.close()
+                return
+            await asyncio.sleep(0.05)
         self._conns += 1
         self._per_ip[key] = self._per_ip.get(key, 0) + 1
         try:

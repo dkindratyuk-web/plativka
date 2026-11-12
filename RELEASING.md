@@ -10,5 +10,5 @@ Every release ships with its description — on GitHub **and** on the website.
 5. **README** (`README.md`, `README.uk.md`): features and keys.
 6. **Website** — `tools/build_site.py`: feature cards, sections for big features; then `python tools/build_site.py` (What's new and Help pages are built from the changelog and troubleshooting).
 7. **Release notes** — `docs/release-notes/vX.Y.Z.md`: what's new + a short "How to use".
-8. Version in `src/plativka/__init__.py` and `pyproject.toml`, tests green, then push `main` to the `release` branch.
+8. Version in `src/plativka/__init__.py` and `pyproject.toml`, tests green. Push `main` first and **wait until CI has finished**; only then push `main` to the `release` branch. CI and the release build both need macOS machines, and GitHub may not give enough of them at once — then the Apple Silicon builds wait 15 minutes and get cancelled. (If that happens anyway: Actions → the Release run → **Re-run failed jobs**.)
 9. After the release: check GitHub (8 files), the website and SourceForge.

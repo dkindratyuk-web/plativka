@@ -1,5 +1,21 @@
 # Changelog / Історія змін
 
+## 1.5.1
+
+**English**
+
+- Phone remote: coming back to the remote after switching apps (Safari or the icon on the Home Screen) no longer ends with a white screen or "cannot connect". The page is kept on the phone, so it opens at once even while the phone is still reconnecting to Wi-Fi, and then catches up with Plativka by itself.
+- Phone remote: the protection against guessing the code now only stops new phones from connecting; the page and phones that are already connected keep working.
+- The remote window: the QR code no longer touches the "Connected phones" label.
+- The log (`plativka.log`) now says why a phone was refused, to make remote problems easier to sort out.
+
+**Українська**
+
+- Пульт з телефона: повернення до пульта після перемикання на інший застосунок (у Safari чи з іконки на головному екрані) більше не закінчується білим екраном або «не вдалося під'єднатися». Сторінка зберігається на телефоні, тож відкривається одразу, навіть поки телефон ще під'єднується до Wi-Fi, а потім сама наздоганяє Платівку.
+- Пульт з телефона: захист від вгадування коду тепер не пускає лише нові телефони; сторінка й уже підключені телефони працюють далі.
+- Вікно пульта: QR-код більше не злипається з написом «Підключені телефони».
+- У журналі (`plativka.log`) тепер видно, чому телефону відмовлено, — так простіше розібратися з пультом.
+
 ## 1.5.0
 
 **English**

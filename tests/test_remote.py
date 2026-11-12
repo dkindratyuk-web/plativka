@@ -151,11 +151,19 @@ async def test_short_code_limits(server):
 async def test_brute_force_blocks_address(server):
     srv, host, _ = await server()
     try:
+        token = await pair_qr(srv)
         for _ in range(remote.IP_FAIL_LIMIT):
-            await req(srv.port, "GET", "/api/state", {"Authorization": "Bearer guess"})
+            await req(srv.port, "POST", "/api/pair", {}, json.dumps({"secret": "x" * 32}).encode())
         tok_ok = srv.pair_secret
         s, _, _ = await req(srv.port, "POST", "/api/pair", {}, json.dumps({"secret": tok_ok}).encode())
         assert s == 429 and any(e[0] == "blocked" for e in host.events)
+        # блок не зачіпає сторінку й уже підключений телефон — він не може заблокувати сам себе
+        assert (await req(srv.port, "GET", "/"))[0] == 200
+        assert (await req(srv.port, "GET", "/api/state", {"Authorization": f"Bearer {token}"}))[0] == 200
+        for _ in range(30):                                   # чужі ключі не блокують адресу
+            await req(srv.port, "GET", "/api/state", {"Authorization": "Bearer guess"})
+        srv._ip_fails.clear()
+        assert (await req(srv.port, "POST", "/api/pair", {}, json.dumps({"secret": srv.pair_secret}).encode()))[0] == 200
     finally:
         await srv.stop()
 
@@ -267,3 +275,20 @@ def test_queue_command_args():
     ok = remote.RemoteServer._arg_ok
     assert ok("queue", 3) and not ok("queue", -1) and not ok("queue", "3") and not ok("queue", True)
     assert "queue" in remote.COMMANDS
+
+
+@pytest.mark.asyncio
+async def test_page_cached_api_not(server):
+    """Сторінку телефон може взяти з кешу (повернення до згорнутого пульта без мережі),
+    а стан і обкладинку — ніколи."""
+    srv, host, _ = await server()
+    try:
+        token = await pair_qr(srv)
+        s, h, b = await req(srv.port, "GET", "/")
+        assert s == 200 and "max-age" in h["cache-control"] and b"{{V}}" not in b
+        s, h, _ = await req(srv.port, "GET", "/app.js?v=1")
+        assert s == 200 and "max-age" in h["cache-control"]
+        s, h, _ = await req(srv.port, "GET", "/api/state", {"Authorization": f"Bearer {token}"})
+        assert s == 200 and h["cache-control"] == "no-store"
+    finally:
+        await srv.stop()

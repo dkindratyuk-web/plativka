@@ -269,6 +269,14 @@ class RemoteServer:
             log(f"пульт: адреса {ip} заблокована на {IP_BLOCK // 60} хв після невдалих спроб")
             self.host.remote_event("blocked", ip)
 
+    def _diag(self, kind: str, msg: str):
+        """Пояснення в журнал, чому телефону відмовлено, — не частіше ніж раз на 30 с на причину."""
+        now = time.monotonic()
+        last = self.__dict__.setdefault("_diag_t", {})
+        if now - last.get(kind, -1e9) >= 30:
+            last[kind] = now
+            log(msg)
+
     def _device_for(self, auth: str | None):
         if not auth or not auth.startswith("Bearer "):
             return None
@@ -284,6 +292,7 @@ class RemoteServer:
         peer = (writer.get_extra_info("peername") or [None])[0]
         key = _peer_key(peer) if isinstance(peer, str) else ""
         if not peer_allowed(peer):
+            self._diag("peer", f"пульт: з'єднання з {peer} відхилено — адреса не з домашньої мережі")
             writer.close()
             return
         # забагато з'єднань: зачекати, поки звільниться місце (висячі відпадають за HEADER_TIMEOUT),
@@ -291,6 +300,14 @@ class RemoteServer:
         deadline = time.monotonic() + SLOT_WAIT
         while self._conns >= MAX_CONN or self._per_ip.get(key, 0) >= MAX_CONN_PER_IP:
             if time.monotonic() > deadline:
+                self._diag("busy", f"пульт: {peer} — забагато одночасних з'єднань "
+                           f"({self._per_ip.get(key, 0)} з цієї адреси, {self._conns} усього)")
+                try:                            # коротка відповідь замість обірваного з'єднання (білого екрана)
+                    writer.write(b"HTTP/1.1 503 Service Unavailable\r\nRetry-After: 1\r\nContent-Length: 0\r\n"
+                                 b"Connection: close\r\n\r\n")
+                    await asyncio.wait_for(writer.drain(), 2)
+                except Exception:
+                    pass
                 writer.close()
                 return
             await asyncio.sleep(0.05)
@@ -335,8 +352,6 @@ class RemoteServer:
             return await self._send(writer, 400, b"")
         if not host_allowed(headers.get("host")):
             return await self._send(writer, 421, b"")
-        if self._blocked(peer):
-            return await self._send(writer, 429, b"")
         body = b""
         if method == "POST":
             origin = headers.get("origin")
@@ -357,29 +372,42 @@ class RemoteServer:
         # сторінка — без ключа (у ній немає нічого, крім коду інтерфейсу)
         if method == "GET" and path in ("/", "/index.html"):
             from .remote_page import INDEX
-            return await self._send(writer, 200, INDEX.encode(), "text/html; charset=utf-8")
+            # сторінку й файли інтерфейсу браузер може тримати в кеші: повернувшись до згорнутого
+            # пульта, телефон показує його одразу, навіть поки Wi-Fi ще «прокидається»
+            return await self._send(writer, 200, INDEX.replace("{{V}}", __version__).encode(),
+                                    "text/html; charset=utf-8", cache=600)
         if method == "GET" and path == "/app.js":
             from .remote_page import JS
-            return await self._send(writer, 200, JS.encode(), "text/javascript; charset=utf-8")
+            return await self._send(writer, 200, JS.replace("{{V}}", __version__).encode(),
+                                    "text/javascript; charset=utf-8", cache=86400)
         if method == "GET" and path == "/app.css":
             from .remote_page import CSS
-            return await self._send(writer, 200, CSS.encode(), "text/css; charset=utf-8")
+            return await self._send(writer, 200, CSS.encode(), "text/css; charset=utf-8", cache=86400)
         if method == "GET" and path == "/icon.png":
             from .remote_page import icon_png
-            return await self._send(writer, 200, icon_png(), "image/png")
+            return await self._send(writer, 200, icon_png(), "image/png", cache=86400)
         if method == "GET" and path == "/manifest.webmanifest":
             from .remote_page import MANIFEST
-            return await self._send(writer, 200, MANIFEST.encode(), "application/manifest+json")
+            return await self._send(writer, 200, MANIFEST.encode(), "application/manifest+json", cache=86400)
 
+        # блок після невдалих спроб стосується лише підключення нових телефонів (вгадування коду):
+        # сторінка й уже підключені телефони працюють завжди — інакше телефон міг заблокувати сам себе
         if method == "POST" and path == "/api/pair":
+            if self._blocked(peer):
+                self._diag("blocked", f"пульт: {peer} заблоковано — спроба підключення відхилена")
+                return await self._send(writer, 429, b"")
             return await self._pair(writer, peer, body, headers)
 
         dev = self._device_for(headers.get("authorization"))
         if dev is None:
+            # ключі телефонів — 256 біт, вгадати їх неможливо; тут лише пояснюємо в журналі, що сталося
             if path.startswith("/api/") or path == "/cover":
-                self._fail(peer)
+                self._diag("unauth", f"пульт: {peer} — запит без дійсного ключа ({path}); "
+                           f"телефон відключено або його ключ загубився")
             return await self._send(writer, 401 if path.startswith("/api/") or path == "/cover" else 404, b"")
         if time.time() - dev.get("seen", 0) > 60:
+            if time.time() - dev.get("seen", 0) > 300:
+                log(f"пульт: {dev.get('name', '?')} ({peer}) знову на зв'язку")
             dev["seen"] = int(time.time())
             self.save()
 
@@ -499,13 +527,16 @@ class RemoteServer:
         return await self._send(writer, 200, json.dumps(obj, ensure_ascii=False).encode(),
                                 "application/json; charset=utf-8")
 
-    async def _send(self, writer, status: int, body: bytes, ctype: str = "text/plain; charset=utf-8"):
+    async def _send(self, writer, status: int, body: bytes, ctype: str = "text/plain; charset=utf-8",
+                    cache: int = 0):
         reason = {200: "OK", 400: "Bad Request", 401: "Unauthorized", 403: "Forbidden", 404: "Not Found",
                   409: "Conflict",
                   405: "Method Not Allowed", 413: "Payload Too Large", 421: "Misdirected Request",
                   429: "Too Many Requests", 431: "Request Header Fields Too Large"}.get(status, "")
         hdr = {"Content-Type": ctype, "Content-Length": str(len(body)), "Connection": "close",
                **SECURITY_HEADERS}
+        if cache:                       # лише код інтерфейсу; відповіді API й обкладинка — ніколи
+            hdr["Cache-Control"] = f"private, max-age={cache}"
         writer.write((f"HTTP/1.1 {status} {reason}\r\n" + "".join(f"{k}: {v}\r\n" for k, v in hdr.items())
                       + "\r\n").encode() + body)
         await asyncio.wait_for(writer.drain(), IO_TIMEOUT)

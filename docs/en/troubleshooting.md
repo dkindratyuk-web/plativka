@@ -114,7 +114,8 @@ Some places have no Trash: network drives, and on Linux some USB sticks and othe
 - **Same network.** The phone must be on the same Wi-Fi as the computer — not on mobile data, and not on a guest network (guest networks usually isolate devices from each other).
 - **Firewall.** The first time, macOS or Windows asks whether Plativka may accept incoming connections. If you clicked “Deny”: on a Mac — System Settings → Network → Firewall → Options, allow Plativka; on Windows — Windows Security → Firewall → “Allow an app through firewall”, tick Plativka for private networks. On Linux, open the port Plativka shows (8765 by default) if you use a firewall (`sudo ufw allow 8765/tcp`).
 - **The QR code says “already used”.** Each QR code works once and changes every 10 minutes and when the remote window is closed. Open the remote window again and scan the new one.
-- **“Too many failed attempts”.** After many wrong codes, the address is blocked for 10 minutes — wait, then show a new code.
+- **“Too many failed attempts”.** After many wrong codes, connecting new phones from that address is blocked for 10 minutes — wait, then show a new code. Phones that are already connected keep working.
+- **A white screen or “cannot connect” after switching back to the remote** (fixed in 1.5.1). Update Plativka, then open the remote once more from the QR code. If it still happens, look in `plativka.log` (see [Logs](#logs)): lines starting with `пульт:` say why the phone was refused.
 - **The phone was connected but now shows the code screen.** It was disconnected in Plativka (or “Disconnect all” was pressed). Scan the QR code again.
 - **The address changed.** If the router gave the computer a new address, the old bookmark stops working; scan the QR code again. To avoid it, reserve a fixed address for the computer in the router (DHCP reservation).
 

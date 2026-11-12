@@ -22,8 +22,8 @@ INDEX = """<!doctype html>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.png">
 <link rel="apple-touch-icon" href="/icon.png">
-<link rel="stylesheet" href="/app.css">
-<script src="/app.js" defer></script>
+<link rel="stylesheet" href="/app.css?v={{V}}">
+<script src="/app.js?v={{V}}" defer></script>
 </head>
 <body>
 <p id="boot" class="boot">Plativka…<br><small>Якщо сторінка не з'являється — оновіть її. · If the page doesn't appear, reload it.</small></p>
@@ -163,6 +163,7 @@ JS = r"""
   var token = null;
   try { token = localStorage.getItem(KEY); } catch (e) {}
   var st = null, plVer = -1, coverKey = null, coverUrl = null, timer = null, volBusy = 0, fails = 0;
+  var VERSION = "{{V}}";
 
   function fmt(s) {
     s = Math.max(0, Math.floor(s || 0));
@@ -376,11 +377,26 @@ JS = r"""
       return r.ok ? r.json() : null;
     }).then(function (j) {
       if (!j) return;
-      fails = 0; $("conn").className = "dot"; st = j; render();
+      fails = 0; $("conn").className = "dot"; $("conn").title = "";
+      if (j.version && j.version !== VERSION) {          // Платівку оновили — беремо нову сторінку
+        var k = "plativka-reloaded-" + j.version, done = null;
+        try { done = sessionStorage.getItem(k); sessionStorage.setItem(k, "1"); } catch (e) {}
+        if (!done) { location.replace("/?v=" + encodeURIComponent(j.version)); return; }
+      }
+      st = j; render();
     }).catch(function () { if (++fails > 2) { $("conn").className = "dot off"; $("conn").title = S.noConn; } });
   }
-  document.addEventListener("visibilitychange", poll);
-  window.addEventListener("pageshow", function () { if (token) showApp(); });   // повернулися на сторінку — оживляємо
+  // повернулися до згорнутого пульта: одразу питаємо стан і кілька секунд пробуємо частіше,
+  // поки телефон знову під'єднується до Wi-Fi
+  function wake() {
+    if (!token || document.hidden) return;
+    fails = 0; showApp(); plVer = -1;
+    [400, 1200, 2500, 4000].forEach(function (t) { setTimeout(poll, t); });
+  }
+  document.addEventListener("visibilitychange", wake);
+  window.addEventListener("pageshow", wake);
+  window.addEventListener("online", wake);
+  window.addEventListener("focus", wake);
 
   var m = /#p=([A-Za-z0-9_-]{16,})/.exec(location.hash);
   if (m) {

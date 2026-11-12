@@ -39,71 +39,97 @@ INDEX = """<!doctype html>
 </main>
 
 <main id="app" hidden>
-  <header class="bar"><span class="muted small" id="where">Plativka</span><span id="conn" class="dot" title=""></span></header>
-  <div class="cover"><img id="cover" alt="" hidden><div id="vinyl" class="vinyl"><span></span></div></div>
-  <div class="trow"><h2 id="t-title" class="title"></h2><button id="fav" class="heart" aria-label="favorite" aria-pressed="false">&#x2661;</button></div>
-  <p id="t-sub" class="muted sub"></p>
-  <div id="seek" class="seek" role="slider" aria-label="position" tabindex="0"><div id="seek-fill"></div></div>
-  <div class="times muted small"><span id="pos">0:00</span><span id="dur">0:00</span></div>
-  <div class="controls">
-    <button id="prev" class="round" aria-label="previous">&#x23EE;&#xFE0E;</button>
-    <button id="toggle" class="round big primary" aria-label="play/pause">&#x25B6;&#xFE0E;</button>
-    <button id="next" class="round" aria-label="next">&#x23ED;&#xFE0E;</button>
-  </div>
-  <div class="vol"><span class="muted" aria-hidden="true">&#x1F508;&#xFE0E;</span><input id="vol" type="range" min="0" max="100" step="1" aria-label="volume"><span id="vol-n" class="muted small"></span></div>
+  <header class="bar"><span class="brand">Plativka</span><span id="conn" class="dot" title=""></span></header>
+  <section class="card">
+    <div class="cover"><img id="cover" alt="" hidden><div id="vinyl" class="vinyl"><span></span></div></div>
+    <div class="lcdrow">
+      <div class="lcdbox"><svg id="lcd" class="lcd" viewBox="0 0 92 30" aria-label="time"></svg></div>
+      <button id="fav" class="heart" aria-label="favorite" aria-pressed="false"><svg class="ic hfill" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-9.2-8.6C1.2 8.2 3 4.5 6.6 4.5c2.1 0 3.4 1.2 4.4 2.6 1-1.4 2.3-2.6 4.4-2.6 3.6 0 5.4 3.7 3.8 6.9C19 15.6 12 20 12 20z"/></svg><svg class="ic hline" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-9.2-8.6C1.2 8.2 3 4.5 6.6 4.5c2.1 0 3.4 1.2 4.4 2.6 1-1.4 2.3-2.6 4.4-2.6 3.6 0 5.4 3.7 3.8 6.9C19 15.6 12 20 12 20z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
+    </div>
+    <h2 id="t-title" class="title"></h2>
+    <p id="t-sub" class="sub"></p>
+    <div id="seek" class="seek" role="slider" aria-label="position" tabindex="0"><div id="seek-fill"></div></div>
+    <div class="times small"><span id="pos">0:00</span><span id="dur">0:00</span></div>
+    <div class="controls">
+      <button id="prev" class="round" aria-label="previous"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h2v14H7zM20 5v14L10 12z"/></svg></button>
+      <button id="toggle" class="round big primary" aria-label="play/pause"><svg class="ic play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><svg class="ic pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg></button>
+      <button id="next" class="round" aria-label="next"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5h2v14h-2zM4 5v14l10-7z"/></svg></button>
+    </div>
+    <div class="vol"><span class="volic"><svg class="ic " viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16 8.5a5 5 0 0 1 0 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span><input id="vol" type="range" min="0" max="100" step="1" aria-label="volume"><span id="vol-n" class="small muted"></span></div>
+  </section>
   <div class="row">
     <button id="sleep-btn" class="chip" data-t="sleep"></button>
   </div>
   <div id="sleep-menu" class="sheet" hidden></div>
-  <h3 class="muted small up" data-t="playlist"></h3>
-  <ol id="list" class="list"></ol>
+  <section class="card listcard">
+    <h3 class="small up" data-t="playlist"></h3>
+    <p class="small muted hint" data-t="holdHint"></p>
+    <ol id="list" class="list"></ol>
+  </section>
   <p class="foot"><button id="forget" class="link" data-t="forget"></button></p>
+  <div id="toast" class="toast" role="status" hidden></div>
 </main>
 </body>
 </html>
 """
 
 CSS = """
-:root{--bg:#f6f3ee;--card:#fff;--ink:#1d1a16;--muted:#6c645a;--line:#e2dbd0;--accent:#0e7c84;--accent-ink:#fff;color-scheme:light}
+:root{--bg:#eceff4;--card:#f7f8fb;--ink:#1a1d24;--muted:rgba(0,0,0,.52);--line:rgba(0,0,0,.08);--accent:#0e7c84;
+--accent-ink:#fff;--lcd:rgba(14,124,132,.08);--hl:rgba(14,124,132,.16);--btn:rgba(0,0,0,.055);color-scheme:light}
+:root.dark{--ink:#f2f3f5;--muted:rgba(255,255,255,.58);--line:rgba(255,255,255,.09);--btn:rgba(255,255,255,.08);color-scheme:dark}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif}
-main{max-width:460px;margin:0 auto;padding:max(14px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
+html,body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;transition:background .4s}
+main{max-width:460px;margin:0 auto;padding:max(10px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom))}
 [hidden]{display:none!important}
 .boot{text-align:center;color:var(--muted);padding-top:30vh;font-size:1.2rem}.boot small{font-size:.8rem}
-.muted{color:var(--muted)}.small{font-size:.85rem}.up{text-transform:uppercase;letter-spacing:.06em}
-h1{font-size:1.6rem;margin:.4em 0 .2em}h3{margin:26px 0 8px}
+.muted{color:var(--muted)}.small{font-size:.85rem}.up{text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:2px 4px 8px}
+h1{font-size:1.6rem;margin:.4em 0 .2em}
 #pair{text-align:center;padding-top:12vh}.logo{border-radius:16px}
 #pair form{display:flex;gap:8px;margin-top:22px}
-#code{flex:1;min-width:0;font-size:1.6rem;letter-spacing:.2em;text-align:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
+#code{flex:1;min-width:0;font-size:1.6rem;letter-spacing:.2em;text-align:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 button{font:inherit;color:inherit;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 16px;cursor:pointer}
 button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.err{color:#b3261e;min-height:1.4em}
-.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
-.dot{width:9px;height:9px;border-radius:50%;background:#2e9d5b}.dot.off{background:#c9c2b7}
-.cover{aspect-ratio:1;border-radius:18px;overflow:hidden;background:var(--accent);display:grid;place-items:center}
+.err{color:#d03a2f;min-height:1.4em}
+.bar{display:flex;justify-content:space-between;align-items:center;margin:0 4px 10px}
+.brand{font-weight:700;letter-spacing:.02em;color:var(--muted)}
+.dot{width:9px;height:9px;border-radius:50%;background:#2e9d5b}.dot.off{background:#9c958b}
+.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px;transition:background .4s}
+.cover{aspect-ratio:1;border-radius:14px;overflow:hidden;background:var(--accent);display:grid;place-items:center}
 .cover img{width:100%;height:100%;object-fit:cover}
 .vinyl{width:72%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#0000 0 31%,#26292f 32% 100%);display:grid;place-items:center;box-shadow:inset 0 0 0 10px #1c1e23}
 .vinyl span{width:34%;aspect-ratio:1;border-radius:50%;background:var(--accent);box-shadow:inset 0 0 0 3px #0003}
-.trow{display:flex;align-items:flex-start;gap:8px}.trow .title{flex:1}
-.heart{border:0;background:none;font-size:1.7rem;line-height:1;padding:12px 4px 0;color:var(--muted)}.heart.on{color:#e0245e}
-.list li .h{color:#e0245e;width:1em}
-.title{font-size:1.35rem;margin:16px 0 2px;overflow-wrap:anywhere}.sub{margin:0;overflow-wrap:anywhere}
-.seek{height:28px;margin-top:14px;position:relative;touch-action:none;cursor:pointer}
+.lcdrow{display:flex;align-items:center;gap:10px;margin-top:12px}
+.lcdbox{flex:1;background:var(--lcd);border-radius:12px;padding:8px 12px;display:flex;justify-content:center}
+.lcd{height:44px;width:auto;fill:var(--accent)}.lcd .off{opacity:.09}
+.heart{border:0;background:none;padding:6px;color:var(--muted);line-height:0}
+.heart .ic{width:34px;height:34px}.heart .hfill{display:none;fill:#e0245e}.heart.on .hfill{display:block}.heart.on .hline{display:none}
+.title{font-size:1.3rem;margin:12px 2px 2px;overflow-wrap:anywhere}.sub{margin:0 2px;color:var(--muted);overflow-wrap:anywhere}
+.seek{height:28px;margin-top:10px;position:relative;touch-action:none;cursor:pointer}
 .seek::before{content:"";position:absolute;left:0;right:0;top:12px;height:5px;border-radius:5px;background:var(--line)}
 #seek-fill{position:absolute;left:0;top:12px;height:5px;border-radius:5px;background:var(--accent);width:0}
-.times{display:flex;justify-content:space-between;margin-top:-4px}
-.controls{display:flex;justify-content:center;align-items:center;gap:22px;margin:12px 0 6px}
-.round{width:58px;height:58px;border-radius:50%;padding:0;font-size:1.3rem;display:grid;place-items:center}
-.round.big{width:76px;height:76px;font-size:1.8rem}
-.vol{display:flex;align-items:center;gap:10px;margin-top:6px}.vol input{flex:1;accent-color:var(--accent)}
-.row{display:flex;justify-content:center;margin-top:14px}.chip{border-radius:999px;padding:8px 16px;font-size:.95rem}
+.times{display:flex;justify-content:space-between;margin-top:-4px;color:var(--muted)}
+.controls{display:flex;justify-content:center;align-items:center;gap:22px;margin:10px 0 4px}
+.round{width:58px;height:58px;border-radius:50%;padding:0;display:grid;place-items:center;background:var(--btn);border:0;color:var(--ink)}
+.round.big{width:76px;height:76px;background:var(--accent);color:var(--accent-ink)}
+.ic{width:24px;height:24px;fill:currentColor}.round.big .ic{width:32px;height:32px}
+#toggle .pause{display:none}#toggle.playing .pause{display:block}#toggle.playing .play{display:none}
+.vol{display:flex;align-items:center;gap:10px;margin-top:8px;color:var(--muted)}.vol input{flex:1;accent-color:var(--accent)}
+.volic .ic{width:22px;height:22px}
+.row{display:flex;justify-content:center;margin:14px 0 0}.chip{border-radius:999px;padding:8px 16px;font-size:.95rem;background:var(--card)}
 .chip.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .sheet{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}.sheet button{padding:10px 4px;font-size:.92rem}
-.list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.list li{display:flex;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.listcard{margin-top:16px;padding:10px 6px}
+.list{list-style:none;margin:0;padding:0}
+.list li{display:flex;gap:8px;padding:10px 8px;border-radius:10px;cursor:pointer;font-size:.95rem}
 .list li .n{color:var(--muted);min-width:2.2em;text-align:right}.list li .d{color:var(--muted);margin-left:auto;padding-left:8px}
-.list li .t{overflow-wrap:anywhere}.list li.cur{color:var(--accent);font-weight:600}.list li.cur .n{color:var(--accent)}
-.foot{text-align:center;margin-top:28px}.link{border:0;background:none;color:var(--muted);text-decoration:underline;padding:6px}
+.list li .t{overflow-wrap:anywhere}.list li .h{color:#e0245e;width:1em;flex:none}
+.list li.cur{background:var(--hl);font-weight:600}.list li.cur .t,.list li.cur .n{color:var(--accent)}
+.hint{margin:-4px 4px 6px}
+.list li{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.list li.q .n{color:var(--accent);font-weight:600}
+.toast{position:fixed;left:50%;bottom:max(18px,env(safe-area-inset-bottom));transform:translateX(-50%);max-width:88vw;
+background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:9}
+.foot{text-align:center;margin-top:24px}.link{border:0;background:none;color:var(--muted);text-decoration:underline;padding:6px}
 """
 
 JS = r"""
@@ -115,7 +141,7 @@ JS = r"""
     connect: "Підключити", badCode: "Код не підійшов або вже не діє. Покажіть новий у Платівці.",
     badQr: "Цей QR-код уже використано. Відкрийте вікно пульта в Платівці ще раз.", noConn: "Немає зв'язку з Платівкою",
     sleep: "Таймер сну", sleepOff: "Вимк", min: "хв", afterTrack: "Після треку", sleepIn: "Сон: ", sleepTrack: "Сон: після треку",
-    playlist: "Список відтворення", forget: "Відключити цей телефон", pick: "Оберіть, що послухати, у Платівці",
+    playlist: "Список відтворення", holdHint: "Утримуйте пісню — заграє наступною", queued: "Наступною: ", forget: "Відключити цей телефон", pick: "Оберіть, що послухати, у Платівці",
     forgetQ: "Відключити цей телефон від Платівки?",
     full: "Підключено забагато телефонів. Відключіть якийсь у вікні пульта в Платівці.",
     wait: "Забагато невдалих спроб. Спробуйте за 10 хвилин."
@@ -124,7 +150,7 @@ JS = r"""
     connect: "Connect", badCode: "The code is wrong or no longer valid. Show a new one in Plativka.",
     badQr: "This QR code was already used. Open the remote window in Plativka again.", noConn: "No connection to Plativka",
     sleep: "Sleep timer", sleepOff: "Off", min: "min", afterTrack: "After track", sleepIn: "Sleep: ", sleepTrack: "Sleep: after track",
-    playlist: "Playlist", forget: "Disconnect this phone", pick: "Choose something to play in Plativka",
+    playlist: "Playlist", holdHint: "Touch and hold a song to play it next", queued: "Up next: ", forget: "Disconnect this phone", pick: "Choose something to play in Plativka",
     forgetQ: "Disconnect this phone from Plativka?",
     full: "Too many phones are connected. Disconnect one in the remote window in Plativka.",
     wait: "Too many failed attempts. Try again in 10 minutes."
@@ -236,27 +262,106 @@ JS = r"""
             d = document.createElement("span");
         n.className = "n"; t.className = "t"; d.className = "d";
         var h = document.createElement("span"); h.className = "h"; h.textContent = it[2] ? "\u2665" : "";
-        n.textContent = (i + 1) + "."; t.textContent = it[0]; d.textContent = it[1];
-        li.append(n, h, t, d); li.onclick = function () { cmd("play", i); };
+        n.textContent = (it[3] ? "\u2192" + it[3] + " " : "") + (i + 1) + ".";
+        if (it[3]) li.classList.add("q");
+        t.textContent = it[0]; d.textContent = it[1];
+        li.append(n, h, t, d);
+        holdable(li, function () { cmd("play", i); }, function () {
+          cmd("queue", i); toast(S.queued + it[0]); setTimeout(function () { plVer = -1; }, 300);
+        });
         ol.appendChild(li);
       });
       markCurrent();
     }).catch(function () {});
   }
+  // дотик — грати; утримання (~0,5 с) — грати наступною
+  function holdable(el, tap, hold) {
+    var tm = null, held = false, sx = 0, sy = 0;
+    function start(x, y) { held = false; sx = x; sy = y; clearTimeout(tm);
+      tm = setTimeout(function () { held = true; if (navigator.vibrate) navigator.vibrate(15); hold(); }, 520); }
+    function cancel() { clearTimeout(tm); tm = null; }
+    el.addEventListener("touchstart", function (e) { var t = e.touches[0]; start(t.clientX, t.clientY); }, { passive: true });
+    el.addEventListener("touchmove", function (e) { var t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > 10 || Math.abs(t.clientY - sy) > 10) cancel(); }, { passive: true });
+    el.addEventListener("touchend", cancel);
+    el.addEventListener("touchcancel", cancel);
+    el.addEventListener("mousedown", function (e) { start(e.clientX, e.clientY); });
+    el.addEventListener("mouseup", cancel);
+    el.addEventListener("mouseleave", cancel);
+    el.addEventListener("contextmenu", function (e) { e.preventDefault(); });
+    el.addEventListener("click", function () { if (held) { held = false; return; } tap(); });
+  }
+  var toastT = null;
+  function toast(msg) {
+    var el = $("toast"); el.textContent = msg; el.hidden = false;
+    clearTimeout(toastT); toastT = setTimeout(function () { el.hidden = true; }, 2200);
+  }
   function markCurrent() {
     var lis = $("list").children;
     for (var i = 0; i < lis.length; i++) lis[i].classList.toggle("cur", st && i === st.current);
   }
+  // ── вигляд як у Платівці на комп'ютері: фон і картка підфарбовані кольором обкладинки ──
+  function rgb(h) { return [1, 3, 5].map(function (i) { return parseInt(h.substr(i, 2), 16); }); }
+  function mix(a, b, t) { return "rgb(" + a.map(function (x, i) { return Math.round(x + (b[i] - x) * t); }).join(",") + ")"; }
+  function rgba(c, a) { return "rgba(" + c.join(",") + "," + a + ")"; }
+  var lastTheme = "";
+  function applyTheme(accent, dark) {
+    var key = accent + dark;
+    if (key === lastTheme) return;
+    lastTheme = key;
+    var a = rgb(accent), r = document.documentElement, cs = r.style;
+    r.classList.toggle("dark", dark);
+    cs.setProperty("--accent", accent);
+    cs.setProperty("--bg", mix(rgb(dark ? "#16181e" : "#eceff4"), a, dark ? .10 : .08));
+    cs.setProperty("--card", mix(rgb(dark ? "#1e2129" : "#f7f8fb"), a, dark ? .06 : .045));
+    cs.setProperty("--lcd", rgba(a, dark ? .09 : .07));
+    cs.setProperty("--hl", rgba(a, .18));
+    var lum = (a[0] * 299 + a[1] * 587 + a[2] * 114) / 1000;
+    cs.setProperty("--accent-ink", lum > 150 ? "#111" : "#fff");
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", getComputedStyle(r).getPropertyValue("--bg"));
+  }
+  // ── семисегментне табло, як годинник у Платівці ──
+  var SEG = { a: [2, 0, 10, 2], b: [12, 2, 2, 9], c: [12, 13, 2, 9], d: [2, 22, 10, 2], e: [0, 13, 2, 9], f: [0, 2, 2, 9], g: [2, 11, 10, 2] };
+  var DIG = ["abcdef", "bc", "abdeg", "abcdg", "bcfg", "acdfg", "acdefg", "abc", "abcdefg", "abcdfg"];
+  var NS = "http://www.w3.org/2000/svg", lcdDigits = [];
+  (function buildLcd() {
+    var svg = $("lcd"), xs = [0, 20, 46, 66];
+    xs.forEach(function (x) {
+      var g = document.createElementNS(NS, "g"), segs = {};
+      g.setAttribute("transform", "translate(" + (x + 4) + ",3)");
+      Object.keys(SEG).forEach(function (k) {
+        var r = document.createElementNS(NS, "rect"), v = SEG[k];
+        r.setAttribute("x", v[0]); r.setAttribute("y", v[1]); r.setAttribute("width", v[2]); r.setAttribute("height", v[3]);
+        r.setAttribute("rx", 1); g.appendChild(r); segs[k] = r;
+      });
+      svg.appendChild(g); lcdDigits.push(segs);
+    });
+    [9, 19].forEach(function (y) {
+      var c = document.createElementNS(NS, "rect");
+      c.setAttribute("x", 39); c.setAttribute("y", y + 3); c.setAttribute("width", 3); c.setAttribute("height", 3); c.setAttribute("rx", 1);
+      svg.appendChild(c);
+    });
+  })();
+  function showLcd(sec) {
+    sec = Math.max(0, Math.floor(sec || 0));
+    var m = Math.min(99, Math.floor(sec / 60)), s2 = sec % 60;
+    var ds = [Math.floor(m / 10), m % 10, Math.floor(s2 / 10), s2 % 10];
+    ds.forEach(function (d, i) {
+      var on = (i === 0 && d === 0) ? "" : DIG[d];
+      Object.keys(SEG).forEach(function (k) { lcdDigits[i][k].setAttribute("class", on.indexOf(k) >= 0 ? "" : "off"); });
+    });
+  }
   function render() {
-    document.documentElement.style.setProperty("--accent", /^#[0-9a-f]{6}$/i.test(st.accent) ? st.accent : "#0e7c84");
+    applyTheme(/^#[0-9a-f]{6}$/i.test(st.accent) ? st.accent : "#0e7c84", !!st.dark);
+    showLcd(st.pos);
     $("t-title").textContent = st.title || S.pick;
     $("fav").hidden = !st.title;
-    $("fav").textContent = st.fav ? "\u2665" : "\u2661";
     $("fav").classList.toggle("on", !!st.fav); $("fav").setAttribute("aria-pressed", st.fav ? "true" : "false");
     $("t-sub").textContent = [st.artist, [st.album, st.year].filter(Boolean).join(" · ")].filter(Boolean).join(" — ");
     $("pos").textContent = fmt(st.pos); $("dur").textContent = fmt(st.dur);
     $("seek-fill").style.width = (st.dur ? Math.min(100, st.pos / st.dur * 100) : 0) + "%";
-    $("toggle").textContent = st.active && !st.paused ? "❚❚" : "▶︎";
+    $("toggle").classList.toggle("playing", !!(st.active && !st.paused));
     if (Date.now() - volBusy > 1500) { $("vol").value = st.volume; $("vol-n").textContent = st.volume; }
     var sb = $("sleep-btn");
     sb.textContent = st.sleep === "track" ? S.sleepTrack : (st.sleep != null ? S.sleepIn + fmt(st.sleep) : S.sleep);

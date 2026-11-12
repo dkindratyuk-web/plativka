@@ -517,13 +517,17 @@ def find_cover(path: str) -> bytes | None:
     return None
 
 
-def load_cover(path: str) -> Image.Image | None:
+def load_cover(path: str, size: int = 256, track: "Track | None" = None) -> Image.Image | None:
+    """Обкладинка: з файлу, з теки, а якщо там немає — знайдена раніше в інтернеті (кеш)."""
     data = find_cover(path)
+    if not data and track is not None:
+        from .covers import cached
+        data = cached(track)
     if not data:
         return None
     try:
         im = Image.open(io.BytesIO(data))
-        im.draft("RGB", (256, 256))
+        im.draft("RGB", (size, size))
         return im.convert("RGB")
     except Exception:
         return None
@@ -1081,8 +1085,56 @@ class PlayerExtras:
                 ("most", _("Найчастіше слухаю"), F.most_played(tracks, self.hist)),
                 ("stale", _("Давно не звучали"), F.not_played_lately(tracks, self.hist))]
 
+    # ── черга «Грати наступним» ──
+    @property
+    def queue(self) -> list[str]:
+        q = self.__dict__.get("_queue")
+        if q is None:
+            q = self._queue = []
+        return q
+
+    def queue_play_next(self, paths) -> int:
+        """Поставити треки першими в черзі (у тому ж порядку). Тих, яких немає в списку,
+        вставити одразу після поточного — список не перемішується і нічого не зникає."""
+        paths = list(dict.fromkeys(p for p in paths if isinstance(p, str)))
+        if not paths:
+            return 0
+        missing = [p for p in paths if p not in self.playlist]
+        if missing:
+            at = self.current + 1 if 0 <= self.current < len(self.playlist) else len(self.playlist)
+            self.playlist[at:at] = missing
+            self.history = [h + len(missing) if h >= at else h for h in self.history]
+        self._queue = paths + [p for p in self.queue if p not in paths]
+        return len(paths)
+
+    def queue_index(self) -> int | None:
+        """Рядок списку, який має грати наступним із черги (None — черга порожня)."""
+        while self.queue:
+            idx = [i for i, x in enumerate(self.playlist) if x == self.queue[0]]
+            if idx:
+                return next((i for i in idx if i > self.current), idx[0])
+            self.queue.pop(0)                   # трек прибрали зі списку — і з черги теж
+        return None
+
+    def queue_pos(self, path: str) -> int:
+        """Місце в черзі, починаючи з 1; 0 — не в черзі."""
+        try:
+            return self.queue.index(path) + 1
+        except ValueError:
+            return 0
+
+    def queue_consume(self, path: str):
+        if path in self.queue:
+            self.queue.remove(path)
+
+    def queue_clear(self) -> int:
+        n = len(self.queue)
+        self._queue = []
+        return n
+
     async def load_track(self, path: str, start: float = 0.0, paused: bool = False):
         self.end_listen()
+        self.queue_consume(path)
         self._listen_path = path
         t = self.track(path)
         await self.player.load(real_path(path), start=start, paused=paused, seg=t.segment)
@@ -1122,6 +1174,7 @@ class PlayerExtras:
             n = self.track(prev).length or 0
             self.hist.note(prev, n, n)
         self._listen_path = self.playlist[j]
+        self.queue_consume(self.playlist[j])
         if self.current != j and self.current >= 0:
             self.history = (self.history + [self.current])[-200:]
         self.current = j

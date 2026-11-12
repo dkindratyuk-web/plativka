@@ -25,7 +25,7 @@ import time
 from urllib.parse import parse_qs, urlsplit
 
 from . import __version__, sysdeps
-from .core import fmt_time, load_cover, log, real_path
+from .core import fmt_time, load_cover, log
 
 DEFAULT_PORT = 8765
 MAX_HEADER = 8 * 1024
@@ -42,7 +42,7 @@ CODE_TTL = 120            # секунд живе короткий код
 CODE_TRIES = 5            # невдалих спроб — і код згорає
 IP_FAIL_LIMIT = 10        # невдалих спроб з однієї адреси — блок на IP_BLOCK секунд
 IP_BLOCK = 600
-COMMANDS = {"toggle", "next", "prev", "seek", "volume", "play", "sleep", "fav"}
+COMMANDS = {"toggle", "next", "prev", "seek", "volume", "play", "sleep", "fav", "queue"}
 
 SECURITY_HEADERS = {
     "Cache-Control": "no-store",
@@ -419,7 +419,7 @@ class RemoteServer:
             return num and 0 <= arg <= 24 * 3600
         if cmd == "volume":
             return num and 0 <= arg <= 100
-        if cmd == "play":
+        if cmd in ("play", "queue"):
             return isinstance(arg, int) and not isinstance(arg, bool) and arg >= 0
         if cmd == "sleep":
             return arg is None or arg == "track" or (isinstance(arg, int) and not isinstance(arg, bool)
@@ -477,17 +477,17 @@ class RemoteServer:
         if not path:
             return None
         async with self._cover_lock:            # одна обкладинка декодується один раз
-            if self._cover[0] == path:
+            if self._cover[0] == path and self._cover[1] is not None:
                 return self._cover[1]
             return await self._make_cover(path)
 
     async def _make_cover(self, path: str) -> bytes | None:
 
         def make():
-            im = load_cover(real_path(path))
+            im = load_cover(path, 1000, track=self.host.track(path))
             if im is None:
                 return None
-            im.thumbnail((600, 600))
+            im.thumbnail((1000, 1000))
             buf = io.BytesIO()
             im.convert("RGB").save(buf, "JPEG", quality=85)
             return buf.getvalue()
@@ -519,6 +519,9 @@ class RemoteHost:
     _pl_ver = 0
     _pl_sig = None
 
+    def remote_dark(self) -> bool:
+        return False
+
     def remote_state(self) -> dict:
         p = self.player
         st = {"version": __version__, "active": bool(p and p.active), "paused": bool(p and p.paused),
@@ -527,29 +530,34 @@ class RemoteHost:
               "shuffle": bool(self.shuffle), "repeat": self.repeat,
               "sleep": ("track" if self.sleep_after_track else
                         (int(self.sleep_left) if self.sleep_until else None)),
-              "accent": self.remote_accent(), "cover": None}
+              "accent": self.remote_accent(), "dark": bool(self.remote_dark()), "cover": None}
         if 0 <= self.current < len(self.playlist):
             path = self.playlist[self.current]
             t = self.track(path)
             st.update(title=t.title or t.display, artist=t.artist, album=t.album, year=t.year,
                       dur=round((p.duration if p and p.active and p.duration else t.length) or 0, 1),
-                      cover=hashlib.sha1(path.encode()).hexdigest()[:12], fav=self.is_fav(path))
-        sig = (len(self.playlist), tuple(self.playlist[:3]), tuple(self.playlist[-3:]))
+                      cover=hashlib.sha1(f"{path}|{getattr(self, 'cover_rev', 0)}".encode()).hexdigest()[:12], fav=self.is_fav(path))
+        sig = (len(self.playlist), tuple(self.playlist[:3]), tuple(self.playlist[-3:]), tuple(getattr(self, "queue", [])[:20]))
         if sig != self._pl_sig:
             self._pl_sig, self._pl_ver = sig, self._pl_ver + 1
         st["pl"] = self._pl_ver
         return st
 
     def remote_playlist(self) -> list:
+        qpos = getattr(self, "queue_pos", lambda p: 0)
         out = []
         for path in self.playlist[:5000]:
             t = self.track(path)
-            out.append([t.display, fmt_time(t.length), self.is_fav(path)])
+            out.append([t.display, fmt_time(t.length), self.is_fav(path), qpos(path)])
         return out
 
     def remote_like(self, path: str):
         """Програма може перевизначити, щоб оновити свій інтерфейс."""
         self.toggle_fav(path)
+
+    def remote_queue(self, path: str):
+        """«Грати наступним» з телефона. Програма може перевизначити, щоб оновити свій інтерфейс."""
+        self.queue_play_next([path])
 
     def remote_cover_path(self):
         return self.playlist[self.current] if 0 <= self.current < len(self.playlist) else None
@@ -571,6 +579,9 @@ class RemoteHost:
                 await self.play_index(arg)
         elif cmd == "sleep":
             self.choose_sleep(arg)
+        elif cmd == "queue":
+            if arg < len(self.playlist):
+                self.remote_queue(self.playlist[arg])
         elif cmd == "fav":
             if 0 <= self.current < len(self.playlist):
                 self.remote_like(self.playlist[self.current])

@@ -22,7 +22,7 @@ python3 -m PyInstaller --noconfirm --clean --windowed --onedir --name "Plativka 
   --osx-bundle-identifier io.github.dkindratyuk-web.plativka.desktop \
   --distpath "$WORK/dist" --workpath "$WORK/pyi" --specpath "$WORK" \
   --collect-data plativka --collect-submodules plativka \
-  --hidden-import segno --collect-submodules send2trash --hidden-import UserNotifications --hidden-import Foundation --hidden-import objc \
+  --hidden-import segno --hidden-import certifi --collect-data certifi --collect-submodules send2trash --hidden-import UserNotifications --hidden-import Foundation --hidden-import objc \
   --exclude-module textual --exclude-module textual_image --exclude-module rich \
   --exclude-module numpy --exclude-module yaml --exclude-module tkinter --exclude-module pytest \
   "$ROOT/packaging/pyinstaller/plativka_desktop_entry.py"

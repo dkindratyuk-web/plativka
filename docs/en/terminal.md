@@ -89,6 +89,10 @@ In the playlist: **Enter** or a double-click plays a track, **Delete** removes i
 | `G` | volume levelling: by album → by track → off |
 | `U` | check for updates / open the download page |
 | `F3` | phone remote: QR code, connected phones |
+| `F` · `Shift+F` · `Shift+D` | like · play favorites only · remove non-favorites |
+| `Shift+N` | play next (the track or library node under the cursor) |
+| `Shift+C` · `Shift+X` | copy the playlist to a USB stick · find duplicates |
+| `Shift+O` | find missing covers online: on / off |
 
 **Volume** mirrors the system volume: the volume keys on your keyboard (F11/F12 or the speaker keys on a Mac, the volume keys or the Windows/Linux sound slider) move the player's volume bar, and `+` `−` in the player change the system volume. If you prefer a separate player volume, switch it in **F1 → Volume**. On Linux this needs PipeWire (`wpctl`) or PulseAudio (`pactl`), which every modern desktop has.
 
@@ -117,6 +121,7 @@ If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plat
 - Covers are read from the files themselves or from `cover.jpg` / `folder.jpg` / `front.jpg` next to them.
 - **Kitty, Ghostty, iTerm2, WezTerm** and recent **Windows Terminal** show real pictures. Other terminals (Terminal.app, the classic Windows console, GNOME Terminal…) draw covers with coloured blocks. The macOS DMG and the Linux script open Plativka in its own kitty window, so covers are real there.
 - If a cover shows up empty, start with `plativka --no-images`.
+- **Covers from the internet** (off by default): `Shift+O` turns on the search for covers that are missing from the files and folders — MusicBrainz / Cover Art Archive first, Apple (iTunes) as a fallback. Only a confident match is used (artist and album must match; Cyrillic and Latin spellings count). Only the artist and album name are sent; found covers are kept in the cache and work offline. To pick a cover by hand, use Plativka Desktop (**Find cover art…**) — the terminal edition will show it too.
 
 ## Track popups
 
@@ -128,9 +133,29 @@ System notifications show the **album cover**:
 - **Windows** (installed with the installer): a Windows notification with the cover; a new track replaces the previous notification. Without the installer the tray icon shows a notification without a cover.
 - **Linux**: the cover is shown as the notification icon (GNOME, KDE and most desktops).
 
+## Favorites
+
+- **Like**: `F` likes the track under the cursor in the playlist (or the one playing). Liked songs get a red **♥**; an empty ♡ is shown only on the cursor row.
+- **Play only favorites**: `Shift+F`, or **♥ Favorites** at the top of the library.
+- Likes survive moving and renaming files: Plativka remembers a song by artist, title and length and moves the like after the next library scan.
+- **Smart lists** at the top of the library: **Recently added**, **Most played**, **Not played for a while** — from the play history kept only on your computer.
+- `Shift+D` — **remove non-favorites** from the playlist or from the library node under the cursor: `1` from the list only (default), `2` from the list and the disk — to the Trash, never permanently; `H` — keep songs that haven't played yet (on by default); `Enter` to run.
+
+## Play next
+
+`Shift+N` on a track in the playlist (or on an album/artist in the library) — it plays right after the current track, without breaking the order of the list. Several songs can wait; the last one added plays first. Queued rows show **1**, **2**… in the leftmost column. `Shift+N` again on a queued song removes it from the queue. The queue plays with shuffle on too and is not saved when you quit. On the phone remote: touch and hold a song in the list.
+
+## Copy to a USB stick
+
+`Shift+C` copies the playlist to a USB stick or a folder (for the car or an old player). Choose the folder; Plativka first shows the number of files, the size and the free space. `N` — numbered names 01, 02… (on by default, so a car stereo keeps the order); `R` — replace files that are already there (off by default: nothing is overwritten without asking); `Enter` — copy, `Esc` — cancel (or stop after the current file). Names are made safe for FAT32/exFAT; albums that are one file with a `.cue` are copied whole together with the `.cue`.
+
+## Find duplicates
+
+`Shift+X` looks through the library and the playlist for **identical files** and **the same song** in different files (same artist and title, length within 3 seconds). The ticked copy is kept — by default the best one: liked, lossless, higher bitrate. `Space` changes the tick (at least one copy always stays); `1` removes the extras from the playlist only (default), `2` — to the Trash; `Enter` to run.
+
 ## Phone remote
 
-Control Plativka from your phone while lying on the sofa: pause, next or previous track, seek, volume, the sleep timer and any track from the playlist. Nothing to install on the phone — it is a web page that Plativka itself serves in your home network.
+Control Plativka from your phone while lying on the sofa: pause, next or previous track, seek, volume, the sleep timer and any track from the playlist. Nothing to install on the phone — it is a web page that Plativka itself serves in your home network. The page looks like Plativka itself: tinted by the cover of the song that is playing, with the same clock and buttons, and light or dark like the player on the computer.
 
 1. Press `F3` and then `Space` to turn the remote on; the QR code is drawn right in the terminal (make the window at least 36 rows tall).
 2. Point the phone's camera at the QR code and open the link. That's it — the phone is connected and remembers it: next time just open the same page (add it to the home screen: Safari → Share → **Add to Home Screen**, Chrome → ⋮ → **Add to Home screen**).
@@ -174,7 +199,7 @@ Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.
 
 The playlist, the position in the current track, the volume, the theme and all switches are saved automatically.
 
-Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions.
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe.
 
 ## Command-line options
 

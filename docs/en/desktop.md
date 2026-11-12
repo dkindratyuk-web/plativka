@@ -66,6 +66,8 @@ In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or
 | `S` | shuffle on / off |
 | `R` | repeat: off → all → one |
 | `N` | track notifications on / off |
+| `F` · `Shift+F` | like · play favorites only |
+| `Shift+N` | play next (the selected tracks) |
 | `Tab` · `1` · `2` | switch tabs |
 | `F1` | about Plativka |
 | `Q`, `Ctrl+Q` (`⌘Q`) | quit |
@@ -88,13 +90,60 @@ Tracks follow each other without a pause, as on the album — live recordings an
 
 If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plativka shows it as separate tracks with their own titles, and they play one after another without a gap. The `.cue` file can be in UTF-8 or in the old Windows encoding (Cyrillic `.cue` files from the 2000s too).
 
+## Favorites
+
+Like the songs you love and play only them — from all your folders at once.
+
+- **Like**: the **♡** in the playlist row (it appears on the row under the mouse and on the selected one), `F`, **☰ → Favorites → Add to / remove from favorites**, right-click on a track, the tray menu or the ♡ on the phone remote. Liked songs get a red **♥**; there are no empty hearts on every row, so the list stays clean.
+- **Play only favorites**: `Shift+F`, **☰ → Favorites → Play favorites only**, or double-click **♥ Favorites** at the top of the library.
+- **Likes don't get lost.** Plativka remembers a song by its artist, title and length, not only by the file name. Moved the music to another disk or renamed the files? After the next library scan the like moves to the new place by itself.
+- **Smart lists** at the top of the library: **Recently added**, **Most played**, **Not played for a while** (a month or more). They are built from the play history, which is kept only on your computer: a song counts as played after 30 seconds.
+- **Remove non-favorites…** (☰ → Favorites, or right-click a library folder/artist) — tidy up a big list or folder: by default only from the playlist (files stay on disk); or from the playlist and from the disk — to the Trash, never permanently. Songs that haven't played even once are kept by default, so you don't throw away what you haven't heard yet.
+- **Save favorites as M3U…** — a playlist file for another player or a phone.
+
+## Play next
+
+Want to hear a particular song right after this one, without breaking the order of the list? Select it and press `Shift+N` (or right-click → **Play next**). It also works on a whole album or artist in the library: they are inserted right after the current track.
+
+- Several songs can wait in the queue; the one you added last plays first. Queued rows are marked **→1**, **→2**… next to the number.
+- The queue plays even with shuffle on, and then shuffle continues.
+- On the phone remote: touch and hold a song in the list — it plays next.
+- Right-click a queued song → **Remove from queue**; **☰ → Playback → Clear queue** empties it. The queue is not saved when you quit.
+
+## Copy to a USB stick
+
+For the car, an old player or a friend: **☰ → File → Copy playlist to a USB stick…** (or right-click the playlist). Choose the stick or a folder — Plativka first shows how many files and megabytes it is and how much space is free, and only then copies.
+
+- **Numbered files** (01, 02, …) — most car stereos play files in name order, so the order of your list is kept. Untick it to keep the plain "Artist - Title" names.
+- **Nothing is overwritten without asking**: if some files are already there, choose **Skip existing** (default) or **Replace existing**.
+- If it doesn't fit, Plativka says how much is missing before copying anything.
+- Names are made safe for any stick (FAT32/exFAT): characters like `: ? " /` are replaced. The originals are not touched. Albums that are one file with a `.cue` are copied as the whole file together with the `.cue`.
+
+## Find duplicates
+
+**☰ → File → Find duplicates…** (or right-click in the library) looks through the library and the playlist for:
+
+- **identical files** — the same file in two places (byte for byte);
+- **the same song** in different files — same artist and title, length within 3 seconds (for example an MP3 and a FLAC of the same album). Remastered versions in brackets count as the same song; a live version of a different length does not.
+
+Each group shows its copies with format, bitrate, size, ♥ and how many times you played it. The ticked copy is kept — by default the best one: liked, lossless, higher bitrate, more played. Change the ticks if you prefer another one (at least one copy always stays). Then remove the extras **from the playlist only** (default) or **to the Trash** — never permanently.
+
+## Covers from the internet
+
+If a track has no cover in the file and no `cover.jpg` next to it, Plativka can find one online. It is **off by default**: turn on **☰ → View → Find missing covers online**.
+
+- Where from: **MusicBrainz / Cover Art Archive** (an open music database), with **Apple (iTunes)** as a fallback.
+- Only a **confident match** is used: the artist and album must match (Cyrillic and Latin spellings count — "Океан Ельзи" = "Okean Elzy"). A doubtful cover is never put in by itself.
+- **Find cover art…** (☰ → View, or right-click a track) shows up to six options from both sources — pick one yourself. Tick **Also save as cover.jpg in the music folder** to keep it next to the music for other players.
+- Found covers are kept in Plativka's cache and then work offline; the music files are not changed. Only the artist and album name (or song title) are sent — nothing else.
+
 ## Phone remote
 
-Control Plativka from your phone while lying on the sofa: pause, next or previous track, seek, volume, the sleep timer and any track from the playlist. Nothing to install on the phone — it is a web page that Plativka itself serves in your home network.
+Control Plativka from your phone while lying on the sofa: pause, next or previous track, seek, volume, the sleep timer and any track from the playlist. Nothing to install on the phone — it is a web page that Plativka itself serves in your home network. The page looks like Plativka itself: tinted by the cover of the song that is playing, with the same clock and buttons, and light or dark like the player on the computer.
 
 1. Open ☰ → **Playback → Phone remote…** (on a Mac — the **Playback** menu; or click **remote** next to shuffle and repeat once it is on) and tick **Allow control from a phone**.
 2. Point the phone's camera at the QR code and open the link. That's it — the phone is connected and remembers it: next time just open the same page (add it to the home screen: Safari → Share → **Add to Home Screen**, Chrome → ⋮ → **Add to Home screen**).
-3. If the camera cannot read the code from the screen, open the address shown next to it on the phone, press **Show a code to type in** and type the 6-digit code.
+3. If the camera cannot read the code from the screen, open the address shown next to it on the phone, press **Show code** in Plativka and type the 6-digit code on the phone.
 
 The phone and the computer must be on the same Wi-Fi network. The first time, macOS or Windows may ask whether Plativka may accept incoming connections — allow it for private networks.
 
@@ -134,7 +183,7 @@ Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.
 
 The first time Plativka Desktop starts, it takes the music folders and the playlist from the terminal edition (if it is installed); after that each edition keeps its own settings. The library cache is shared.
 
-Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions.
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe.
 
 ## Command-line options
 

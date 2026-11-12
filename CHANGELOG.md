@@ -1,5 +1,25 @@
 # Changelog / Історія змін
 
+## 1.5.0
+
+**English**
+
+- **Play next**: `Shift+N` (or right-click → **Play next**) puts a song — or a whole album from the library — right after the current one, without reordering the playlist. Several songs can wait in the queue (marked →1, →2…); on the phone remote, touch and hold a song.
+- **Copy to a USB stick** (☰ → File, terminal `Shift+C`): numbered file names so a car stereo keeps your order; the size and free space are shown first; nothing is overwritten without asking; names are safe for any stick.
+- **Find duplicates** (☰ → File, terminal `Shift+X`): identical files and the same song in different files (for example MP3 and FLAC of one album). The best copy is ticked to keep — liked, lossless, higher bitrate — and you can change it; the extras go from the playlist only (default) or to the Trash, never permanently.
+- **Covers from the internet** (off by default; ☰ → View → **Find missing covers online**, terminal `Shift+O`): for tracks with no cover in the file or folder, from MusicBrainz / Cover Art Archive, with Apple as a fallback. Only a confident match is used (Cyrillic and Latin spellings count: Океан Ельзи = Okean Elzy); **Find cover art…** lets you pick one yourself from up to six. Only the artist and album name are sent; found covers are cached and work offline.
+- **The phone remote looks like Plativka**: tinted by the cover, the seven-segment clock, the same buttons, light or dark like the player on the computer; a sharper cover. The remote window on the computer is more compact, and the code is shown in large digits.
+- The guides now describe favorites and smart lists (added in 1.4.0) in full.
+
+**Українська**
+
+- **Грати наступним**: `Shift+N` (або правий клік → **Грати наступним**) ставить пісню — чи цілий альбом із медіатеки — одразу після поточної, не змінюючи порядок списку. У черзі можуть чекати кілька пісень (позначені →1, →2…); на пульті з телефона — утримуйте пісню.
+- **Копіювати на флешку** (☰ → Файл, консольна `Shift+C`): нумеровані назви, щоб магнітола тримала ваш порядок; спершу видно розмір і вільне місце; без питання нічого не перезаписується; назви безпечні для будь-якої флешки.
+- **Знайти дублікати** (☰ → Файл, консольна `Shift+X`): однакові файли й та сама пісня в різних файлах (наприклад, MP3 і FLAC одного альбому). Галочкою позначено найкращу копію — улюблену, без втрат, з вищим бітрейтом — і її можна змінити; зайві прибираються лише зі списку (за замовчуванням) або в Кошик, ніколи назавжди.
+- **Обкладинки з інтернету** (за замовчуванням вимкнено; ☰ → Вигляд → **Шукати обкладинки в інтернеті**, консольна `Shift+O`): для треків без обкладинки у файлі чи теці — з MusicBrainz / Cover Art Archive, запасний варіант — Apple. Береться лише впевнений збіг (кирилиця й латиниця теж: Океан Ельзи = Okean Elzy); **Знайти обкладинку…** дає обрати самому з шести варіантів. Надсилається лише виконавець і назва альбому; знайдені обкладинки лежать у кеші й працюють без інтернету.
+- **Пульт з телефона схожий на Платівку**: підфарбований кольором обкладинки, семисегментний годинник, ті самі кнопки, світлий чи темний — як плеєр на комп'ютері; чіткіша обкладинка. Вікно пульта на комп'ютері компактніше, а код — великими цифрами.
+- В інструкціях тепер повністю описано улюблені й розумні списки (з'явилися в 1.4.0).
+
 ## 1.4.1
 
 **English**

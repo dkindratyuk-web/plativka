@@ -428,7 +428,7 @@ class RemoteDialog(QDialog):
         super().__init__(win)
         self.win = win
         self.setWindowTitle(_("Пульт з телефона"))
-        self.resize(460, 600)
+        self.resize(440, 470)
         lay = QVBoxLayout(self)
         self.on = QCheckBox(_("Дозволити керування з телефона"))
         self.on.setChecked(win.remote is not None and win.remote.running)
@@ -448,18 +448,27 @@ class RemoteDialog(QDialog):
         self.how.setWordWrap(True)
         self.how.setTextInteractionFlags(Qt.TextSelectableByMouse)
         side.addWidget(self.how)
-        self.code_btn = QPushButton(_("Показати код для введення вручну"))
+        self.code_btn = QPushButton(_("Показати код"))
         self.code_btn.clicked.connect(self._code)
         side.addWidget(self.code_btn)
         self.code = QLabel()
         self.code.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        f = self.code.font()
+        f.setPointSizeF(f.pointSizeF() * 2.2)
+        f.setBold(True)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 2)
+        self.code.setFont(f)
         side.addWidget(self.code)
+        self.code_left = QLabel()
+        self.code_left.setObjectName("dim")
+        side.addWidget(self.code_left)
         side.addStretch()
         row.addLayout(side, 1)
         lay.addLayout(row)
         lay.addWidget(QLabel(_("Підключені телефони")))
         self.list = QListWidget()
-        lay.addWidget(self.list, 1)
+        self.list.setMaximumHeight(self.list.fontMetrics().height() * 4 + 16)
+        lay.addWidget(self.list)
         brow = QHBoxLayout()
         self.forget_btn = QPushButton(_("Відключити вибраний"))
         self.forget_btn.clicked.connect(self._forget)
@@ -516,7 +525,7 @@ class RemoteDialog(QDialog):
             self.on.blockSignals(True)
             self.on.setChecked(on)
             self.on.blockSignals(False)
-        for w in (self.qr, self.how, self.code_btn, self.code, self.list, self.forget_btn, self.reset_btn):
+        for w in (self.qr, self.how, self.code_btn, self.code, self.code_left, self.list, self.forget_btn, self.reset_btn):
             w.setEnabled(on)
         if not on:
             self.hint.setText(_("Увімкніть — і керуйте Платівкою з телефона в тій самій Wi-Fi-мережі: "
@@ -525,6 +534,7 @@ class RemoteDialog(QDialog):
             self._qr_for = None
             self.how.setText("")
             self.code.setText("")
+            self.code_left.setText("")
             self.list.clear()
             return
         self.hint.setText(_("Наведіть камеру телефона на QR-код і відкрийте посилання. "
@@ -533,10 +543,11 @@ class RemoteDialog(QDialog):
         if url != self._qr_for:
             self._qr_for = url
             self.qr.setPixmap(qr_pixmap(url, 176))
-        self.how.setText(_("Або відкрийте на телефоні адресу\n{url}\nі введіть код.").format(url=r.base_url()))
+        self.how.setText(_("Або відкрийте на телефоні адресу\n{url}\nі натисніть «Показати код».").format(url=r.base_url()))
         left = r.code_left()
-        self.code.setText(_("Код: {code}  ·  діє ще {t}").format(code=f"{r.code[:3]} {r.code[3:]}", t=fmt_time(left))
-                          if left and r.code else "")
+        shown = bool(left and r.code)
+        self.code.setText(f"{r.code[:3]} {r.code[3:]}" if shown else "")
+        self.code_left.setText(_("діє ще {t}").format(t=fmt_time(left)) if shown else "")
         devs = r.devices
         ids = [self.list.item(i).data(Qt.UserRole) for i in range(self.list.count())]
         if ids != [d["id"] for d in devs] or not devs:
@@ -573,6 +584,123 @@ def qr_pixmap(text: str, size: int) -> QPixmap:
                 p.fillRect((x + 4) * k, (y + 4) * k, k, k, QColor("black"))
     p.end()
     return QPixmap.fromImage(img).scaled(size, size, Qt.KeepAspectRatio, Qt.FastTransformation)
+
+
+class CopyDialog(QDialog):
+    """«Копіювати на флешку»: спершу показати розмір і вільне місце, нічого не перезаписувати без дозволу."""
+
+    def __init__(self, win: "MainWindow", paths: list[str], dest: str):
+        super().__init__(win)
+        self.win, self.paths, self.dest = win, paths, dest
+        self.setWindowTitle(_("Копіювати на флешку"))
+        self.resize(480, 300)
+        lay = QVBoxLayout(self)
+        self.summary = QLabel()
+        self.summary.setWordWrap(True)
+        self.summary.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        lay.addWidget(self.summary)
+        self.numbered = QCheckBox(_("Нумерувати файли (01, 02…) — щоб магнітола грала по порядку"))
+        self.numbered.setChecked(True)
+        self.numbered.toggled.connect(self.refresh)
+        lay.addWidget(self.numbered)
+        self.exist = QLabel()
+        self.exist.setWordWrap(True)
+        lay.addWidget(self.exist)
+        self.r_skip = QRadioButton(_("Пропустити наявні"))
+        self.r_repl = QRadioButton(_("Замінити наявні"))
+        self.r_skip.setChecked(True)
+        lay.addWidget(self.r_skip)
+        lay.addWidget(self.r_repl)
+        self.note = QLabel()
+        self.note.setWordWrap(True)
+        self.note.setObjectName("dim")
+        lay.addWidget(self.note)
+        from PySide6.QtWidgets import QProgressBar
+        self.bar = QProgressBar()
+        self.bar.hide()
+        lay.addWidget(self.bar)
+        lay.addStretch()
+        bb = QDialogButtonBox()
+        self.go = bb.addButton(_("Копіювати"), QDialogButtonBox.AcceptRole)
+        self.cancel_btn = bb.addButton(_("Скасувати"), QDialogButtonBox.RejectRole)
+        bb.accepted.connect(self.run)
+        bb.rejected.connect(self._cancel)
+        lay.addWidget(bb)
+        self._stop = False
+        self._state = None
+        self.refresh()
+
+    def refresh(self, *_a):
+        from .export import plan_copy
+        from .favorites import fmt_size
+        self.plan = plan = plan_copy(self.paths, self.win.track, self.dest, self.numbered.isChecked())
+        free = _(" Вільно: {free}.").format(free=fmt_size(plan.free)) if plan.free is not None else ""
+        self.summary.setText(_("Файлів: {n} ({size}) → {dest}.").format(
+            n=len(plan.items), size=fmt_size(plan.total), dest=self.dest) + free)
+        k = len(plan.existing)
+        self.exist.setText(_("Уже є в цій теці: {n}.").format(n=k) if k else "")
+        for w in (self.exist, self.r_skip, self.r_repl):
+            w.setVisible(bool(k))
+        if not plan.fits:
+            self.note.setText(_("Не вміститься: бракує {size}. Приберіть частину треків зі списку або візьміть більшу флешку.")
+                              .format(size=fmt_size(plan.total - plan.free)))
+        else:
+            self.note.setText(_("Оригінали лишаються на місці. Альбоми одним файлом із .cue копіюються цілим файлом."))
+        self.go.setEnabled(plan.fits and bool(plan.items))
+
+    def run(self):
+        from .export import run_copy
+        self.go.setEnabled(False)
+        for w in (self.numbered, self.r_skip, self.r_repl):
+            w.setEnabled(False)
+        self.bar.setRange(0, len(self.plan.items))
+        self.bar.setValue(0)
+        self.bar.show()
+        replace = self.r_repl.isChecked()
+        state = self._state = {"i": 0, "res": None}
+
+        def progress(i, n, name):
+            state["i"] = i
+
+        def work():
+            try:
+                state["res"] = run_copy(self.plan, replace, progress, lambda: self._stop)
+            except OSError as e:
+                state["res"] = (0, 0, [str(e)])
+        threading.Thread(target=work, daemon=True).start()
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._poll)
+        self._timer.start(150)
+
+    def _poll(self):
+        st = self._state
+        self.bar.setValue(st["i"])
+        if st["res"] is None:
+            return
+        self._timer.stop()
+        done, skipped, errors = st["res"]
+        msg = _("Скопійовано: {n}").format(n=n_tracks(done))
+        if skipped:
+            msg += " · " + _("пропущено наявних: {n}").format(n=skipped)
+        if errors:
+            msg += " · " + _("помилок: {n}").format(n=len(errors))
+            QMessageBox.warning(self, _("Копіювати на флешку"), msg + "\n\n" + "\n".join(errors[:15]))
+        self.win.toast(msg)
+        self.accept()
+
+    def _cancel(self):
+        if self._state and self._state["res"] is None:
+            self._stop = True                     # дочекаємося поточного файлу — і стоп
+            self.cancel_btn.setEnabled(False)
+            return
+        self.reject()
+
+    def closeEvent(self, e):
+        if self._state and self._state["res"] is None:
+            self._stop = True
+            e.ignore()
+            return
+        super().closeEvent(e)
 
 
 class RemoveUnlikedDialog(QDialog):
@@ -655,6 +783,272 @@ class RemoveUnlikedDialog(QDialog):
             msg = _("Прибрано зі списку: {n}").format(n=n_tracks(len(gone)))
         self.win.toast(msg)
         self.accept()
+
+
+class DuplicatesDialog(QDialog):
+    """«Знайти дублікати»: групи однакових треків, галочка — яку копію лишити.
+    Типово зайві прибираються лише зі списку; файли — тільки в Кошик і тільки якщо попросити."""
+
+    def __init__(self, win: "MainWindow"):
+        super().__init__(win)
+        self.win = win
+        self.setWindowTitle(_("Дублікати"))
+        self.resize(640, 520)
+        lay = QVBoxLayout(self)
+        self.summary = QLabel(_("Шукаю дублікати…"))
+        self.summary.setWordWrap(True)
+        lay.addWidget(self.summary)
+        self.tree = QTreeWidget()
+        self.tree.setHeaderLabels([_("Трек / файл"), _("Якість")])
+        self.tree.setRootIsDecorated(False)
+        self.tree.header().setStretchLastSection(False)
+        self.tree.header().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.tree.header().setSectionResizeMode(1, QHeaderView.ResizeToContents)
+        self.tree.itemChanged.connect(self._changed)
+        lay.addWidget(self.tree, 1)
+        self.r_list = QRadioButton(_("Лише зі списку відтворення — файли лишаться на диску"))
+        self.r_disk = QRadioButton()
+        self.r_list.setChecked(True)
+        for r in (self.r_list, self.r_disk):
+            r.toggled.connect(self.refresh)
+            lay.addWidget(r)
+        self.note = QLabel()
+        self.note.setWordWrap(True)
+        self.note.setObjectName("dim")
+        lay.addWidget(self.note)
+        bb = QDialogButtonBox()
+        self.go = bb.addButton(_("Прибрати зайві"), QDialogButtonBox.AcceptRole)
+        bb.addButton(_("Закрити"), QDialogButtonBox.RejectRole)
+        bb.accepted.connect(self.run)
+        bb.rejected.connect(self.reject)
+        lay.addWidget(bb)
+        self.groups = None
+        self._stop = False
+        self.go.setEnabled(False)
+        for r in (self.r_list, self.r_disk):
+            r.setEnabled(False)
+        tracks = dict(win.lib.tracks)
+        for p in win.playlist:
+            if p not in tracks:
+                tracks[p] = win.track(p)
+        state = self._state = {"i": 0, "n": 0, "res": None}
+
+        def work():
+            from .dupes import find_duplicates
+
+            def prog(i, n):
+                state["i"], state["n"] = i, n
+            state["res"] = find_duplicates(tracks.values(), win.favs, win.hist, prog, lambda: self._stop)
+        threading.Thread(target=work, daemon=True).start()
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._poll)
+        self._timer.start(200)
+        self.finished.connect(lambda *_: setattr(self, "_stop", True))
+
+    def _poll(self):
+        st = self._state
+        if st["res"] is None:
+            if st["n"]:
+                self.summary.setText(_("Шукаю дублікати… порівнюю файли: {i} з {n}").format(i=st["i"], n=st["n"]))
+            return
+        self._timer.stop()
+        self.groups = st["res"]
+        self._fill()
+
+    def _detail(self, path: str) -> str:
+        from .favorites import fmt_size
+        t = self.win.track(path)
+        bits = [t.fmt]
+        if t.bitrate:
+            bits.append(f"{t.bitrate} kbps")
+        try:
+            bits.append(fmt_size(os.path.getsize(path)))
+        except OSError:
+            pass
+        if self.win.is_fav(path):
+            bits.append("♥")
+        n = self.win.hist.plays(path)
+        if n:
+            bits.append(_("слухали {n}×").format(n=n))
+        return " · ".join(bits)
+
+    def _fill(self):
+        self.tree.blockSignals(True)
+        self.tree.clear()
+        for gi, g in enumerate(self.groups):
+            t = self.win.track(g.paths[0])
+            head = QTreeWidgetItem(self.tree, [("≡ " if g.kind == "file" else "≈ ") + t.display,
+                                               _("однакові файли") if g.kind == "file" else _("та сама пісня")])
+            f = head.font(0)
+            f.setBold(True)
+            head.setFont(0, f)
+            head.setFlags(Qt.ItemIsEnabled)
+            head.setFirstColumnSpanned(False)
+            for p in g.paths:
+                it = QTreeWidgetItem(self.tree, ["    " + p, self._detail(p)])
+                it.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable | Qt.ItemIsSelectable)
+                it.setCheckState(0, Qt.Checked if p in g.keep else Qt.Unchecked)
+                it.setToolTip(0, _("Галочка — цю копію лишити"))
+                it.setData(0, Qt.UserRole, (gi, p))
+        self.tree.blockSignals(False)
+        for r in (self.r_list, self.r_disk):
+            r.setEnabled(bool(self.groups))
+        self.refresh()
+
+    def _changed(self, it, col):
+        data = it.data(0, Qt.UserRole)
+        if not data:
+            return
+        gi, p = data
+        g = self.groups[gi]
+        if it.checkState(0) == Qt.Checked:
+            g.keep.add(p)
+        else:
+            g.keep.discard(p)
+            if not g.keep:                        # хоч одна копія лишається завжди
+                self.tree.blockSignals(True)
+                it.setCheckState(0, Qt.Checked)
+                self.tree.blockSignals(False)
+                g.keep.add(p)
+                self.win.toast(_("Хоча б одну копію треба лишити"))
+        self.refresh()
+
+    def refresh(self, *_a):
+        from .dupes import total_size
+        from .favorites import fmt_size
+        if self.groups is None:
+            return
+        extra = [p for g in self.groups for p in g.extra]
+        in_pl = [p for p in extra if p in set(self.win.playlist)]
+        files = [p for p in extra if not p.startswith("demo:")]
+        if not self.groups:
+            self.summary.setText(_("Дублікатів не знайдено."))
+        else:
+            self.summary.setText(_("Груп: {g}. Зайвих копій: {n}. Галочкою позначено, яку копію лишити — "
+                                   "типово найкращу: улюблену, без втрат, з вищим бітрейтом.").format(
+                g=len(self.groups), n=len(extra)))
+        self.r_disk.setText(_("Зайві файли — у Кошик: {n} ({size})").format(
+            n=n_tracks(len(files)), size=fmt_size(total_size(files))))
+        if self.r_disk.isChecked():
+            self.note.setText(_("Файли йдуть у Кошик — їх можна відновити."))
+            self.go.setText(_("Перемістити в Кошик"))
+            self.go.setEnabled(bool(files))
+        else:
+            self.note.setText(_("У списку відтворення з них: {n}.").format(n=len(in_pl)) if extra else "")
+            self.go.setText(_("Прибрати зі списку"))
+            self.go.setEnabled(bool(in_pl))
+
+    def run(self):
+        from .favorites import move_to_trash
+        extra = {p for g in self.groups for p in g.extra}
+        if self.r_disk.isChecked():
+            trashed, failed = move_to_trash(sorted(extra))
+            for p in trashed:
+                self.win.lib.tracks.pop(p, None)
+            self.win.lib.save()
+            self.win.drop_from_playlist(set(trashed))
+            self.win.rebuild_tree()
+            msg = _("У Кошику: {n}").format(n=n_tracks(len(trashed)))
+            if failed:
+                msg += " · " + _("не вдалося: {n}").format(n=len(failed))
+        else:
+            gone = extra & set(self.win.playlist)
+            self.win.drop_from_playlist(gone)
+            msg = _("Прибрано зі списку: {n}").format(n=n_tracks(len(gone)))
+        self.win.toast(msg)
+        self.accept()
+
+
+class CoverPickDialog(QDialog):
+    """«Знайти обкладинку…»: до шести варіантів з MusicBrainz та Apple — людина обирає сама."""
+
+    def __init__(self, win: "MainWindow", path: str):
+        super().__init__(win)
+        self.win, self.path = win, path
+        self.t = t = win.track(path)
+        self.setWindowTitle(_("Знайти обкладинку"))
+        self.resize(560, 470)
+        lay = QVBoxLayout(self)
+        what = f"{t.albumartist or t.artist} — {t.album or t.title}"
+        self.head = QLabel(_("Шукаю: {what}…").format(what=what))
+        self.head.setWordWrap(True)
+        lay.addWidget(self.head)
+        from PySide6.QtWidgets import QGridLayout
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        lay.addLayout(self.grid)
+        lay.addStretch()
+        self.folder = QCheckBox(_("Також зберегти як cover.jpg у теку з музикою"))
+        lay.addWidget(self.folder)
+        note = QLabel(_("Надсилається лише виконавець і назва альбому. Обрана обкладинка зберігається "
+                        "в кеші Платівки й далі працює без інтернету. Файли з музикою не змінюються."))
+        note.setWordWrap(True)
+        note.setObjectName("dim")
+        lay.addWidget(note)
+        bb = QDialogButtonBox(QDialogButtonBox.Close)
+        bb.button(QDialogButtonBox.Close).setText(_("Закрити"))
+        bb.rejected.connect(self.reject)
+        lay.addWidget(bb)
+        self._alive = True
+        self.finished.connect(lambda *_: setattr(self, "_alive", False))
+        threading.Thread(target=self._search, daemon=True).start()
+
+    def _search(self):
+        from . import covers
+        cands = covers.candidates(self.t)
+        thumbs = []
+        for c in cands:
+            if not self._alive:
+                return
+            thumbs.append((c, covers.download(c["thumb"])))
+        self.win.call_from_thread(self._show, thumbs)
+
+    def _show(self, thumbs):
+        if not self._alive:
+            return
+        shown = 0
+        for c, data in thumbs:
+            if not data:
+                continue
+            img = QImage.fromData(data)
+            if img.isNull():
+                continue
+            b = QToolButton()
+            b.setIcon(QIcon(QPixmap.fromImage(img)))
+            b.setIconSize(QSize(150, 150))
+            b.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+            fm = QFontMetrics(b.font())
+            b.setText(fm.elidedText(c["label"], Qt.ElideRight, 150) + "\n" + c["src"])
+            b.setToolTip(c["label"])
+            b.setAutoRaise(True)
+            b.clicked.connect(lambda _c=False, url=c["url"]: self._choose(url))
+            self.grid.addWidget(b, shown // 3, shown % 3)
+            shown += 1
+        self.head.setText(_("Оберіть обкладинку:") if shown else
+                          _("Нічого не знайшлося. Перевірте назву альбому й виконавця в тегах файлу або підключення до інтернету."))
+
+    def _choose(self, url: str):
+        from . import covers
+        self.head.setText(_("Завантажую…"))
+        for i in range(self.grid.count()):
+            self.grid.itemAt(i).widget().setEnabled(False)
+        folder = self.folder.isChecked()
+
+        def work():
+            data = covers.download(url)
+            jpg = covers.store(self.t, data, folder) if data else None
+            self.win.call_from_thread(self._done, bool(jpg))
+        threading.Thread(target=work, daemon=True).start()
+
+    def _done(self, ok: bool):
+        if ok:
+            self.win._online_cover_ready(self.path)
+            self.win.toast(_("Обкладинку збережено"))
+            self.accept()
+        else:
+            self.head.setText(_("Не вдалося завантажити — спробуйте інший варіант."))
+            for i in range(self.grid.count()):
+                self.grid.itemAt(i).widget().setEnabled(True)
 
 
 class FoldersDialog(QDialog):
@@ -776,6 +1170,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.popups = bool(self.cfg.get("popups", True))
         self.replaygain = self.cfg.get("replaygain", "album")
         self.check_updates = bool(self.cfg.get("check_updates", True))
+        self.online_covers = bool(self.cfg.get("online_covers", False))
+        self.cover_rev = 0
         self.update_info = None
         self.remote = None              # пульт з телефона (RemoteServer), коли увімкнено
         self.remote_cfg = self.cfg.setdefault("remote", {})
@@ -856,7 +1252,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                         view=self.view, collapsed=self.collapsed, on_top=self.on_top, lib_mode=self.lib_mode,
                         tab=self.tab, remaining=self.remaining, expanded_h=self._expanded_h,
                         minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
-                        check_updates=self.check_updates,
+                        check_updates=self.check_updates, online_covers=self.online_covers,
                         geometry=[g.x(), g.y(), g.width(), g.height()])
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
@@ -1190,18 +1586,26 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                                 [("off", _("Вимкнено")), ("track", _("За треком")), ("album", _("За альбомом"))],
                                 self.choose_replaygain)
         self.a_autoupd = act(_("Перевіряти оновлення автоматично"), self.toggle_check_updates, None, True)
+        self.a_online = act(_("Шукати обкладинки в інтернеті"), self.toggle_online_covers, None, True)
+        self.a_online.setToolTip(_("Якщо обкладинки немає ні у файлі, ні в теці. Надсилається лише виконавець і назва альбому."))
+        a_findcover = act(_("Знайти обкладинку…"), lambda: self.pick_cover())
         a_upd = act(_("Перевірити оновлення…"), lambda: self.spawn(self.look_for_update(manual=True)))
         a_remote = act(_("Пульт з телефона…"), self.open_remote)
         a_like = act(_("До улюблених / прибрати"), lambda: self.like(), ["F"])
         a_favplay = act(_("Грати лише улюблені"), self.play_favorites, ["Shift+F"])
         a_favm3u = act(_("Зберегти улюблені як M3U…"), self.export_favorites)
+        a_copy = act(_("Копіювати список на флешку…"), self.copy_playlist)
+        a_dupes = act(_("Знайти дублікати…"), self.find_duplicates)
         a_unliked = act(_("Прибрати неулюблені…"), lambda: self.remove_unliked())
+        a_qnext = act(_("Грати наступним"), lambda: self.play_next(), ["Shift+N"])
+        a_qclear = act(_("Очистити чергу"), self.clear_queue)
         menus = [
-            (_("Файл"), [a_add, a_folders, None, a_quit]),
+            (_("Файл"), [a_add, a_folders, None, a_copy, a_dupes, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
-                                 None, m_sleep, m_rg, None, a_remote]),
+                                 None, a_qnext, a_qclear, None, m_sleep, m_rg, None, a_remote]),
             (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
-            (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, a_theme, self.a_popups, a_lang, None, a_find]
+            (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, a_theme, self.a_popups, a_lang, None,
+                           self.a_online, a_findcover, None, a_find]
              + ([self.a_tray] if not sysdeps.IS_MAC else [])),
             (_("Довідка"), [a_gh, a_bug, None, a_upd, self.a_autoupd, None, a_about]),
         ]
@@ -1577,6 +1981,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             return None
         if auto and self.repeat == "one":
             return self.current
+        q = self.queue_index()
+        if q is not None:
+            return q
         if self.shuffle and n > 1:
             recent = set(self.history[-max(1, n // 2):] + [self.current])
             pool = [i for i in range(n) if i not in recent] or [i for i in range(n) if i != self.current]
@@ -1810,6 +2217,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         for key, a in self.a_rg.items():
             a.setChecked(key == self.replaygain)
         self.a_autoupd.setChecked(self.check_updates)
+        self.a_online.setChecked(self.online_covers)
         on = bool(self.remote and self.remote.running)
         self.f_remote.setText(_("пульт"))
         self.f_remote.setToolTip(_("Пульт з телефона увімкнено — клацніть, щоб відкрити"))
@@ -1850,6 +2258,43 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.update_flags()
         self.save_cfg()
 
+    # ── обкладинки з інтернету ──
+    def toggle_online_covers(self):
+        self.online_covers = not self.online_covers
+        self.update_flags()
+        self.save_cfg()
+        if self.online_covers:
+            self.toast(_("Шукатиму обкладинки, яких немає у файлах: MusicBrainz, запасний — Apple. "
+                         "Надсилається лише виконавець і назва альбому."))
+            if 0 <= self.current < len(self.playlist) and self._cover_img is None:
+                self._fetch_online_cover(self.playlist[self.current])
+
+    def _fetch_online_cover(self, path: str):
+        from . import covers
+        covers.fetch_in_background(self.track(path), lambda jpg: self.call_from_thread(self._online_cover_ready, path))
+
+    def _online_cover_ready(self, path: str):
+        self.cover_rev += 1
+        if 0 <= self.current < len(self.playlist) and self.playlist[self.current] == path:
+            self._cover_path = None
+            self.load_cover(path)
+
+    def pick_cover(self, path: str | None = None):
+        if path is None and 0 <= self.current < len(self.playlist):
+            path = self.playlist[self.current]
+        if not path:
+            self.toast(_("Спершу увімкніть трек"))
+            return
+        t = self.track(path)
+        if not (t.albumartist or t.artist) or not (t.album or t.title):
+            self.toast(_("У треку немає виконавця й назви — нема за чим шукати"))
+            return
+        from .core import find_cover
+        if find_cover(path):
+            self.toast(_("У цього треку вже є обкладинка у файлі чи в теці — вона головніша за знайдену"))
+            return
+        CoverPickDialog(self, path).exec()
+
     def toggle_check_updates(self):
         self.check_updates = not self.check_updates
         self.update_flags()
@@ -1887,10 +2332,16 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.save_cfg()
 
     def remote_accent(self) -> str:
-        return tune(self.accent_rgb, False)
+        return tune(self.accent_rgb, self.is_dark())
+
+    def remote_dark(self) -> bool:
+        return self.is_dark()
 
     def remote_like(self, path: str):
         self.like(path)
+
+    def remote_queue(self, path: str):
+        self.play_next([path])
 
     def remote_event(self, kind: str, text: str):
         msg = {"paired": _("Підключено пульт: {name}"), "left": _("Пульт відключився: {name}"),
@@ -1941,10 +2392,12 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
         def work():
             try:
-                img = load_cover(path)
+                img = load_cover(path, track=self.track(path))
             except Exception:
                 img = None
             self.call_from_thread(self._set_cover, path, img)
+            if img is None and self.online_covers:
+                self._fetch_online_cover(path)
         threading.Thread(target=work, daemon=True).start()
 
     def _set_cover(self, path, img):
@@ -2079,6 +2532,45 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if self.tab == "library" or self.tree.topLevelItemCount():
             self.rebuild_tree()
 
+    # ── черга «Грати наступним» ──
+    def _selected_paths(self, row: int | None = None) -> list[str]:
+        rows = sorted({ix.row() for ix in self.table.selectionModel().selectedRows()})
+        if row is not None and row not in rows:
+            rows = [row]
+        return [self.playlist[r] for r in rows if 0 <= r < len(self.playlist)]
+
+    def play_next(self, paths: list[str] | None = None):
+        """Shift+N: виділені рядки списку або вузол медіатеки — заграють одразу після поточного."""
+        if paths is None:
+            if self.tree.hasFocus() and self.tree.currentItem() is not None:
+                paths = self.item_paths(self.tree.currentItem())
+            else:
+                paths = self._selected_paths()
+        if not paths:
+            self.toast(_("Виберіть трек у списку або в медіатеці"))
+            return
+        before = len(self.playlist)
+        n = self.queue_play_next(paths)
+        self.toast(_("Наступним: {t}").format(t=self.track(paths[0]).display) if n == 1
+                   else _("Наступними: {n}").format(n=n_tracks(n)))
+        if len(self.playlist) != before:
+            self.rebuild_playlist()
+            self.save_cfg()
+        else:
+            self.mark_current()
+            self.spawn(self.refresh_preload())
+
+    def unqueue(self, path: str):
+        self.queue_consume(path)
+        self.mark_current()
+        self.spawn(self.refresh_preload())
+
+    def clear_queue(self):
+        n = self.queue_clear()
+        self.toast(_("Чергу очищено") if n else _("Черга вже порожня"))
+        self.mark_current()
+        self.spawn(self.refresh_preload())
+
     def play_favorites(self):
         paths = [p for p in self.favs.paths() if p in self.lib.tracks or os.path.exists(real_path(p))]
         if not paths:
@@ -2100,6 +2592,22 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 self.toast(_("Збережено: {n} у {f}").format(n=n_tracks(n), f=Path(dest).name))
             except OSError as e:
                 self.toast(_("Не вдалося зберегти: {e}").format(e=e))
+
+    def find_duplicates(self):
+        if not self.lib.tracks and not self.playlist:
+            self.toast(_("Спершу додайте музику"))
+            return
+        DuplicatesDialog(self).exec()
+
+    def copy_playlist(self):
+        if not self.playlist:
+            self.toast(_("Список відтворення порожній"))
+            return
+        start = next((d for d in ("/Volumes", f"/media/{os.environ.get('USER', '')}", "/media", "/run/media")
+                      if os.path.isdir(d) and os.listdir(d)), str(Path.home()))
+        dest = QFileDialog.getExistingDirectory(self, _("Куди копіювати? Оберіть флешку або теку"), start)
+        if dest:
+            CopyDialog(self, list(self.playlist), dest).exec()
 
     def remove_unliked(self, paths: list[str] | None = None, where: str | None = None):
         paths = list(self.playlist) if paths is None else paths
@@ -2127,7 +2635,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                     it.setForeground(sub if c != 1 else self.palette().text().color())
             num = self.table.item(i, 0)
             if num is not None:
-                num.setText(("▶ " if cur else "") + f"{i + 1}.")
+                k = 0 if cur or i >= len(self.playlist) else self.queue_pos(self.playlist[i])
+                num.setText(("▶ " if cur else f"→{k} " if k else "") + f"{i + 1}.")
+                num.setToolTip(_("У черзі: {k}-й").format(k=k) if k else "")
+                if k:
+                    num.setForeground(QColor(self._acc))
         if 0 <= self.current < self.table.rowCount():
             self.table.scrollToItem(self.table.item(self.current, 0), QAbstractItemView.EnsureVisible)
 
@@ -2190,11 +2702,21 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         m = QMenu(self)
         if r >= 0:
             m.addAction(_("Грати"), lambda: self.spawn(self.play_index(r)))
+            if r < len(self.playlist) and self.queue_pos(self.playlist[r]):
+                m.addAction(_("Прибрати з черги"), lambda: self.unqueue(self.playlist[r]))
+            else:
+                m.addAction(_("Грати наступним"), lambda: self.play_next(self._selected_paths(r)))
+            if r < len(self.playlist):
+                m.addAction(_("Знайти обкладинку…"), lambda: self.pick_cover(self.playlist[r]))
             fav = self.is_fav(self.playlist[r]) if r < len(self.playlist) else False
             m.addAction(_("Прибрати з улюблених") if fav else _("До улюблених"), lambda: self._like_row(r))
             m.addAction(_("Прибрати зі списку"), self.remove_selected)
             m.addSeparator()
         m.addAction(_("Прибрати неулюблені…"), lambda: self.remove_unliked())
+        if self.queue:
+            m.addAction(_("Очистити чергу"), self.clear_queue)
+        if self.playlist:
+            m.addAction(_("Копіювати список на флешку…"), self.copy_playlist)
         m.addAction(_("Очистити список"), self.clear_playlist)
         m.exec(self.table.viewport().mapToGlobal(pos))
 
@@ -2344,6 +2866,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if it is not None:
             m.addAction(_("Грати"), lambda: self.lib_activate(it))
             m.addAction(_("Додати в кінець списку"), self.lib_append)
+            m.addAction(_("Грати наступним"), lambda: self.play_next(self.item_paths(it)))
             data = it.data(0, Qt.UserRole)
             if data and data[0] == "track":
                 fav = self.is_fav(data[1])
@@ -2353,6 +2876,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                             lambda: self.remove_unliked(self.item_paths(it), _("У «{name}»").format(name=it.text(0).lstrip("♥◦ "))))
             m.addSeparator()
         m.addAction(_("Уся медіатека в список"), self.lib_all)
+        m.addAction(_("Знайти дублікати…"), self.find_duplicates)
         m.addAction(_("Пересканувати"), self.start_scan)
         m.exec(self.tree.viewport().mapToGlobal(pos))
 

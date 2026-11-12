@@ -612,9 +612,13 @@ class HelpScreen(ModalScreen):
             ("Shift+P", _("уся медіатека в список")),
             ("M", _("показати / сховати медіатеку")),
             ("O", _("обкладинка: звичайна → велика → вимкнена")),
+            ("Shift+O", _("шукати обкладинки в інтернеті, яких немає у файлах (MusicBrainz, Apple): увімк / вимк")),
             ("N", _("сповіщення про трек")),
             ("F", _("до улюблених / прибрати (рядок під курсором у списку або те, що грає)")),
             ("Shift+F", _("грати лише улюблені")),
+            ("Shift+C", _("копіювати список на флешку: розмір і вільне місце спершу, нічого не перезаписує без дозволу")),
+            ("Shift+X", _("знайти дублікати: однакові файли й та сама пісня; лишити кращу копію")),
+            ("Shift+N", _("грати наступним: трек під курсором або вузол медіатеки (ще раз — прибрати з черги)")),
             ("Shift+D", _("прибрати неулюблені: зі списку або в Кошик")),
             ("K", _("таймер сну: 15 · 30 · 45 · 60 · 90 хв · після треку · вимк")),
             ("G", _("вирівнювання гучності: за альбомом · за треком · вимк")),
@@ -830,6 +834,242 @@ class RemoveUnlikedScreen(ModalScreen):
         self.dismiss(None)
 
 
+class CopyScreen(ModalScreen):
+    """«Копіювати на флешку»: розмір і вільне місце спершу; N — нумерація; R — замінювати наявні."""
+    BINDINGS = [Binding("escape", "close", _("Скасувати")),
+                Binding("n", "numbered", show=False), Binding("r", "replace", show=False),
+                Binding("enter", "run", show=False)]
+
+    def __init__(self, paths: list[str], dest: str):
+        super().__init__()
+        self.paths, self.dest, self.numbered, self.replace, self.busy, self.stop = paths, dest, True, False, False, False
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dlg", classes="remove"):
+            yield Static(_("Копіювати на флешку"), classes="dlg-title")
+            yield Static(id="cp-sum")
+            yield Clickable("", "numbered", id="cp-num")
+            yield Clickable("", "replace", id="cp-repl")
+            yield Static(id="cp-note", classes="dlg-help")
+            with Horizontal(classes="dlg-buttons"):
+                yield Clickable("", "run", classes="btn primary", id="cp-go")
+                yield Static(classes="spacer")
+                yield Clickable(_(" Скасувати (Esc) "), "close", classes="btn")
+
+    def on_mount(self):
+        self.refresh_view()
+
+    def action_numbered(self):
+        if not self.busy:
+            self.numbered = not self.numbered
+            self.refresh_view()
+
+    def action_replace(self):
+        if not self.busy:
+            self.replace = not self.replace
+            self.refresh_view()
+
+    def action_close(self):
+        if self.busy:
+            self.stop = True
+            self.query_one("#cp-note", Static).update(_("Зупиняю після поточного файлу…"))
+        else:
+            self.dismiss(None)
+
+    def refresh_view(self):
+        from .export import plan_copy
+        from .favorites import fmt_size
+        self.plan = plan = plan_copy(self.paths, self.app.track, self.dest, self.numbered)
+        free = _(" Вільно: {free}.").format(free=fmt_size(plan.free)) if plan.free is not None else ""
+        self.query_one("#cp-sum", Static).update(Text(_("Файлів: {n} ({size}) → {dest}.").format(
+            n=len(plan.items), size=fmt_size(plan.total), dest=self.dest) + free))
+        box = lambda on: "☑ " if on else "☐ "
+        self.query_one("#cp-num", Static).update(box(self.numbered) + _("N  Нумерувати файли (01, 02…) — щоб магнітола грала по порядку"))
+        k = len(plan.existing)
+        repl = self.query_one("#cp-repl", Static)
+        repl.display = bool(k)
+        repl.update(box(self.replace) + _("R  Замінити наявні (уже є в цій теці: {n})").format(n=k))
+        if not plan.fits:
+            note = _("Не вміститься: бракує {size}. Приберіть частину треків зі списку або візьміть більшу флешку.").format(
+                size=fmt_size(plan.total - plan.free))
+        else:
+            note = _("Оригінали лишаються на місці. Альбоми одним файлом із .cue копіюються цілим файлом.")
+        self.query_one("#cp-note", Static).update(note)
+        self.query_one("#cp-go", Static).update(_(" Копіювати (Enter) ") if plan.fits else "")
+
+    def action_run(self):
+        if self.busy or not self.plan.fits or not self.plan.items:
+            return
+        self.busy = True
+        self.query_one("#cp-go", Static).update("")
+        self._copy()
+
+    @work(thread=True, exclusive=True, group="copy")
+    def _copy(self):
+        from .export import run_copy
+
+        def progress(i, n, name):
+            self.app.call_from_thread(self.query_one("#cp-note", Static).update,
+                                      Text(f"{i}/{n}  {name}", no_wrap=True, overflow="ellipsis"))
+        try:
+            res = run_copy(self.plan, self.replace, progress, lambda: self.stop)
+        except OSError as e:
+            res = (0, 0, [str(e)])
+        self.app.call_from_thread(self._finish, res)
+
+    def _finish(self, res):
+        done, skipped, errors = res
+        msg = _("Скопійовано: {n}").format(n=n_tracks(done))
+        if skipped:
+            msg += " · " + _("пропущено наявних: {n}").format(n=skipped)
+        if errors:
+            msg += " · " + _("помилок: {n}").format(n=len(errors)) + "\n" + "\n".join(errors[:5])
+        self.app.notify(msg, timeout=8 if errors else 4, severity="warning" if errors else "information", markup=False)
+        self.dismiss(None)
+
+
+class DuplicatesScreen(ModalScreen):
+    """Дублікати: пробіл — лишити / не лишити копію, 1 — лише зі списку, 2 — у Кошик, Enter — виконати."""
+    BINDINGS = [Binding("escape", "close", _("Закрити")),
+                Binding("1", "mode(False)", show=False), Binding("2", "mode(True)", show=False),
+                Binding("enter", "run", show=False, priority=True)]
+
+    def __init__(self):
+        super().__init__()
+        self.groups, self.disk, self.stop = None, False, False
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dlg", classes="remove dupes"):
+            yield Static(_("Дублікати"), classes="dlg-title")
+            yield Static(_("Шукаю дублікати…"), id="du-sum")
+            yield SelectionList(id="du-list")
+            yield Clickable("", "mode(False)", id="du-l")
+            yield Clickable("", "mode(True)", id="du-d")
+            yield Static(id="du-note", classes="dlg-help")
+            with Horizontal(classes="dlg-buttons"):
+                yield Clickable("", "run", classes="btn primary", id="du-go")
+                yield Static(classes="spacer")
+                yield Clickable(_(" Закрити (Esc) "), "close", classes="btn")
+
+    def on_mount(self):
+        self.query_one("#du-list").display = False
+        app = self.app
+        tracks = dict(app.lib.tracks)
+        for p in app.playlist:
+            if p not in tracks:
+                tracks[p] = app.track(p)
+        self._scan(list(tracks.values()))
+
+    @work(thread=True, exclusive=True, group="dupes")
+    def _scan(self, tracks):
+        from .dupes import find_duplicates
+
+        def prog(i, n):
+            if i % 20 == 0 or i == n:
+                self.app.call_from_thread(self.query_one("#du-sum", Static).update,
+                                          _("Шукаю дублікати… порівнюю файли: {i} з {n}").format(i=i, n=n))
+        res = find_duplicates(tracks, self.app.favs, self.app.hist, prog, lambda: self.stop)
+        self.app.call_from_thread(self._show, res)
+
+    def _show(self, groups):
+        from textual.widgets.selection_list import Selection
+        self.groups = groups
+        sl = self.query_one("#du-list", SelectionList)
+        dim = Style(color=self.app.dim_hex)
+        for gi, g in enumerate(groups):
+            t = self.app.track(g.paths[0])
+            kind = _("однакові файли") if g.kind == "file" else _("та сама пісня")
+            sl.add_option(Selection(Text.assemble((t.display, "bold"), ("  · " + kind, dim)), ("h", gi),
+                                    False, disabled=True))
+            for p in g.paths:
+                sl.add_option(Selection(Text.assemble(p, ("  " + self._detail(p), dim)), ("f", gi, p), p in g.keep))
+        sl.display = bool(groups)
+        if groups:
+            sl.focus()
+        self.refresh_view()
+
+    def _detail(self, path):
+        t = self.app.track(path)
+        bits = [t.fmt] + ([f"{t.bitrate} kbps"] if t.bitrate else []) + (["♥"] if self.app.is_fav(path) else [])
+        return " · ".join(bits)
+
+    def on_selection_list_selection_toggled(self, event):
+        v = event.selection.value
+        if v[0] != "f":
+            return
+        _k, gi, p = v
+        g = self.groups[gi]
+        sl = self.query_one("#du-list", SelectionList)
+        if p in sl.selected:
+            g.keep.add(p)
+        else:
+            g.keep.discard(p)
+            if not g.keep:
+                sl.select(v)
+                g.keep.add(p)
+                self.app.notify(_("Хоча б одну копію треба лишити"), timeout=3)
+        self.refresh_view()
+
+    def action_mode(self, disk: bool):
+        self.disk = disk
+        self.refresh_view()
+
+    def action_close(self):
+        self.stop = True
+        self.dismiss(None)
+
+    def refresh_view(self):
+        from .dupes import total_size
+        from .favorites import fmt_size
+        if self.groups is None:
+            return
+        extra = [p for g in self.groups for p in g.extra]
+        in_pl = [p for p in extra if p in set(self.app.playlist)]
+        if not self.groups:
+            self.query_one("#du-sum", Static).update(_("Дублікатів не знайдено."))
+        else:
+            self.query_one("#du-sum", Static).update(_("Груп: {g}. Зайвих копій: {n}. Пробіл — лишити / не лишити копію.")
+                                                     .format(g=len(self.groups), n=len(extra)))
+        dot = lambda on: "◉ " if on else "○ "
+        show = bool(self.groups)
+        for w in ("#du-l", "#du-d"):
+            self.query_one(w).display = show
+        self.query_one("#du-l", Static).update(dot(not self.disk) + _("1  Лише зі списку відтворення — файли лишаться на диску"))
+        self.query_one("#du-d", Static).update(dot(self.disk) + _("2  Зайві файли — у Кошик: {n} ({size})").format(
+            n=n_tracks(len(extra)), size=fmt_size(total_size(extra))))
+        if self.disk:
+            note, ok, go = _("Файли йдуть у Кошик — їх можна відновити."), bool(extra), _(" Перемістити в Кошик (Enter) ")
+        else:
+            note = _("У списку відтворення з них: {n}.").format(n=len(in_pl)) if extra else ""
+            ok, go = bool(in_pl), _(" Прибрати зі списку (Enter) ")
+        self.query_one("#du-note", Static).update(note)
+        self.query_one("#du-go", Static).update(go if ok else "")
+        self._ok = ok
+
+    def action_run(self):
+        from .favorites import move_to_trash
+        if not self.groups or not getattr(self, "_ok", False):
+            return
+        app = self.app
+        extra = {p for g in self.groups for p in g.extra}
+        if self.disk:
+            trashed, failed = move_to_trash(sorted(extra))
+            for p in trashed:
+                app.lib.tracks.pop(p, None)
+            app.lib.save()
+            app.drop_from_playlist(set(trashed))
+            app.rebuild_tree()
+            msg = _("У Кошику: {n}").format(n=n_tracks(len(trashed)))
+            if failed:
+                msg += " · " + _("не вдалося: {n}").format(n=len(failed))
+        else:
+            gone = extra & set(app.playlist)
+            app.drop_from_playlist(gone)
+            msg = _("Прибрано зі списку: {n}").format(n=n_tracks(len(gone)))
+        app.notify(msg, timeout=4, markup=False)
+        self.dismiss(None)
+
+
 class FoldersScreen(ModalScreen):
     """Теки медіатеки: додати (системне вікно), прибрати позначені, прибрати всі."""
     BINDINGS = [Binding("escape", "dismiss(None)", _("Закрити"))]
@@ -1020,6 +1260,10 @@ class MainScreen(Screen):
         Binding("f3", "remote", _("Пульт"), show=False),
         Binding("f", "like", _("До улюблених"), show=False),
         Binding("F", "play_favorites", _("Грати улюблені"), show=False),
+        Binding("N", "play_next", _("Грати наступним"), show=False),
+        Binding("C", "copy_playlist", _("Копіювати на флешку"), show=False),
+        Binding("X", "duplicates", _("Дублікати"), show=False),
+        Binding("O", "online_covers", _("Обкладинки з інтернету"), show=False),
         Binding("D", "remove_unliked", _("Прибрати неулюблені"), show=False),
         Binding("m", "toggle_library", _("Медіатека"), show=False),
         Binding("w", "toggle_view", _("Вигляд"), show=False),
@@ -1136,6 +1380,10 @@ class MainScreen(Screen):
     def action_remote(self): self.app.push_screen(RemoteScreen())
     def action_like(self): self.app.like()
     def action_play_favorites(self): self.app.play_favorites()
+    def action_play_next(self): self.app.play_next_selected()
+    def action_copy_playlist(self): self.app.copy_playlist()
+    def action_duplicates(self): self.app.find_duplicates()
+    def action_online_covers(self): self.app.toggle_online_covers()
     def action_remove_unliked(self): self.app.remove_unliked()
     def action_theme(self): self.app.toggle_theme()
     def action_help(self): self.app.push_screen(HelpScreen())
@@ -1335,7 +1583,9 @@ Footer { background: $primary 8%; }
 #dlg.help { width: 86; }
 #dlg.remote { width: 84; }
 #dlg.remove { width: 80; }
-#ru-list, #ru-disk, #ru-heard { width: auto; margin: 0 0 0 1; }
+#ru-list, #ru-disk, #ru-heard, #cp-num, #cp-repl, #du-l, #du-d { width: auto; margin: 0 0 0 1; }
+#dlg.dupes { width: 100; max-width: 96%; }
+#du-list { height: auto; max-height: 20; margin: 1 0; }
 #r-qr { width: auto; margin: 0 0 1 0; }
 #help-url { color: $foreground 50%; margin-bottom: 1; }
 .help-h { text-style: bold; color: $primary; margin-top: 1; }
@@ -1393,6 +1643,8 @@ class Plativka(App, PlayerExtras, RemoteHost):
         self.popups: str = self.cfg.get("popups", "app")  # off | app | system
         self.replaygain: str = self.cfg.get("replaygain", "album")  # off | track | album
         self.check_updates: bool = bool(self.cfg.get("check_updates", True))
+        self.online_covers: bool = bool(self.cfg.get("online_covers", False))
+        self.cover_rev = 0
         self.update_info = None
         self.remote = None                      # пульт з телефона (RemoteServer), коли увімкнено
         self.remote_cfg: dict = self.cfg.setdefault("remote", {})
@@ -1441,7 +1693,7 @@ class Plativka(App, PlayerExtras, RemoteHost):
                         lib_mode=self.lib_mode, show_library=self.show_library, cover_mode=self.cover_mode,
                         view=self.view, collapsed=self.collapsed, compact_tab=self.compact_tab, expanded_rows=self.expanded_rows,
                         minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
-                        check_updates=self.check_updates)
+                        check_updates=self.check_updates, online_covers=self.online_covers)
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
             tmp = CONF_DIR / "config.tmp"
@@ -1749,6 +2001,9 @@ class Plativka(App, PlayerExtras, RemoteHost):
             return None
         if auto and self.repeat == "one":
             return self.current
+        q = self.queue_index()
+        if q is not None:
+            return q
         if self.shuffle and n > 1:
             recent = set(self.history[-max(1, n // 2):] + [self.current])
             pool = [i for i in range(n) if i not in recent] or [i for i in range(n) if i != self.current]
@@ -2028,6 +2283,27 @@ class Plativka(App, PlayerExtras, RemoteHost):
             self.update_flags()
             self.notify(_("Таймер сну: музику поставлено на паузу"), timeout=6)
 
+    # ── обкладинки з інтернету ──
+    def toggle_online_covers(self):
+        self.online_covers = not self.online_covers
+        self.save_cfg()
+        if self.online_covers:
+            self.notify(_("Шукатиму обкладинки, яких немає у файлах: MusicBrainz, запасний — Apple. "
+                          "Надсилається лише виконавець і назва альбому."), timeout=6)
+            if 0 <= self.current < len(self.playlist) and self.cover_img is None:
+                self._fetch_online_cover(self.playlist[self.current])
+        else:
+            self.notify(_("Обкладинки з інтернету вимкнено. Уже знайдені лишаються."), timeout=4)
+
+    def _fetch_online_cover(self, path: str):
+        from . import covers
+        covers.fetch_in_background(self.track(path), lambda jpg: self.call_from_thread(self._online_cover_ready, path))
+
+    def _online_cover_ready(self, path: str):
+        self.cover_rev += 1
+        if 0 <= self.current < len(self.playlist) and self.playlist[self.current] == path:
+            self.load_cover_bg(path)
+
     def cycle_replaygain(self):
         self.replaygain = {"album": "track", "track": "off", "off": "album"}.get(self.replaygain, "album")
         self.run_worker(self.player.set_replaygain(self.replaygain))
@@ -2066,7 +2342,13 @@ class Plativka(App, PlayerExtras, RemoteHost):
         self.save_cfg()
 
     def remote_accent(self) -> str:
-        return tune(self.cover_accent or (14, 124, 132), False)
+        return tune(self.cover_accent or (14, 124, 132), self.remote_dark())
+
+    def remote_dark(self) -> bool:
+        try:
+            return bool(self.current_theme.dark)
+        except Exception:
+            return False
 
     def remote_event(self, kind: str, text: str):
         msg = {"paired": _("Підключено пульт: {name}"), "left": _("Пульт відключився: {name}"),
@@ -2274,10 +2556,12 @@ class Plativka(App, PlayerExtras, RemoteHost):
     def load_cover_bg(self, path: str):
         img = None
         try:
-            img = load_cover(path)
+            img = load_cover(path, track=self.track(path))
         except Exception:
             img = None
         self.call_from_thread(self._set_cover, path, img)
+        if img is None and self.online_covers:
+            self._fetch_online_cover(path)
 
     def _set_cover(self, path, img):
         self._last_cover_path = path
@@ -2383,7 +2667,9 @@ class Plativka(App, PlayerExtras, RemoteHost):
     def _row_cells(self, i: int, t: Track):
         playing = i == self.current
         st = Style(bold=True, color=self.primary_hex) if playing else Style()
-        mark = Text("▶" if playing else "", style=st)
+        k = self.queue_pos(self.playlist[i]) if not playing else 0
+        mark = Text("▶", style=st) if playing else \
+            Text(str(k) if k < 10 else "+", style=Style(color=self.primary_hex)) if k else Text("")
         return (mark, Text(f"{i + 1}.", style=Style(color=self.dim_hex) if not playing else st),
                 self._heart(i),
                 Text(t.display, style=st, overflow="ellipsis", no_wrap=True),
@@ -2433,6 +2719,50 @@ class Plativka(App, PlayerExtras, RemoteHost):
 
     def remote_like(self, path: str):
         self.like(path)
+
+    def remote_queue(self, path: str):
+        n = self.queue_play_next([path])
+        if n:
+            self.notify(_("Наступним: {t}").format(t=self.track(path).display), timeout=3, markup=False)
+        self.rebuild_playlist(keep_cursor=True)
+
+    def find_duplicates(self):
+        if not self.lib.tracks and not self.playlist:
+            self.notify(_("Спершу додайте музику"), timeout=3)
+            return
+        self.push_screen(DuplicatesScreen())
+
+    def copy_playlist(self):
+        if not self.playlist:
+            self.notify(_("Список відтворення порожній"), timeout=3)
+            return
+        paths = list(self.playlist)
+        self._pick_folders(_("Куди копіювати? Оберіть флешку або теку"),
+                           lambda dests: dests and self.push_screen(CopyScreen(paths, dests[0])))
+
+    def play_next_selected(self):
+        """Shift+N: рядок під курсором (у списку) або вузол медіатеки — грати наступним.
+        Повторне натискання на треку, що вже в черзі, прибирає його з черги."""
+        paths = []
+        if self.main:
+            tbl, tree = self.main.query_one(PlaylistTable), self.main.query_one(LibraryTree)
+            if self.focused is tree and tree.cursor_node is not None:
+                paths = [p for p in self.node_paths(tree.cursor_node)]
+            elif 0 <= tbl.cursor_row < len(self.playlist):
+                paths = [self.playlist[tbl.cursor_row]]
+        if not paths:
+            self.notify(_("Виберіть трек у списку або в медіатеці"), timeout=3)
+            return
+        if len(paths) == 1 and self.queue_pos(paths[0]):
+            self.queue_consume(paths[0])
+            self.notify(_("Прибрано з черги: {t}").format(t=self.track(paths[0]).display), timeout=3, markup=False)
+        else:
+            n = self.queue_play_next(paths)
+            msg = _("Наступним: {t}").format(t=self.track(paths[0]).display) if n == 1 else \
+                _("Наступними: {n}").format(n=n_tracks(n))
+            self.notify(msg, timeout=3, markup=False)
+        self.rebuild_playlist(keep_cursor=True)
+        self.save_cfg()
 
     def play_favorites(self):
         paths = [p for p in self.favs.paths() if p in self.lib.tracks or os.path.exists(real_path(p))]

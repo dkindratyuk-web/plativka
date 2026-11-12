@@ -150,3 +150,44 @@ async def test_sleep_timer_and_update_flags():
         app.update_flags()
         await pilot.pause(0.1)
         assert "99.0" in app.main.query_one("#main-win").border_subtitle
+
+
+@pytest.mark.asyncio
+async def test_queue_copy_and_duplicates_screens(tmp_path):
+    from plativka.app import CopyScreen, DuplicatesScreen, PlaylistTable
+    from plativka.core import Track
+    files = []
+    for i, data in enumerate([b"aaaa", b"aaaa", b"bbbbbb"]):
+        f = tmp_path / f"{i}.mp3"
+        f.write_bytes(data)
+        files.append(str(f))
+    app = Plativka(demo=True)
+    async with app.run_test(size=(130, 36)) as pilot:
+        await pilot.pause(0.3)
+        for i, p in enumerate(files):
+            app.lib.tracks[p] = Track(path=p, title=f"T{i}", artist="A", length=60, size=4)
+        app.add_to_playlist(files, quiet=True)
+        app.current = 0
+        tbl = app.main.query_one(PlaylistTable)
+        tbl.focus()
+        tbl.move_cursor(row=len(app.playlist) - 1)
+        await pilot.press("N")
+        await pilot.pause(0.1)
+        assert app.queue == [app.playlist[-1]]
+        await pilot.press("N")                       # ще раз — прибрати з черги
+        assert app.queue == []
+        await pilot.press("X")
+        await pilot.pause(0.8)
+        scr = app.screen
+        assert isinstance(scr, DuplicatesScreen) and scr.groups and scr.groups[0].kind == "file"
+        await pilot.press("enter")                   # лише зі списку
+        await pilot.pause(0.2)
+        assert sum(p in app.playlist for p in files[:2]) == 1 and files[2] in app.playlist
+        dest = tmp_path / "usb"
+        dest.mkdir()
+        app.push_screen(CopyScreen(list(app.playlist), str(dest)))
+        await pilot.pause(0.3)
+        await pilot.press("enter")
+        await pilot.pause(0.8)
+        assert app.screen is app.main
+        assert len([f for f in dest.iterdir() if f.suffix == ".mp3"]) == 2

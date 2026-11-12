@@ -118,6 +118,24 @@ Some places have no Trash: network drives, and on Linux some USB sticks and othe
 - **The phone was connected but now shows the code screen.** It was disconnected in Plativka (or “Disconnect all” was pressed). Scan the QR code again.
 - **The address changed.** If the router gave the computer a new address, the old bookmark stops working; scan the QR code again. To avoid it, reserve a fixed address for the computer in the router (DHCP reservation).
 
+## A cover was not found online
+
+- **Is it on?** Plativka Desktop: ☰ → View → **Find missing covers online**; terminal edition: `Shift+O`. It only looks when there is no cover in the file and no `cover.jpg` next to it.
+- **Tags.** The search uses the artist and album from the file's tags. If they are empty or misspelled, nothing confident is found — and Plativka does not guess. Fix the tags, or use **Find cover art…** in Plativka Desktop and pick one yourself.
+- **Not found once — not asked again for 30 days**, so the music databases aren't asked about the same album over and over. **Find cover art…** always asks again.
+- **No internet or a firewall** — nothing is remembered as "not found"; Plativka tries again next time.
+- **A wrong cover?** Delete it from the `covers/` folder in Plativka's cache (see the data folders in the guide) and pick another one with **Find cover art…**.
+
+## Copying to a USB stick: some files were not copied
+
+- **The stick is full or read-only.** Plativka checks the free space before copying, but a stick can still fail mid-way. Check that it is not locked and try again — files already copied are not copied twice if you choose **Skip existing**.
+- **A file bigger than 4 GB** cannot go to a FAT32 stick (a limit of FAT32 itself). Reformat the stick as exFAT, or leave that file out.
+- **Wrong order in the car.** Keep **Number the files** on. Some car stereos sort by the time files were written rather than by name — copy to an empty stick in one go.
+
+## Duplicates: two different recordings were shown as the same song
+
+Plativka treats songs with the same artist and title and a length within 3 seconds as the same song — which is usually right (an MP3 and a FLAC of the same album). If a different version slipped in, keep both ticked: nothing is removed unless you untick it.
+
 ## Logs
 
 If something goes wrong, the logs show what happened:

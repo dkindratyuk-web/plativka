@@ -50,7 +50,11 @@ It comes in two editions; install either one or both — the first time Plativka
 - **Windows 11**: the translucent Mica background, tinted by the cover.
 - **Plays like an album**: no pauses between tracks (gapless), volume levelling with ReplayGain (by album or by track), albums as one FLAC/APE/WAV file with a `.cue` sheet shown as separate tracks.
 - **Favorites that don't get lost**: like a song with a heart (or `F`) and play only your favorites from all folders at once. Likes survive moving and renaming files — Plativka recognises the song by artist, title and length. Plus smart lists (*Recently added*, *Most played*, *Not played for a while*) and **Remove non-favorites** — from the list, or to the Trash, never permanently.
-- **Phone remote**: control the music from your phone on the same Wi-Fi — scan a QR code, nothing to install. Pause, next track, volume, sleep timer, any track from the playlist; only phones you paired, only in your home network.
+- **Play next**: `Shift+N` puts a song (or a whole album) right after the current one, without breaking the order of the list.
+- **Copy to a USB stick** for the car: numbered files so the stereo keeps your order, the size and free space shown first, nothing overwritten without asking.
+- **Find duplicates**: identical files and the same song in different files (MP3 and FLAC of one album); you choose which copy to keep, the extras go from the list or to the Trash.
+- **Covers from the internet** (off by default): if a file has no cover, Plativka finds it on MusicBrainz or Apple — only a confident match, or pick one yourself from a few options.
+- **Phone remote**: control the music from your phone on the same Wi-Fi — scan a QR code, nothing to install. Pause, next track, volume, sleep timer, any track from the playlist — on a page that looks like Plativka itself; only phones you paired, only in your home network.
 - **Sleep timer**: stop after 15–90 minutes or after the current track, with a gentle fade-out.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.
 - **Remembers everything**: playlist, position, volume, view, window size and library.
@@ -179,6 +183,9 @@ The original edition: the same player as a text interface in a terminal window. 
 | `F3` | phone remote: QR code, connected phones |
 | `F` · `Shift+F` | add to / remove from favorites · play favorites only |
 | `Shift+D` | remove non-favorites (from the list or to the Trash) |
+| `Shift+N` | play next (the track or library node under the cursor; again — remove from the queue) |
+| `Shift+C` · `Shift+X` | copy the playlist to a USB stick · find duplicates |
+| `Shift+O` | find missing covers online: on / off |
 | `J` or `/` | find a track |
 | `L` | add a folder to the library (system folder dialog) |
 | `Shift+P` | put the whole library in the playlist |

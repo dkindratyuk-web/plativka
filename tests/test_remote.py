@@ -261,3 +261,9 @@ def test_ipv6_tricks_not_local():
         assert not remote.peer_allowed(bad), bad
     for bad in ("[::1]@evil.com", "[::1]:80x", "127.0.0.1:80:90", "127.0.0.1:abc"):
         assert not remote.host_allowed(bad), bad
+
+
+def test_queue_command_args():
+    ok = remote.RemoteServer._arg_ok
+    assert ok("queue", 3) and not ok("queue", -1) and not ok("queue", "3") and not ok("queue", True)
+    assert "queue" in remote.COMMANDS

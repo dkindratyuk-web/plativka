@@ -69,7 +69,7 @@ T = {
              "or by track (ReplayGain). One-file albums with a .cue sheet show up as separate tracks."),
             ("📱", "Phone remote",
              "Pause, skip, turn it down or set the sleep timer from your phone — scan a QR code, "
-             "nothing to install. The sleep timer fades the music out after 15–90 minutes."),
+             "nothing to install. The page looks like Plativka itself, tinted by the cover."),
             ("💾", "Remembers everything",
              "Playlist, position, volume, view and window size are there next time. "
              "Tells you when a new version is out. English and Ukrainian interface."),
@@ -105,6 +105,20 @@ T = {
                     "disk, and the like is gone. Plativka also remembers <i>which song it is</i> (artist, title and length) "
                     "and finds it in its new place by itself.",
         "fav_more": "How favorites work",
+        "tl_h": "Small things that save time",
+        "tl_p": "New in 1.5: everyday chores that usually need a separate program.",
+        "tools": [
+            ("⏭", "Play next", "Want this song right after the current one? <b>Shift+N</b> or right-click → <b>Play next</b> "
+                               "— the order of the list stays as it is. On the phone remote: touch and hold a song."),
+            ("💾", "Copy to a USB stick", "The playlist for the car in one go: numbered files so the stereo keeps your order, "
+                                         "the size and free space shown first, nothing overwritten without asking."),
+            ("🧹", "Find duplicates", "The same song as an MP3 and a FLAC, or one file in two folders? Plativka shows them "
+                                     "side by side, ticks the best copy, and you decide what goes."),
+        ],
+        "tl_cov": "Covers from the internet: if a file has no cover, Plativka can find it on MusicBrainz or Apple — only a "
+                  "confident match (Океан Ельзи = Okean Elzy), or pick one yourself. Off until you turn it on; only the "
+                  "artist and album name are sent.",
+        "tl_more": "How it works",
         "rm_h": "Control it from your phone",
         "rm_p": "Music plays from the computer to the speakers, and you are on the sofa? Your phone becomes the remote — "
                 "a web page right in the phone's browser, nothing to install.",
@@ -197,7 +211,7 @@ T = {
              "гучності за альбомом або за треком (ReplayGain). Альбом одним файлом з .cue — окремими треками."),
             ("📱", "Пульт з телефона",
              "Пауза, наступний трек, гучність і таймер сну — з телефона, не встаючи з дивана. "
-             "Відскануйте QR-код, нічого встановлювати не треба."),
+             "Відскануйте QR-код, нічого встановлювати не треба. Сторінка схожа на саму Платівку."),
             ("💾", "Усе пам'ятає",
              "Плейлист, позиція, гучність, вигляд і розмір вікна — наступного разу все "
              "на місці. Підкаже, коли вийде нова версія. Українська й англійська мова інтерфейсу."),
@@ -233,6 +247,20 @@ T = {
                     "на інший диск, і лайка немає. Платівка пам'ятає ще й <i>яка це пісня</i> (виконавець, назва й тривалість) "
                     "і сама знаходить її на новому місці.",
         "fav_more": "Як працюють улюблені",
+        "tl_h": "Дрібниці, які заощаджують час",
+        "tl_p": "Нове в 1.5: щоденні справи, для яких зазвичай потрібна окрема програма.",
+        "tools": [
+            ("⏭", "Грати наступним", "Хочете цю пісню одразу після поточної? <b>Shift+N</b> або правий клік → "
+                                     "<b>Грати наступним</b> — порядок списку не змінюється. На пульті з телефона — утримуйте пісню."),
+            ("💾", "Копіювати на флешку", "Список для машини за один раз: нумеровані файли, щоб магнітола тримала ваш порядок, "
+                                         "розмір і вільне місце видно наперед, без питання нічого не перезаписується."),
+            ("🧹", "Знайти дублікати", "Та сама пісня в MP3 і FLAC чи один файл у двох теках? Платівка покаже їх поруч, "
+                                      "позначить найкращу копію, а що прибрати — вирішуєте ви."),
+        ],
+        "tl_cov": "Обкладинки з інтернету: якщо у файлі немає обкладинки, Платівка знайде її на MusicBrainz чи в Apple — лише "
+                  "впевнений збіг (Океан Ельзи = Okean Elzy), або оберіть самі. Вимкнено, доки не ввімкнете; надсилається "
+                  "лише виконавець і назва альбому.",
+        "tl_more": "Як це працює",
         "rm_h": "Керуйте з телефона",
         "rm_p": "Музика грає з комп'ютера в колонки, а ви на дивані? Телефон стає пультом — це вебсторінка прямо "
                 "в браузері телефона, нічого встановлювати не треба.",
@@ -361,6 +389,13 @@ def page(t: dict) -> str:
   <p class="sub">{t['fav_p']}</p>
   <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['fav_steps'])}</ol>
   <p class="note-box">♥ {t['fav_safe']} <a href="{docs}desktop.md#{'favorites' if t['lang'] == 'en' else 'улюблені'}">{t['fav_more']} →</a></p>
+</section>
+
+<section id="tools" class="wrap sec sec-top">
+  <h2>{t['tl_h']}</h2>
+  <p class="sub">{t['tl_p']}</p>
+  <ul class="features">{''.join(f'<li><span class="f-ico" aria-hidden="true">{i}</span><h3>{h}</h3><p>{d}</p></li>' for i, h, d in t['tools'])}</ul>
+  <p class="note-box">🖼 {t['tl_cov']} <a href="{docs}desktop.md#{'covers-from-the-internet' if t['lang'] == 'en' else 'обкладинки-з-інтернету'}">{t['tl_more']} →</a></p>
 </section>
 
 <section id="remote" class="wrap sec sec-top">

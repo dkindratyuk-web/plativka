@@ -138,6 +138,8 @@ Control Plativka from your phone while lying on the sofa: pause, next or previou
 
 The phone and the computer must be on the same Wi-Fi network. The first time, macOS or Windows may ask whether Plativka may accept incoming connections — allow it for private networks.
 
+If the page does not open on the phone, see [Troubleshooting](troubleshooting.md#the-phone-remote-does-not-open-on-the-phone).
+
 **Security.** The remote is off until you turn it on, and works only while Plativka is open.
 
 - Only devices in your home network can reach it — requests from the internet are refused, even if a port is forwarded on the router.

@@ -1,6 +1,6 @@
 # Changelog / Історія змін
 
-## Unreleased / Ще не випущено
+## 1.3.7
 
 **English**
 

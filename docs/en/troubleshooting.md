@@ -101,6 +101,15 @@ launchctl bootstrap gui/$(id -u) /System/Library/LaunchAgents/com.apple.rcd.plis
 
 Some keyboards (most non-Apple ones, or a Mac with "Use F1, F2, etc. keys as standard function keys" turned on) send F7 F8 F9 as plain function keys instead of media keys. Since 1.1.2 Plativka treats F7 F8 F9 as previous · pause · next while its window is in front. To control it from other apps too, use the media keys (on Apple keyboards — without Fn, or with Fn if that setting is on).
 
+## The phone remote does not open on the phone
+
+- **Same network.** The phone must be on the same Wi-Fi as the computer — not on mobile data, and not on a guest network (guest networks usually isolate devices from each other).
+- **Firewall.** The first time, macOS or Windows asks whether Plativka may accept incoming connections. If you clicked “Deny”: on a Mac — System Settings → Network → Firewall → Options, allow Plativka; on Windows — Windows Security → Firewall → “Allow an app through firewall”, tick Plativka for private networks. On Linux, open the port Plativka shows (8765 by default) if you use a firewall (`sudo ufw allow 8765/tcp`).
+- **The QR code says “already used”.** Each QR code works once and changes every 10 minutes and when the remote window is closed. Open the remote window again and scan the new one.
+- **“Too many failed attempts”.** After many wrong codes, the address is blocked for 10 minutes — wait, then show a new code.
+- **The phone was connected but now shows the code screen.** It was disconnected in Plativka (or “Disconnect all” was pressed). Scan the QR code again.
+- **The address changed.** If the router gave the computer a new address, the old bookmark stops working; scan the QR code again. To avoid it, reserve a fixed address for the computer in the router (DHCP reservation).
+
 ## Logs
 
 If something goes wrong, the logs show what happened:

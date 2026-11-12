@@ -64,9 +64,9 @@ T = {
             ("💿", "Plays like an album",
              "No pauses between tracks, so live albums and mixes flow on. Volume levelling by album "
              "or by track (ReplayGain). One-file albums with a .cue sheet show up as separate tracks."),
-            ("🌙", "Sleep timer",
-             "Fall asleep to music: stop in 15–90 minutes or after the current track, "
-             "with a gentle fade-out instead of a sudden stop."),
+            ("📱", "Phone remote",
+             "Pause, skip, turn it down or set the sleep timer from your phone — scan a QR code, "
+             "nothing to install. The sleep timer fades the music out after 15–90 minutes."),
             ("💾", "Remembers everything",
              "Playlist, position, volume, view and window size are there next time. "
              "Tells you when a new version is out. English and Ukrainian interface."),
@@ -87,6 +87,19 @@ T = {
         "mini": [("desk-mac-en-mini.png", "Mini player, macOS"),
                  ("desk-mac-en-mini-dark.png", "Mini player, dark theme, macOS")],
         "mini_cap": "The mini player — just the player strip, pinned above other windows.",
+        "rm_h": "Control it from your phone",
+        "rm_p": "Music plays from the computer to the speakers, and you are on the sofa? Your phone becomes the remote — "
+                "a web page right in the phone's browser, nothing to install.",
+        "rm_steps": [
+            ("Turn it on", "Plativka Desktop: ☰ → <b>Playback → Phone remote…</b> → tick <b>Allow control from a phone</b>. "
+                           "Terminal edition: <b>F3</b>, then <b>Space</b>."),
+            ("Scan the QR code", "Point the phone's camera at the code and open the link. The phone must be on the same Wi-Fi."),
+            ("Keep it on the home screen", "The phone remembers the connection. Add the page to the home screen — "
+                                           "next time it opens like an app."),
+        ],
+        "rm_safe": "Safe by design: off until you turn it on, works only in your home network and only for the phones you "
+                   "connected, and can only control the music — no access to files or settings.",
+        "rm_more": "How the remote works and how it is protected",
         "dl_h": "Download",
         "dl_sub": "Plativka Desktop is the main edition. The terminal edition is for people who live in the terminal; you can install both.",
         "version": "Latest version",
@@ -161,9 +174,9 @@ T = {
             ("💿", "Грає як альбом",
              "Без пауз між треками — концертні альбоми й мікси не розриваються. Вирівнювання "
              "гучності за альбомом або за треком (ReplayGain). Альбом одним файлом з .cue — окремими треками."),
-            ("🌙", "Таймер сну",
-             "Засинайте під музику: зупинка через 15–90 хвилин або після поточного треку, "
-             "з м'яким стишуванням, а не різким обривом."),
+            ("📱", "Пульт з телефона",
+             "Пауза, наступний трек, гучність і таймер сну — з телефона, не встаючи з дивана. "
+             "Відскануйте QR-код, нічого встановлювати не треба."),
             ("💾", "Усе пам'ятає",
              "Плейлист, позиція, гучність, вигляд і розмір вікна — наступного разу все "
              "на місці. Підкаже, коли вийде нова версія. Українська й англійська мова інтерфейсу."),
@@ -184,6 +197,19 @@ T = {
         "mini": [("desk-mac-uk-mini-dark.png", "Міні-плеєр, темна тема, macOS"),
                  ("desk-linux-uk-mini.png", "Міні-плеєр, Kubuntu")],
         "mini_cap": "Міні-плеєр — лише смужка керування, закріплена поверх інших вікон.",
+        "rm_h": "Керуйте з телефона",
+        "rm_p": "Музика грає з комп'ютера в колонки, а ви на дивані? Телефон стає пультом — це вебсторінка прямо "
+                "в браузері телефона, нічого встановлювати не треба.",
+        "rm_steps": [
+            ("Увімкніть", "Віконна версія: ☰ → <b>Відтворення → Пульт з телефона…</b> → галочка "
+                          "<b>Дозволити керування з телефона</b>. Консольна: <b>F3</b>, потім <b>Пробіл</b>."),
+            ("Відскануйте QR-код", "Наведіть камеру телефона на код і відкрийте посилання. Телефон має бути в тій самій Wi-Fi-мережі."),
+            ("Додайте на головний екран", "Телефон запам'ятає підключення. Додайте сторінку на головний екран — "
+                                          "наступного разу вона відкриється як застосунок."),
+        ],
+        "rm_safe": "Безпечно: вимкнено, доки ви не ввімкнете, працює лише в домашній мережі й лише для телефонів, які "
+                   "ви підключили, і вміє тільки керувати музикою — жодного доступу до файлів чи налаштувань.",
+        "rm_more": "Як працює пульт і як він захищений",
         "dl_h": "Завантажити",
         "dl_sub": "Основна версія — Платівка у власному вікні (Plativka Desktop). Версія для термінала — для тих, хто живе в терміналі; можна встановити обидві.",
         "version": "Остання версія",
@@ -294,7 +320,14 @@ def page(t: dict) -> str:
   </div>
 </section>
 
-<section id="download" class="wrap sec">
+<section id="remote" class="wrap sec">
+  <h2>{t['rm_h']}</h2>
+  <p class="sub">{t['rm_p']}</p>
+  <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['rm_steps'])}</ol>
+  <p class="note-box">🔒 {t['rm_safe']} <a href="{docs}desktop.md#{'phone-remote' if t['lang'] == 'en' else 'пульт-з-телефона'}">{t['rm_more']} →</a></p>
+</section>
+
+<section id="download" class="wrap sec sec-top">
   <h2>{t['dl_h']} <span class="ver" data-version></span></h2>
   <p class="sub">{t['dl_sub']}</p>
   <div class="dl-grid">

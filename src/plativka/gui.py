@@ -465,6 +465,7 @@ class RemoteDialog(QDialog):
         side.addStretch()
         row.addLayout(side, 1)
         lay.addLayout(row)
+        lay.addSpacing(10)                      # біле поле QR-коду не злипається з підписом
         lay.addWidget(QLabel(_("Підключені телефони")))
         self.list = QListWidget()
         self.list.setMaximumHeight(self.list.fontMetrics().height() * 4 + 16)

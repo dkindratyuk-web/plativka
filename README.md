@@ -101,6 +101,15 @@ The same window on all three systems — screenshots from macOS, Windows 11 and 
 <img src="docs/img/desk-linux-en-mini-dark.png" width="32%" alt="Mini player, dark theme, Kubuntu">
 </p>
 
+**Phone remote** — the same song on the Mac and on the phone; the page takes the colours of the cover:
+
+<p>
+<img src="docs/img/remote-phone-en.png" width="24%" alt="Phone remote with the cover-tinted player">
+<img src="docs/img/remote-phone-en-list.png" width="24%" alt="Phone remote: sleep timer and playlist">
+<img src="docs/img/remote-window-en.png" width="46%" alt="Remote window on the Mac: QR code and connected phones">
+</p>
+<p><img src="docs/img/remote-player-en.png" width="60%" alt="Plativka Desktop playing the same song"></p>
+
 ### Download and install
 
 | System | What to download |

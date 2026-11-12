@@ -132,6 +132,10 @@ T = {
         "rm_safe": "Safe by design: off until you turn it on, works only in your home network and only for the phones you "
                    "connected, and can only control the music — no access to files or settings.",
         "rm_more": "How the remote works and how it is protected",
+        "rm_shots": [("remote-phone-en.png", "The phone remote: the same song as on the computer, tinted by its cover"),
+                     ("remote-phone-en-list.png", "Sleep timer and the playlist; touch and hold a song to play it next"),
+                     ("remote-player-en.png", "Plativka on the Mac, playing the same song"),
+                     ("remote-window-en.png", "The remote window: QR code, connected phones")],
         "dl_h": "Download",
         "dl_sub": "Plativka Desktop is the main edition. The terminal edition is for people who live in the terminal; you can install both.",
         "version": "Latest version",
@@ -274,6 +278,10 @@ T = {
         "rm_safe": "Безпечно: вимкнено, доки ви не ввімкнете, працює лише в домашній мережі й лише для телефонів, які "
                    "ви підключили, і вміє тільки керувати музикою — жодного доступу до файлів чи налаштувань.",
         "rm_more": "Як працює пульт і як він захищений",
+        "rm_shots": [("remote-phone-uk.png", "Пульт на телефоні: та сама пісня, що й на комп'ютері, у кольорах її обкладинки"),
+                     ("remote-phone-uk-list.png", "Таймер сну й список; утримайте пісню — заграє наступною"),
+                     ("remote-player-uk.png", "Платівка на Mac грає ту саму пісню"),
+                     ("remote-window-uk.png", "Вікно пульта: QR-код і підключені телефони")],
         "dl_h": "Завантажити",
         "dl_sub": "Основна версія — Платівка у власному вікні (Plativka Desktop). Версія для термінала — для тих, хто живе в терміналі; можна встановити обидві.",
         "version": "Остання версія",
@@ -402,6 +410,10 @@ def page(t: dict) -> str:
   <h2>{t['rm_h']}</h2>
   <p class="sub">{t['rm_p']}</p>
   <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['rm_steps'])}</ol>
+  <div class="rm-shots">
+    {''.join(f'<figure class="rm-phone">{img(p, n, a)}<figcaption>{a}</figcaption></figure>' for n, a in t['rm_shots'][:2])}
+    <div class="rm-mac">{''.join(f'<figure>{img(p, n, a)}<figcaption>{a}</figcaption></figure>' for n, a in t['rm_shots'][2:])}</div>
+  </div>
   <p class="note-box">🔒 {t['rm_safe']} <a href="{docs}desktop.md#{'phone-remote' if t['lang'] == 'en' else 'пульт-з-телефона'}">{t['rm_more']} →</a></p>
 </section>
 

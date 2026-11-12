@@ -100,6 +100,15 @@
 <img src="docs/img/desk-linux-uk-mini.png" width="48%" alt="Міні-плеєр, Kubuntu">
 </p>
 
+**Пульт з телефона** — та сама пісня на Mac і на телефоні; сторінка бере кольори обкладинки:
+
+<p>
+<img src="docs/img/remote-phone-uk.png" width="24%" alt="Пульт на телефоні в кольорах обкладинки">
+<img src="docs/img/remote-phone-uk-list.png" width="24%" alt="Пульт на телефоні: таймер сну й список">
+<img src="docs/img/remote-window-uk.png" width="46%" alt="Вікно пульта на Mac: QR-код і підключені телефони">
+</p>
+<p><img src="docs/img/remote-player-uk.png" width="60%" alt="Платівка грає ту саму пісню"></p>
+
 ### Завантаження і встановлення
 
 | Система | Що завантажити |

@@ -19,6 +19,9 @@ class FakeHost(remote.RemoteHost):
         from plativka.core import Track
         return Track(path=p, title='<img src=x onerror=alert(1)>', artist="A", length=60)
 
+    def is_fav(self, p):
+        return False
+
     def remote_accent(self):
         return "#123456"
 

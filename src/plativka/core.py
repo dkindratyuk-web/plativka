@@ -129,6 +129,7 @@ class Track:
     size: int = 0
     start: float = 0.0      # трек з CUE: початок і кінець у спільному файлі (0 — до кінця файлу)
     end: float = 0.0
+    added: float = 0.0      # коли трек з'явився в медіатеці (для «Нещодавно додані»)
 
     @property
     def segment(self):
@@ -447,6 +448,8 @@ class Library:
             if os.path.isdir(folder):
                 paths.extend(scan_dir(folder))
         total = len(paths)
+        first = not self.tracks          # перше сканування: «додано» = дата файлу, а не «щойно»
+        now = time.time()
         for i, path in enumerate(paths):
             old = self.tracks.get(path)
             try:
@@ -457,6 +460,9 @@ class Library:
                 found[path] = old
             else:
                 found[path] = read_track(path)
+            t = found[path]
+            if not t.added:
+                t.added = (old.added if old and old.added else (st.st_mtime if first else now))
             if progress and (i % 25 == 0 or i == total - 1):
                 progress(i + 1, total)
         self.tracks = found
@@ -1032,7 +1038,52 @@ class PlayerExtras:
     sleep_minutes = None
     _fading = False
 
+    # ── улюблені й історія (favorites.py) ──
+    @property
+    def favs(self):
+        if getattr(self, "_favs", None) is None:
+            from .favorites import Favorites
+            self._favs = Favorites()
+        return self._favs
+
+    @property
+    def hist(self):
+        if getattr(self, "_hist", None) is None:
+            from .favorites import History
+            self._hist = History()
+        return self._hist
+
+    def end_listen(self):
+        """Трек перемикають: записати в історію, скільки його слухали."""
+        path = getattr(self, "_listen_path", None)
+        self._listen_path = None
+        if path and self.player is not None:
+            try:
+                self.hist.note(path, float(self.player.time_pos or 0), self.track(path).length or 0, skipped=True)
+            except Exception as e:
+                log(f"історія: {e}")
+
+    def is_fav(self, path: str | None) -> bool:
+        return bool(path) and path in self.favs
+
+    def toggle_fav(self, path: str | None) -> bool | None:
+        """Лайк / зняти лайк. Повертає новий стан або None, якщо треку немає."""
+        if not path:
+            return None
+        return self.favs.toggle(self.track(path))
+
+    def smart_lists(self, tracks: dict) -> list[tuple[str, str, list[str]]]:
+        """(ключ, назва, шляхи) для розумних списків у бібліотеці."""
+        from . import favorites as F
+        favs = [p for p in self.favs.paths() if p in tracks or os.path.exists(real_path(p))]
+        return [("favorites", _("Улюблені"), favs),
+                ("recent", _("Нещодавно додані"), F.recently_added(tracks)),
+                ("most", _("Найчастіше слухаю"), F.most_played(tracks, self.hist)),
+                ("stale", _("Давно не звучали"), F.not_played_lately(tracks, self.hist))]
+
     async def load_track(self, path: str, start: float = 0.0, paused: bool = False):
+        self.end_listen()
+        self._listen_path = path
         t = self.track(path)
         await self.player.load(real_path(path), start=start, paused=paused, seg=t.segment)
         await self.refresh_preload()
@@ -1066,6 +1117,11 @@ class PlayerExtras:
         return None
 
     def mark_advanced(self, j: int):
+        prev = getattr(self, "_listen_path", None)
+        if prev:                                       # gapless: попередній трек дограв до кінця
+            n = self.track(prev).length or 0
+            self.hist.note(prev, n, n)
+        self._listen_path = self.playlist[j]
         if self.current != j and self.current >= 0:
             self.history = (self.history + [self.current])[-200:]
         self.current = j

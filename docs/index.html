@@ -56,6 +56,7 @@
 <li><span class="f-ico" aria-hidden="true">📚</span><h3>Playlist and library</h3><p>Your library by artist and album or by folder, instant search, drag folders into the window, play a whole album with a double-click.</p></li>
 <li><span class="f-ico" aria-hidden="true">⌨️</span><h3>Fits into your system</h3><p>Media keys and headphone buttons, Now Playing, MPRIS on Linux, track notifications with the album cover, a tray icon.</p></li>
 <li><span class="f-ico" aria-hidden="true">🎧</span><h3>Plays what you have</h3><p>MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE and WavPack through mpv. Files without tags are named from the file name, old Windows-1251 tags are fixed automatically.</p></li>
+<li><span class="f-ico" aria-hidden="true">♥</span><h3>Favorites that don't get lost</h3><p>Like a song with a heart and play only your favorites from all folders at once. Moved or renamed your music? The likes follow it.</p></li>
 <li><span class="f-ico" aria-hidden="true">💿</span><h3>Plays like an album</h3><p>No pauses between tracks, so live albums and mixes flow on. Volume levelling by album or by track (ReplayGain). One-file albums with a .cue sheet show up as separate tracks.</p></li>
 <li><span class="f-ico" aria-hidden="true">📱</span><h3>Phone remote</h3><p>Pause, skip, turn it down or set the sleep timer from your phone — scan a QR code, nothing to install. The sleep timer fades the music out after 15–90 minutes.</p></li>
 <li><span class="f-ico" aria-hidden="true">💾</span><h3>Remembers everything</h3><p>Playlist, position, volume, view and window size are there next time. Tells you when a new version is out. English and Ukrainian interface.</p></li>
@@ -72,7 +73,14 @@
   </div>
 </section>
 
-<section id="remote" class="wrap sec">
+<section id="favorites" class="wrap sec">
+  <h2>Favorites that don't get lost</h2>
+  <p class="sub">Listening to a long playlist? Tap the heart on the songs you like — later you can play only them, from all your folders and albums at once.</p>
+  <ol class="steps"><li><h3>Like</h3><p>Click the ♡ next to a song or press <b>F</b>. A filled ♥ stays only next to the songs you liked — no wall of empty hearts.</p></li><li><h3>Play your favorites</h3><p><b>♥ Favorites</b> at the top of the library, or <b>Shift+F</b>. Next to it — <i>Recently added</i>, <i>Most played</i> and <i>Not played for a while</i>.</p></li><li><h3>Clean up</h3><p><b>Remove non-favorites…</b> removes the rest from the list — or, if you choose, moves the files to the Trash. Never deleted permanently.</p></li></ol>
+  <p class="note-box">♥ Why your likes survive: most players remember a like by where the file lies — move the album to another disk, and the like is gone. Plativka also remembers <i>which song it is</i> (artist, title and length) and finds it in its new place by itself. <a href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/desktop.md#favorites">How favorites work →</a></p>
+</section>
+
+<section id="remote" class="wrap sec sec-top">
   <h2>Control it from your phone</h2>
   <p class="sub">Music plays from the computer to the speakers, and you are on the sofa? Your phone becomes the remote — a web page right in the phone's browser, nothing to install.</p>
   <ol class="steps"><li><h3>Turn it on</h3><p>Plativka Desktop: ☰ → <b>Playback → Phone remote…</b> → tick <b>Allow control from a phone</b>. Terminal edition: <b>F3</b>, then <b>Space</b>.</p></li><li><h3>Scan the QR code</h3><p>Point the phone's camera at the code and open the link. The phone must be on the same Wi-Fi.</p></li><li><h3>Keep it on the home screen</h3><p>The phone remembers the connection. Add the page to the home screen — next time it opens like an app.</p></li></ol>

@@ -6,6 +6,7 @@ on:
     # зміни лише в текстах і картинках не потребують тестів на трьох системах
     paths-ignore:
       - "ROADMAP.md"
+      - "RELEASING.md"
       - "README*.md"
       - "LICENSE"
       - "THIRD_PARTY_LICENSES.md"

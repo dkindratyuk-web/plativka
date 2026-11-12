@@ -49,6 +49,7 @@ It comes in two editions; install either one or both — the first time Plativka
 - **System integration**: media keys ⏮ ⏯ ⏭ and headphone buttons, Now Playing / the Windows media overlay / MPRIS on Linux, track notifications **with the album cover**, a tray icon, the volume mirrors the system volume (your keyboard's volume keys move the slider).
 - **Windows 11**: the translucent Mica background, tinted by the cover.
 - **Plays like an album**: no pauses between tracks (gapless), volume levelling with ReplayGain (by album or by track), albums as one FLAC/APE/WAV file with a `.cue` sheet shown as separate tracks.
+- **Favorites that don't get lost**: like a song with a heart (or `F`) and play only your favorites from all folders at once. Likes survive moving and renaming files — Plativka recognises the song by artist, title and length. Plus smart lists (*Recently added*, *Most played*, *Not played for a while*) and **Remove non-favorites** — from the list, or to the Trash, never permanently.
 - **Phone remote**: control the music from your phone on the same Wi-Fi — scan a QR code, nothing to install. Pause, next track, volume, sleep timer, any track from the playlist; only phones you paired, only in your home network.
 - **Sleep timer**: stop after 15–90 minutes or after the current track, with a gentle fade-out.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.
@@ -176,6 +177,8 @@ The original edition: the same player as a text interface in a terminal window. 
 | `G` | volume levelling (ReplayGain): by album → by track → off |
 | `U` | check for updates / open the download page |
 | `F3` | phone remote: QR code, connected phones |
+| `F` · `Shift+F` | add to / remove from favorites · play favorites only |
+| `Shift+D` | remove non-favorites (from the list or to the Trash) |
 | `J` or `/` | find a track |
 | `L` | add a folder to the library (system folder dialog) |
 | `Shift+P` | put the whole library in the playlist |

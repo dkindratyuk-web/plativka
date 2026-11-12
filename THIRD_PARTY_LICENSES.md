@@ -20,6 +20,7 @@ Plativka's own code is MIT-licensed (see [LICENSE](LICENSE)). The installers als
 | **pycaw**, **comtypes** | Windows | MIT | https://github.com/AndreMiras/pycaw · https://github.com/enthought/comtypes |
 | **PyWinRT** (winrt-*) | Windows | MIT | https://github.com/pywinrt/pywinrt |
 | **segno** — QR code for the phone remote | all | BSD-3-Clause | https://github.com/heuer/segno |
+| **Send2Trash** — moving files to the Trash | all | BSD-3-Clause | https://github.com/arsenetar/send2trash |
 
 The versions of mpv and kitty used for a release are listed at the top of [.github/workflows/release.yml](.github/workflows/release.yml); the matching source is available from the links above under the same version tags. On Linux, mpv and kitty come from your distribution's packages.
 

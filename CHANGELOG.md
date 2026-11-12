@@ -1,5 +1,23 @@
 # Changelog / Історія змін
 
+## 1.4.0
+
+**English**
+
+- Favorites: like a song with the ♡ in the playlist, `F`, the Favorites menu, the tray or the phone remote, and play only your favorites (`Shift+F` or **♥ Favorites** at the top of the library). A filled ♥ is shown only for liked songs; an empty ♡ only on the row under the mouse/cursor or the selected one.
+- Likes survive moving and renaming files: after a library scan Plativka finds the song by artist, title and length and moves the like to the new place.
+- Smart lists at the top of the library: Recently added, Most played, Not played for a while — from the play history kept only on your computer.
+- Remove non-favorites: from the list only (the default) or from the list and the disk — to the Trash, never permanently; songs that haven't played yet are kept by default.
+- Save favorites as an M3U playlist.
+
+**Українська**
+
+- Улюблені: вподобайте пісню сердечком ♡ у списку, клавішею `F`, з меню «Улюблені», трею чи пульта з телефона — і слухайте лише улюблені (`Shift+F` або **♥ Улюблені** нагорі медіатеки). Заповнене ♥ видно лише біля вподобаних; порожнє ♡ — лише на рядку під мишкою/курсором чи на виділеному.
+- Лайки не губляться при перенесенні й перейменуванні файлів: після сканування медіатеки Платівка знаходить пісню за виконавцем, назвою й тривалістю й переносить лайк на нове місце.
+- Розумні списки нагорі медіатеки: «Нещодавно додані», «Найчастіше слухаю», «Давно не звучали» — з історії прослуховувань, яка зберігається лише на вашому комп'ютері.
+- «Прибрати неулюблені»: лише зі списку (за замовчуванням) або зі списку й з диска — у Кошик, ніколи назавжди; пісні, які ще не звучали, за замовчуванням лишаються.
+- Зберегти улюблені як плейлист M3U.
+
 ## 1.3.7
 
 **English**

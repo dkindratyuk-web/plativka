@@ -61,6 +61,9 @@ T = {
             ("🎧", "Plays what you have",
              "MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE and WavPack through mpv. Files without tags are "
              "named from the file name, old Windows-1251 tags are fixed automatically."),
+            ("♥", "Favorites that don't get lost",
+             "Like a song with a heart and play only your favorites from all folders at once. "
+             "Moved or renamed your music? The likes follow it."),
             ("💿", "Plays like an album",
              "No pauses between tracks, so live albums and mixes flow on. Volume levelling by album "
              "or by track (ReplayGain). One-file albums with a .cue sheet show up as separate tracks."),
@@ -87,6 +90,21 @@ T = {
         "mini": [("desk-mac-en-mini.png", "Mini player, macOS"),
                  ("desk-mac-en-mini-dark.png", "Mini player, dark theme, macOS")],
         "mini_cap": "The mini player — just the player strip, pinned above other windows.",
+        "fav_h": "Favorites that don't get lost",
+        "fav_p": "Listening to a long playlist? Tap the heart on the songs you like — later you can play only them, "
+                 "from all your folders and albums at once.",
+        "fav_steps": [
+            ("Like", "Click the ♡ next to a song or press <b>F</b>. A filled ♥ stays only next to the songs you liked — "
+                     "no wall of empty hearts."),
+            ("Play your favorites", "<b>♥ Favorites</b> at the top of the library, or <b>Shift+F</b>. Next to it — "
+                                    "<i>Recently added</i>, <i>Most played</i> and <i>Not played for a while</i>."),
+            ("Clean up", "<b>Remove non-favorites…</b> removes the rest from the list — or, if you choose, moves the files "
+                         "to the Trash. Never deleted permanently."),
+        ],
+        "fav_safe": "Why your likes survive: most players remember a like by where the file lies — move the album to another "
+                    "disk, and the like is gone. Plativka also remembers <i>which song it is</i> (artist, title and length) "
+                    "and finds it in its new place by itself.",
+        "fav_more": "How favorites work",
         "rm_h": "Control it from your phone",
         "rm_p": "Music plays from the computer to the speakers, and you are on the sofa? Your phone becomes the remote — "
                 "a web page right in the phone's browser, nothing to install.",
@@ -171,6 +189,9 @@ T = {
             ("🎧", "Грає те, що у вас є",
              "MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE і WavPack через mpv. Файли без тегів підписуються "
              "з назви файлу, старі теги у Windows-1251 виправляються самі."),
+            ("♥", "Улюблені, які не губляться",
+             "Вподобайте пісню сердечком і слухайте лише улюблені з усіх тек разом. "
+             "Перенесли чи перейменували музику — лайки підуть за нею."),
             ("💿", "Грає як альбом",
              "Без пауз між треками — концертні альбоми й мікси не розриваються. Вирівнювання "
              "гучності за альбомом або за треком (ReplayGain). Альбом одним файлом з .cue — окремими треками."),
@@ -197,6 +218,21 @@ T = {
         "mini": [("desk-mac-uk-mini-dark.png", "Міні-плеєр, темна тема, macOS"),
                  ("desk-linux-uk-mini.png", "Міні-плеєр, Kubuntu")],
         "mini_cap": "Міні-плеєр — лише смужка керування, закріплена поверх інших вікон.",
+        "fav_h": "Улюблені, які не губляться",
+        "fav_p": "Слухаєте довгий плейлист? Натискайте сердечко на піснях, які сподобались, — потім можна слухати лише їх, "
+                 "з усіх тек і альбомів разом.",
+        "fav_steps": [
+            ("Вподобайте", "Клацніть ♡ біля пісні або натисніть <b>F</b>. Заповнене ♥ лишається тільки біля вподобаних — "
+                           "жодної стіни порожніх сердечок."),
+            ("Слухайте улюблені", "<b>♥ Улюблені</b> нагорі медіатеки або <b>Shift+F</b>. Поруч — <i>Нещодавно додані</i>, "
+                                  "<i>Найчастіше слухаю</i> й <i>Давно не звучали</i>."),
+            ("Наведіть лад", "<b>Прибрати неулюблені…</b> прибирає решту зі списку — або, якщо оберете, переносить файли "
+                             "в Кошик. Ніколи не видаляє назавжди."),
+        ],
+        "fav_safe": "Чому лайки не губляться: більшість плеєрів пам'ятає лайк за місцем, де лежить файл, — переніс альбом "
+                    "на інший диск, і лайка немає. Платівка пам'ятає ще й <i>яка це пісня</i> (виконавець, назва й тривалість) "
+                    "і сама знаходить її на новому місці.",
+        "fav_more": "Як працюють улюблені",
         "rm_h": "Керуйте з телефона",
         "rm_p": "Музика грає з комп'ютера в колонки, а ви на дивані? Телефон стає пультом — це вебсторінка прямо "
                 "в браузері телефона, нічого встановлювати не треба.",
@@ -320,7 +356,14 @@ def page(t: dict) -> str:
   </div>
 </section>
 
-<section id="remote" class="wrap sec">
+<section id="favorites" class="wrap sec">
+  <h2>{t['fav_h']}</h2>
+  <p class="sub">{t['fav_p']}</p>
+  <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['fav_steps'])}</ol>
+  <p class="note-box">♥ {t['fav_safe']} <a href="{docs}desktop.md#{'favorites' if t['lang'] == 'en' else 'улюблені'}">{t['fav_more']} →</a></p>
+</section>
+
+<section id="remote" class="wrap sec sec-top">
   <h2>{t['rm_h']}</h2>
   <p class="sub">{t['rm_p']}</p>
   <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['rm_steps'])}</ol>

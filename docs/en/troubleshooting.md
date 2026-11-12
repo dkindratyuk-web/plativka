@@ -101,6 +101,14 @@ launchctl bootstrap gui/$(id -u) /System/Library/LaunchAgents/com.apple.rcd.plis
 
 Some keyboards (most non-Apple ones, or a Mac with "Use F1, F2, etc. keys as standard function keys" turned on) send F7 F8 F9 as plain function keys instead of media keys. Since 1.1.2 Plativka treats F7 F8 F9 as previous · pause · next while its window is in front. To control it from other apps too, use the media keys (on Apple keyboards — without Fn, or with Fn if that setting is on).
 
+## A like disappeared after I moved my music
+
+Plativka finds moved songs during the library scan. Press **↻** in the library (terminal edition: rescan) — the like comes back once the song is found by its artist, title and length. If the tags were also changed (a different title or artist), Plativka can't be sure it is the same song and won't guess; like it again.
+
+## “Move to Trash” did not move some files
+
+Some places have no Trash: network drives, and on Linux some USB sticks and other disks. Plativka never deletes files permanently, so such files simply stay where they were, and the message says how many could not be moved. Delete them yourself if you really want to.
+
 ## The phone remote does not open on the phone
 
 - **Same network.** The phone must be on the same Wi-Fi as the computer — not on mobile data, and not on a guest network (guest networks usually isolate devices from each other).

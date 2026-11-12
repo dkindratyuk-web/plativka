@@ -134,6 +134,8 @@ Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.
 
 The first time Plativka Desktop starts, it takes the music folders and the playlist from the terminal edition (if it is installed); after that each edition keeps its own settings. The library cache is shared.
 
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions.
+
 ## Command-line options
 
 `plativka-desktop --demo` — look around without sound and without mpv; `--lang=en` / `--lang=uk` — interface language.

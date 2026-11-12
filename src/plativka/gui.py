@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import html
 import os
 import random
 import sys
@@ -27,7 +28,7 @@ from PySide6.QtGui import (QAction, QActionGroup, QColor, QDesktopServices, QFon
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDialog, QDialogButtonBox,
                                QFileDialog, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                                QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox,
-                               QPushButton, QSizePolicy, QSlider, QStackedWidget, QSystemTrayIcon,
+                               QPushButton, QRadioButton, QSizePolicy, QSlider, QStackedWidget, QSystemTrayIcon,
                                QTableWidget, QTableWidgetItem, QToolButton, QTreeWidget,
                                QTreeWidgetItem, QVBoxLayout, QWidget)
 
@@ -348,8 +349,8 @@ class TrackTable(QTableWidget):
     delete_pressed = Signal()
 
     def __init__(self):
-        super().__init__(0, 3)
-        self.setHorizontalHeaderLabels(["#", _("Трек"), _("Час")])
+        super().__init__(0, 4)
+        self.setHorizontalHeaderLabels(["#", _("Трек"), _("Час"), ""])
         self.verticalHeader().hide()
         self.horizontalHeader().hide()
         self.setShowGrid(False)
@@ -362,12 +363,31 @@ class TrackTable(QTableWidget):
         h.setSectionResizeMode(0, QHeaderView.Fixed)
         h.setSectionResizeMode(1, QHeaderView.Stretch)
         h.setSectionResizeMode(2, QHeaderView.Fixed)
+        h.setSectionResizeMode(3, QHeaderView.Fixed)
         self.setColumnWidth(0, 56)
         self.setColumnWidth(2, 50)
+        self.setColumnWidth(3, 24)             # сердечко: ♥ — улюблений, ♡ — лише під курсором чи на виділеному
+        self.setMouseTracking(True)
+        self.hover_row = -1
         self.verticalHeader().setDefaultSectionSize(22)
         self.setAlternatingRowColors(False)
         self.cellDoubleClicked.connect(lambda r, c: self.activated_row.emit(r))
         self.setFocusPolicy(Qt.StrongFocus)
+
+    hover_changed = Signal(int, int)
+
+    def mouseMoveEvent(self, e):
+        r = self.rowAt(int(e.position().y()))
+        if r != self.hover_row:
+            old, self.hover_row = self.hover_row, r
+            self.hover_changed.emit(old, r)
+        super().mouseMoveEvent(e)
+
+    def leaveEvent(self, e):
+        if self.hover_row != -1:
+            old, self.hover_row = self.hover_row, -1
+            self.hover_changed.emit(old, -1)
+        super().leaveEvent(e)
 
     def keyPressEvent(self, e):
         if e.key() in (Qt.Key_Return, Qt.Key_Enter) and self.currentRow() >= 0:
@@ -553,6 +573,88 @@ def qr_pixmap(text: str, size: int) -> QPixmap:
                 p.fillRect((x + 4) * k, (y + 4) * k, k, k, QColor("black"))
     p.end()
     return QPixmap.fromImage(img).scaled(size, size, Qt.KeepAspectRatio, Qt.FastTransformation)
+
+
+class RemoveUnlikedDialog(QDialog):
+    """«Прибрати неулюблені»: лише зі списку (типово) або ще й файли в Кошик — ніколи назавжди."""
+
+    def __init__(self, win: "MainWindow", paths: list[str], where: str):
+        super().__init__(win)
+        self.win, self.paths, self.where = win, paths, where
+        self.setWindowTitle(_("Прибрати неулюблені"))
+        self.resize(500, 420)
+        lay = QVBoxLayout(self)
+        self.summary = QLabel()
+        self.summary.setWordWrap(True)
+        lay.addWidget(self.summary)
+        self.r_list = QRadioButton(_("Лише зі списку — файли лишаться на диску"))
+        self.r_disk = QRadioButton()
+        self.r_list.setChecked(True)
+        for r in (self.r_list, self.r_disk):
+            r.toggled.connect(self.refresh)
+            lay.addWidget(r)
+        self.only_heard = QCheckBox(_("Не чіпати треки, які ще не звучали"))
+        self.only_heard.setChecked(True)
+        self.only_heard.toggled.connect(self.refresh)
+        lay.addWidget(self.only_heard)
+        self.note = QLabel()
+        self.note.setWordWrap(True)
+        self.note.setObjectName("dim")
+        lay.addWidget(self.note)
+        self.list = QListWidget()
+        lay.addWidget(self.list, 1)
+        bb = QDialogButtonBox()
+        self.go = bb.addButton("", QDialogButtonBox.AcceptRole)
+        bb.addButton(_("Скасувати"), QDialogButtonBox.RejectRole)
+        bb.accepted.connect(self.run)
+        bb.rejected.connect(self.reject)
+        lay.addWidget(bb)
+        self.refresh()
+
+    def refresh(self, *_a):
+        from .favorites import fmt_size, removal_plan
+        self.plan = plan = removal_plan(self.paths, self.win.favs, self.win.hist, self.only_heard.isChecked())
+        n = len(plan["remove"])
+        self.summary.setText(_("{where}: {total}, з них ♥ {fav} улюблених. Прибрати: {n}.").format(
+            where=self.where, total=n_tracks(plan["total"]), fav=plan["favorites"], n=n_tracks(n)))
+        self.r_disk.setText(_("Зі списку й з диска — {n} ({size}) у Кошик").format(
+            n=n_tracks(len(plan["files"])), size=fmt_size(plan["size"])))
+        notes = []
+        if plan["unheard"] and self.only_heard.isChecked():
+            notes.append(_("Ще не звучали й лишаться: {n}.").format(n=n_tracks(plan["unheard"])))
+        if plan["cue"] and self.r_disk.isChecked():
+            notes.append(_("Альбоми одним файлом із .cue з диска не прибираються (один файл — увесь альбом): {n}.")
+                         .format(n=n_tracks(plan["cue"])))
+        if self.r_disk.isChecked():
+            notes.append(_("Файли йдуть у Кошик — їх можна відновити."))
+        self.note.setText(" ".join(notes))
+        self.list.clear()
+        for p in plan["remove"][:500]:
+            self.list.addItem(self.win.track(p).display)
+        self.go.setText(_("Перемістити в Кошик") if self.r_disk.isChecked() else _("Прибрати зі списку"))
+        self.go.setEnabled(n > 0)
+
+    def run(self):
+        from .favorites import move_to_trash
+        plan = self.plan
+        gone = set(plan["remove"])
+        trashed, failed = [], []
+        if self.r_disk.isChecked() and plan["files"]:
+            trashed, failed = move_to_trash(plan["files"])
+            gone = set(plan["remove"]) - set(failed)
+            for p in trashed:
+                self.win.lib.tracks.pop(p, None)
+            self.win.lib.save()
+        self.win.drop_from_playlist(gone)
+        self.win.rebuild_tree()
+        if self.r_disk.isChecked():
+            msg = _("У Кошику: {n}").format(n=n_tracks(len(trashed)))
+            if failed:
+                msg += " · " + _("не вдалося: {n}").format(n=len(failed))
+        else:
+            msg = _("Прибрано зі списку: {n}").format(n=n_tracks(len(gone)))
+        self.win.toast(msg)
+        self.accept()
 
 
 class FoldersDialog(QDialog):
@@ -810,6 +912,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.c_sub.setObjectName("sub")
         self.title = QLabel()
         self.title.setObjectName("title")
+        self.title.setTextFormat(Qt.RichText)     # ♥ кольором, лише якщо трек в улюблених
+        self.c_title.setTextFormat(Qt.RichText)
         self.info = QLabel()
         self.info.setObjectName("dim")
         for w in (self.c_title, self.c_sub, self.title, self.info):
@@ -954,6 +1058,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.table = TrackTable()
         self.table.activated_row.connect(lambda r: self.spawn(self.play_index(r)))
         self.table.delete_pressed.connect(self.remove_selected)
+        self.table.hover_changed.connect(lambda a, b: [self._heart_cell(r) for r in (a, b)])
+        self.table.currentCellChanged.connect(lambda r, c, pr, pc: [self._heart_cell(x) for x in (pr, r)])
+        self.table.cellClicked.connect(lambda r, c: self._like_row(r) if c == 3 else None)
         self.table.setContextMenuPolicy(Qt.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self._table_menu)
         pv.addWidget(self.table, 1)
@@ -1085,10 +1192,15 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.a_autoupd = act(_("Перевіряти оновлення автоматично"), self.toggle_check_updates, None, True)
         a_upd = act(_("Перевірити оновлення…"), lambda: self.spawn(self.look_for_update(manual=True)))
         a_remote = act(_("Пульт з телефона…"), self.open_remote)
+        a_like = act(_("До улюблених / прибрати"), lambda: self.like(), ["F"])
+        a_favplay = act(_("Грати лише улюблені"), self.play_favorites, ["Shift+F"])
+        a_favm3u = act(_("Зберегти улюблені як M3U…"), self.export_favorites)
+        a_unliked = act(_("Прибрати неулюблені…"), lambda: self.remove_unliked())
         menus = [
             (_("Файл"), [a_add, a_folders, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
                                  None, m_sleep, m_rg, None, a_remote]),
+            (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
             (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, a_theme, self.a_popups, a_lang, None, a_find]
              + ([self.a_tray] if not sysdeps.IS_MAC else [])),
             (_("Довідка"), [a_gh, a_bug, None, a_upd, self.a_autoupd, None, a_about]),
@@ -1652,7 +1764,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if 0 <= self.current < len(self.playlist):
             t = self.track(self.playlist[self.current])
             self._now_title = t.display
-            self.title.setText(f"{self.current + 1}. {t.display} ({fmt_time(t.length)})")
+            heart = ' <span style="color:#e0245e">♥</span>' if self.is_fav(self.playlist[self.current]) else ""
+            self.title.setText(html.escape(f"{self.current + 1}. {t.display} ({fmt_time(t.length)})") + heart)
             parts = [t.fmt]
             if t.bitrate:
                 parts.append(_("{kbps} кбіт/с").format(kbps=t.bitrate // 1000))
@@ -1662,13 +1775,13 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 parts.append(_("стерео") if t.channels >= 2 else _("моно"))
             album = " · ".join(x for x in (t.album, t.year) if x)
             self.info.setText("  ".join(parts) + (f"    {album}" if album else ""))
-            self.c_title.setText(t.title or t.display)
+            self.c_title.setText(html.escape(t.title or t.display) + heart)
             self.c_sub.setText(" — ".join(x for x in (t.artist, " · ".join(y for y in (t.album, t.year) if y)) if x))
         else:
             self._now_title = ""
-            self.title.setText(_("{app} {ver} — оберіть, що послухати").format(app=APP_NAME, ver=VERSION))
+            self.title.setText(html.escape(_("{app} {ver} — оберіть, що послухати").format(app=APP_NAME, ver=VERSION)))
             self.info.setText("")
-            self.c_title.setText(APP_NAME)
+            self.c_title.setText(html.escape(APP_NAME))
             self.c_sub.setText(_("оберіть, що послухати"))
         self._refresh_volume()
 
@@ -1775,6 +1888,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def remote_accent(self) -> str:
         return tune(self.accent_rgb, False)
+
+    def remote_like(self, path: str):
+        self.like(path)
 
     def remote_event(self, kind: str, text: str):
         msg = {"paired": _("Підключено пульт: {name}"), "left": _("Пульт відключився: {name}"),
@@ -1911,11 +2027,12 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.table.setRowCount(len(self.playlist))
         for i, p in enumerate(self.playlist):
             t = self.track(p)
-            for c, v in enumerate((f"{i + 1}.", t.display, fmt_time(t.length))):
+            for c, v in enumerate((f"{i + 1}.", t.display, fmt_time(t.length), "")):
                 it = QTableWidgetItem(v)
-                if c == 2:
-                    it.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                if c >= 2:
+                    it.setTextAlignment((Qt.AlignRight if c == 2 else Qt.AlignCenter) | Qt.AlignVCenter)
                 self.table.setItem(i, c, it)
+            self._heart_cell(i)
         has = bool(self.playlist)
         self.table.setVisible(has)
         self.pl_empty.setVisible(not has)
@@ -1926,13 +2043,78 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if self.player is not None:
             self.spawn(self.refresh_preload())
 
+    def _heart_cell(self, i: int):
+        """♥ — у улюблених; ♡ — лише на рядку під курсором чи виділеному (щоб список не рябів)."""
+        it = self.table.item(i, 3) if 0 <= i < self.table.rowCount() else None
+        if it is None or i >= len(self.playlist):
+            return
+        fav = self.is_fav(self.playlist[i])
+        show_empty = i in (self.table.hover_row, self.table.currentRow())
+        it.setText("♥" if fav else ("♡" if show_empty else ""))
+        it.setForeground(QColor("#e0245e") if fav else QColor(128, 128, 128))
+        it.setToolTip(_("Прибрати з улюблених (F)") if fav else _("До улюблених (F)"))
+
+    def _like_row(self, i: int):
+        if 0 <= i < len(self.playlist):
+            self.like(self.playlist[i])
+
+    def like(self, path: str | None = None):
+        """Лайк / зняти лайк: вибраний рядок у списку (якщо список у фокусі) або те, що грає."""
+        if path is None:
+            r = self.table.currentRow()
+            if self.table.hasFocus() and 0 <= r < len(self.playlist):
+                path = self.playlist[r]
+            elif 0 <= self.current < len(self.playlist):
+                path = self.playlist[self.current]
+        state = self.toggle_fav(path)
+        if state is None:
+            self.toast(_("Спершу увімкніть трек"))
+            return
+        t = self.track(path)
+        self.toast((_("♥ В улюблених: {t}") if state else _("Прибрано з улюблених: {t}")).format(t=t.display))
+        for i, p in enumerate(self.playlist):
+            if p == path:
+                self._heart_cell(i)
+        self.update_now_playing()
+        if self.tab == "library" or self.tree.topLevelItemCount():
+            self.rebuild_tree()
+
+    def play_favorites(self):
+        paths = [p for p in self.favs.paths() if p in self.lib.tracks or os.path.exists(real_path(p))]
+        if not paths:
+            self.toast(_("Улюблених поки немає — вподобайте трек сердечком або клавішею F"))
+            return
+        self.add_to_playlist(paths, replace=True)
+        self.spawn(self.play_index(random.randrange(len(paths)) if self.shuffle else 0))
+        self.toast(_("Грають улюблені: {n}").format(n=n_tracks(len(paths))))
+
+    def export_favorites(self):
+        if not len(self.favs):
+            self.toast(_("Улюблених поки немає"))
+            return
+        dest, _f = QFileDialog.getSaveFileName(self, _("Зберегти улюблені як M3U"),
+                                               str(Path.home() / _("Улюблені.m3u")), "M3U (*.m3u *.m3u8)")
+        if dest:
+            try:
+                n = self.favs.export_m3u(dest, self.track)
+                self.toast(_("Збережено: {n} у {f}").format(n=n_tracks(n), f=Path(dest).name))
+            except OSError as e:
+                self.toast(_("Не вдалося зберегти: {e}").format(e=e))
+
+    def remove_unliked(self, paths: list[str] | None = None, where: str | None = None):
+        paths = list(self.playlist) if paths is None else paths
+        if not paths:
+            self.toast(_("Тут немає треків"))
+            return
+        RemoveUnlikedDialog(self, paths, where or _("У списку")).exec()
+
     def mark_current(self):
         if not hasattr(self, "_acc"):
             return
         sub = QColor(self._sub) if not self._sub.startswith("rgba") else QColor(128, 128, 128)
         for i in range(self.table.rowCount()):
             cur = i == self.current
-            for c in range(3):
+            for c in range(3):           # колонка 3 — сердечко, його колір не чіпаємо
                 it = self.table.item(i, c)
                 if it is None:
                     continue
@@ -1982,6 +2164,18 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.rebuild_playlist()
         self.save_cfg()
 
+    def drop_from_playlist(self, gone: set):
+        """Прибрати треки зі списку, не збиваючи поточний."""
+        if not gone:
+            return
+        cur = self.playlist[self.current] if 0 <= self.current < len(self.playlist) else None
+        self.playlist = [p for p in self.playlist if p not in gone]
+        self.current = self.playlist.index(cur) if cur in self.playlist else -1
+        self.history = []
+        self.rebuild_playlist()
+        self.update_now_playing()
+        self.save_cfg()
+
     def clear_playlist(self):
         self.playlist = []
         self.current = -1
@@ -1996,8 +2190,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         m = QMenu(self)
         if r >= 0:
             m.addAction(_("Грати"), lambda: self.spawn(self.play_index(r)))
+            fav = self.is_fav(self.playlist[r]) if r < len(self.playlist) else False
+            m.addAction(_("Прибрати з улюблених") if fav else _("До улюблених"), lambda: self._like_row(r))
             m.addAction(_("Прибрати зі списку"), self.remove_selected)
             m.addSeparator()
+        m.addAction(_("Прибрати неулюблені…"), lambda: self.remove_unliked())
         m.addAction(_("Очистити список"), self.clear_playlist)
         m.exec(self.table.viewport().mapToGlobal(pos))
 
@@ -2031,6 +2228,25 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             it.setData(0, Qt.UserRole, data)
             it.setForeground(1, dim)
             return it
+
+        # розумні списки — нагорі, над виконавцями й теками
+        for key, title, paths in self.smart_lists(self.lib.tracks):
+            if key != "favorites" and not paths:
+                continue
+            node = item(tree, ("♥ " if key == "favorites" else "◦ ") + title, str(len(paths)), ("smart", paths))
+            if key == "favorites":
+                node.setForeground(0, QColor("#e0245e"))
+            f = node.font(0)
+            f.setBold(key == "favorites")
+            node.setFont(0, f)
+            for p in paths:
+                t = self.track(p)
+                item(node, t.display, fmt_time(t.length), ("track", p))
+            if key == "favorites" and not paths:
+                hint = item(node, _("Вподобайте трек сердечком або клавішею F"), "", None)
+                hint.setForeground(0, dim)
+        sep = item(tree, "", "", None)
+        sep.setFlags(Qt.NoItemFlags)
 
         if self.lib_mode == "artists":
             artists: dict[str, dict[str, list[Track]]] = {}
@@ -2110,7 +2326,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             return
         paths, seen = [], set()
         for i in range(self.tree.topLevelItemCount()):
-            for p in self.item_paths(self.tree.topLevelItem(i)):
+            top = self.tree.topLevelItem(i)
+            if (top.data(0, Qt.UserRole) or ("",))[0] == "smart":
+                continue                          # розумні списки — це ті самі треки, їх не дублюємо
+            for p in self.item_paths(top):
                 if p not in seen:
                     seen.add(p)
                     paths.append(p)
@@ -2125,6 +2344,13 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if it is not None:
             m.addAction(_("Грати"), lambda: self.lib_activate(it))
             m.addAction(_("Додати в кінець списку"), self.lib_append)
+            data = it.data(0, Qt.UserRole)
+            if data and data[0] == "track":
+                fav = self.is_fav(data[1])
+                m.addAction(_("Прибрати з улюблених") if fav else _("До улюблених"), lambda: self.like(data[1]))
+            elif data and data[0] in ("group", "smart"):
+                m.addAction(_("Прибрати неулюблені…"),
+                            lambda: self.remove_unliked(self.item_paths(it), _("У «{name}»").format(name=it.text(0).lstrip("♥◦ "))))
             m.addSeparator()
         m.addAction(_("Уся медіатека в список"), self.lib_all)
         m.addAction(_("Пересканувати"), self.start_scan)
@@ -2184,6 +2410,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def _scan_done(self):
         self.scanning = False
+        try:
+            if self.favs.relink(self.lib.tracks):
+                self.toast(_("Улюблені знайдено на новому місці — лайки збережено"))
+        except Exception as e:
+            log(f"улюблені: {e}")
         self.lib_empty.setText(_("Медіатека порожня.\n\nДодайте теку з музикою кнопкою «+ Тека» "
                                  "або просто перетягніть теку у вікно."))
         self.rebuild_tree()
@@ -2264,6 +2495,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             m.addAction(_("Грати / пауза"), self.toggle_from_tray)
             m.addAction(_("Наступний трек"), self.next_from_tray)
             m.addAction(_("Попередній трек"), self.prev_from_tray)
+            m.addAction(_("До улюблених / прибрати"), lambda: self.like())
             m.addSeparator()
             m.addAction(_("Вийти з Платівки"), self.quit_app)
             self.tray.setContextMenu(m)
@@ -2344,6 +2576,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.tray.hide()
 
         async def bye():
+            self.end_listen()
             try:
                 if self.remote:
                     await asyncio.wait_for(self.remote.stop(), 2)

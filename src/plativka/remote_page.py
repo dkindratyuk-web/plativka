@@ -40,7 +40,7 @@ INDEX = """<!doctype html>
 <main id="app" hidden>
   <header class="bar"><span class="muted small" id="where">Plativka</span><span id="conn" class="dot" title=""></span></header>
   <div class="cover"><img id="cover" alt="" hidden><div id="vinyl" class="vinyl"><span></span></div></div>
-  <h2 id="t-title" class="title"></h2>
+  <div class="trow"><h2 id="t-title" class="title"></h2><button id="fav" class="heart" aria-label="favorite" aria-pressed="false">&#x2661;</button></div>
   <p id="t-sub" class="muted sub"></p>
   <div id="seek" class="seek" role="slider" aria-label="position" tabindex="0"><div id="seek-fill"></div></div>
   <div class="times muted small"><span id="pos">0:00</span><span id="dur">0:00</span></div>
@@ -82,6 +82,9 @@ button.primary{background:var(--accent);border-color:var(--accent);color:var(--a
 .cover img{width:100%;height:100%;object-fit:cover}
 .vinyl{width:72%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#0000 0 31%,#26292f 32% 100%);display:grid;place-items:center;box-shadow:inset 0 0 0 10px #1c1e23}
 .vinyl span{width:34%;aspect-ratio:1;border-radius:50%;background:var(--accent);box-shadow:inset 0 0 0 3px #0003}
+.trow{display:flex;align-items:flex-start;gap:8px}.trow .title{flex:1}
+.heart{border:0;background:none;font-size:1.7rem;line-height:1;padding:12px 4px 0;color:var(--muted)}.heart.on{color:#e0245e}
+.list li .h{color:#e0245e;width:1em}
 .title{font-size:1.35rem;margin:16px 0 2px;overflow-wrap:anywhere}.sub{margin:0;overflow-wrap:anywhere}
 .seek{height:28px;margin-top:14px;position:relative;touch-action:none;cursor:pointer}
 .seek::before{content:"";position:absolute;left:0;right:0;top:12px;height:5px;border-radius:5px;background:var(--line)}
@@ -178,6 +181,7 @@ JS = r"""
   $("toggle").onclick = function () { cmd("toggle"); };
   $("next").onclick = function () { cmd("next"); };
   $("prev").onclick = function () { cmd("prev"); };
+  $("fav").onclick = function () { cmd("fav"); setTimeout(function () { plVer = -1; }, 300); };
   var vt = null;
   $("vol").addEventListener("input", function () {
     volBusy = Date.now(); $("vol-n").textContent = this.value;
@@ -228,8 +232,9 @@ JS = r"""
         var li = document.createElement("li"), n = document.createElement("span"), t = document.createElement("span"),
             d = document.createElement("span");
         n.className = "n"; t.className = "t"; d.className = "d";
+        var h = document.createElement("span"); h.className = "h"; h.textContent = it[2] ? "\u2665" : "";
         n.textContent = (i + 1) + "."; t.textContent = it[0]; d.textContent = it[1];
-        li.append(n, t, d); li.onclick = function () { cmd("play", i); };
+        li.append(n, h, t, d); li.onclick = function () { cmd("play", i); };
         ol.appendChild(li);
       });
       markCurrent();
@@ -242,6 +247,9 @@ JS = r"""
   function render() {
     document.documentElement.style.setProperty("--accent", /^#[0-9a-f]{6}$/i.test(st.accent) ? st.accent : "#0e7c84");
     $("t-title").textContent = st.title || S.pick;
+    $("fav").hidden = !st.title;
+    $("fav").textContent = st.fav ? "\u2665" : "\u2661";
+    $("fav").classList.toggle("on", !!st.fav); $("fav").setAttribute("aria-pressed", st.fav ? "true" : "false");
     $("t-sub").textContent = [st.artist, [st.album, st.year].filter(Boolean).join(" · ")].filter(Boolean).join(" — ");
     $("pos").textContent = fmt(st.pos); $("dur").textContent = fmt(st.dur);
     $("seek-fill").style.width = (st.dur ? Math.min(100, st.pos / st.dur * 100) : 0) + "%";

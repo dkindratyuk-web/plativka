@@ -174,6 +174,8 @@ Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.
 
 The playlist, the position in the current track, the volume, the theme and all switches are saved automatically.
 
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions.
+
 ## Command-line options
 
 | Option | Meaning |

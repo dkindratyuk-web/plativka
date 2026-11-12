@@ -41,7 +41,7 @@ CODE_TTL = 120            # секунд живе короткий код
 CODE_TRIES = 5            # невдалих спроб — і код згорає
 IP_FAIL_LIMIT = 10        # невдалих спроб з однієї адреси — блок на IP_BLOCK секунд
 IP_BLOCK = 600
-COMMANDS = {"toggle", "next", "prev", "seek", "volume", "play", "sleep"}
+COMMANDS = {"toggle", "next", "prev", "seek", "volume", "play", "sleep", "fav"}
 
 SECURITY_HEADERS = {
     "Cache-Control": "no-store",
@@ -405,7 +405,7 @@ class RemoteServer:
     @staticmethod
     def _arg_ok(cmd: str, arg) -> bool:
         num = isinstance(arg, (int, float)) and not isinstance(arg, bool)
-        if cmd in ("toggle", "next", "prev"):
+        if cmd in ("toggle", "next", "prev", "fav"):
             return arg is None
         if cmd == "seek":
             return num and 0 <= arg <= 24 * 3600
@@ -525,7 +525,7 @@ class RemoteHost:
             t = self.track(path)
             st.update(title=t.title or t.display, artist=t.artist, album=t.album, year=t.year,
                       dur=round((p.duration if p and p.active and p.duration else t.length) or 0, 1),
-                      cover=hashlib.sha1(path.encode()).hexdigest()[:12])
+                      cover=hashlib.sha1(path.encode()).hexdigest()[:12], fav=self.is_fav(path))
         sig = (len(self.playlist), tuple(self.playlist[:3]), tuple(self.playlist[-3:]))
         if sig != self._pl_sig:
             self._pl_sig, self._pl_ver = sig, self._pl_ver + 1
@@ -536,8 +536,12 @@ class RemoteHost:
         out = []
         for path in self.playlist[:5000]:
             t = self.track(path)
-            out.append([t.display, fmt_time(t.length)])
+            out.append([t.display, fmt_time(t.length), self.is_fav(path)])
         return out
+
+    def remote_like(self, path: str):
+        """Програма може перевизначити, щоб оновити свій інтерфейс."""
+        self.toggle_fav(path)
 
     def remote_cover_path(self):
         return self.playlist[self.current] if 0 <= self.current < len(self.playlist) else None
@@ -559,3 +563,6 @@ class RemoteHost:
                 await self.play_index(arg)
         elif cmd == "sleep":
             self.choose_sleep(arg)
+        elif cmd == "fav":
+            if 0 <= self.current < len(self.playlist):
+                self.remote_like(self.playlist[self.current])

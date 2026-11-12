@@ -613,6 +613,9 @@ class HelpScreen(ModalScreen):
             ("M", _("показати / сховати медіатеку")),
             ("O", _("обкладинка: звичайна → велика → вимкнена")),
             ("N", _("сповіщення про трек")),
+            ("F", _("до улюблених / прибрати (рядок під курсором у списку або те, що грає)")),
+            ("Shift+F", _("грати лише улюблені")),
+            ("Shift+D", _("прибрати неулюблені: зі списку або в Кошик")),
             ("K", _("таймер сну: 15 · 30 · 45 · 60 · 90 хв · після треку · вимк")),
             ("G", _("вирівнювання гучності: за альбомом · за треком · вимк")),
             ("U", _("перевірити оновлення / завантажити нову версію")),
@@ -735,6 +738,96 @@ def qr_text(url: str) -> Text:
         t.append(line, Style(color="black", bgcolor="white"))
         t.append("\n")
     return t
+
+
+class RemoveUnlikedScreen(ModalScreen):
+    """«Прибрати неулюблені»: 1 — лише зі списку (типово), 2 — ще й файли в Кошик; H — не чіпати незвучалі."""
+    BINDINGS = [Binding("escape", "dismiss(None)", _("Скасувати")),
+                Binding("1", "mode(False)", show=False), Binding("2", "mode(True)", show=False),
+                Binding("h", "heard", show=False), Binding("enter", "run", show=False)]
+
+    def __init__(self, paths: list[str], where: str):
+        super().__init__()
+        self.paths, self.where, self.disk, self.only_heard = paths, where, False, True
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dlg", classes="remove"):
+            yield Static(_("Прибрати неулюблені"), classes="dlg-title")
+            yield Static(id="ru-sum")
+            yield Clickable("", "mode(False)", id="ru-list")
+            yield Clickable("", "mode(True)", id="ru-disk")
+            yield Clickable("", "heard", id="ru-heard")
+            yield Static(id="ru-note", classes="dlg-help")
+            yield Static(id="ru-list-files")
+            with Horizontal(classes="dlg-buttons"):
+                yield Clickable("", "run", classes="btn primary", id="ru-go")
+                yield Static(classes="spacer")
+                yield Clickable(_(" Скасувати (Esc) "), "dismiss(None)", classes="btn")
+
+    def on_mount(self):
+        self.refresh_view()
+
+    def action_mode(self, disk: bool):
+        self.disk = disk
+        self.refresh_view()
+
+    def action_heard(self):
+        self.only_heard = not self.only_heard
+        self.refresh_view()
+
+    def refresh_view(self):
+        from .favorites import fmt_size, removal_plan
+        app = self.app
+        self.plan = plan = removal_plan(self.paths, app.favs, app.hist, self.only_heard)
+        dim = Style(color=app.dim_hex)
+        self.query_one("#ru-sum", Static).update(_("{where}: {total}, з них ♥ {fav} улюблених. Прибрати: {n}.").format(
+            where=self.where, total=n_tracks(plan["total"]), fav=plan["favorites"], n=n_tracks(len(plan["remove"]))))
+        dot = lambda on: "◉ " if on else "○ "
+        self.query_one("#ru-list", Static).update(dot(not self.disk) + _("1  Лише зі списку — файли лишаться на диску"))
+        self.query_one("#ru-disk", Static).update(dot(self.disk) + _("2  Зі списку й з диска — {n} ({size}) у Кошик").format(
+            n=n_tracks(len(plan["files"])), size=fmt_size(plan["size"])))
+        self.query_one("#ru-heard", Static).update(("☑ " if self.only_heard else "☐ ")
+                                                   + _("H  Не чіпати треки, які ще не звучали"))
+        notes = []
+        if plan["unheard"] and self.only_heard:
+            notes.append(_("Ще не звучали й лишаться: {n}.").format(n=n_tracks(plan["unheard"])))
+        if plan["cue"] and self.disk:
+            notes.append(_("Альбоми одним файлом із .cue з диска не прибираються (один файл — увесь альбом): {n}.")
+                         .format(n=n_tracks(plan["cue"])))
+        if self.disk:
+            notes.append(_("Файли йдуть у Кошик — їх можна відновити."))
+        self.query_one("#ru-note", Static).update(" ".join(notes))
+        names = [app.track(p).display for p in plan["remove"][:8]]
+        more = len(plan["remove"]) - len(names)
+        self.query_one("#ru-list-files", Static).update(
+            Text("\n".join("  · " + n for n in names) + (f"\n  … +{more}" if more > 0 else ""), dim))
+        self.query_one("#ru-go", Static).update(
+            (_(" Перемістити в Кошик (Enter) ") if self.disk else _(" Прибрати зі списку (Enter) ")))
+
+    def action_run(self):
+        from .favorites import move_to_trash
+        app, plan = self.app, self.plan
+        if not plan["remove"]:
+            self.dismiss(None)
+            return
+        gone = set(plan["remove"])
+        trashed, failed = [], []
+        if self.disk and plan["files"]:
+            trashed, failed = move_to_trash(plan["files"])
+            gone -= set(failed)
+            for p in trashed:
+                app.lib.tracks.pop(p, None)
+            app.lib.save()
+        app.drop_from_playlist(gone)
+        app.rebuild_tree()
+        if self.disk:
+            msg = _("У Кошику: {n}").format(n=n_tracks(len(trashed)))
+            if failed:
+                msg += " · " + _("не вдалося: {n}").format(n=len(failed))
+        else:
+            msg = _("Прибрано зі списку: {n}").format(n=n_tracks(len(gone)))
+        app.notify(msg, timeout=4, markup=False)
+        self.dismiss(None)
 
 
 class FoldersScreen(ModalScreen):
@@ -925,6 +1018,9 @@ class MainScreen(Screen):
         Binding("g", "replaygain", _("Вирівнювання гучності"), show=False),
         Binding("u", "update", _("Оновлення"), show=False),
         Binding("f3", "remote", _("Пульт"), show=False),
+        Binding("f", "like", _("До улюблених"), show=False),
+        Binding("F", "play_favorites", _("Грати улюблені"), show=False),
+        Binding("D", "remove_unliked", _("Прибрати неулюблені"), show=False),
         Binding("m", "toggle_library", _("Медіатека"), show=False),
         Binding("w", "toggle_view", _("Вигляд"), show=False),
         Binding("e", "toggle_collapsed", _("Згорнути"), show=False),
@@ -1038,6 +1134,9 @@ class MainScreen(Screen):
     def action_replaygain(self): self.app.cycle_replaygain()
     def action_update(self): self.app.update_action()
     def action_remote(self): self.app.push_screen(RemoteScreen())
+    def action_like(self): self.app.like()
+    def action_play_favorites(self): self.app.play_favorites()
+    def action_remove_unliked(self): self.app.remove_unliked()
     def action_theme(self): self.app.toggle_theme()
     def action_help(self): self.app.push_screen(HelpScreen())
     def action_toggle_view(self): self.app.toggle_view()
@@ -1235,6 +1334,8 @@ Footer { background: $primary 8%; }
 /* довідка і теки */
 #dlg.help { width: 86; }
 #dlg.remote { width: 84; }
+#dlg.remove { width: 80; }
+#ru-list, #ru-disk, #ru-heard { width: auto; margin: 0 0 0 1; }
 #r-qr { width: auto; margin: 0 0 1 0; }
 #help-url { color: $foreground 50%; margin-bottom: 1; }
 .help-h { text-style: bold; color: $primary; margin-top: 1; }
@@ -1540,6 +1641,7 @@ class Plativka(App, PlayerExtras, RemoteHost):
             self.mpris.stop()
         if self.smtc is not None:
             self.smtc.stop()
+        self.end_listen()
         if self.remote:
             await self.remote.stop()
         if self.player:
@@ -2121,8 +2223,9 @@ class Plativka(App, PlayerExtras, RemoteHost):
         s = self.main
         if 0 <= self.current < len(self.playlist):
             t = self.track(self.playlist[self.current])
-            s.query_one("#marquee", Marquee).set_text(f"{self.current + 1}. {t.display} ({fmt_time(t.length)})")
-            s.query_one("#c-title", Marquee).set_text(t.title or t.display)
+            heart = "  ♥" if self.is_fav(self.playlist[self.current]) else ""
+            s.query_one("#marquee", Marquee).set_text(f"{self.current + 1}. {t.display} ({fmt_time(t.length)}){heart}")
+            s.query_one("#c-title", Marquee).set_text((t.title or t.display) + heart)
             s.query_one("#c-sub", Static).update(Text(" — ".join(x for x in (t.artist, " · ".join(y for y in (t.album, t.year) if y)) if x)))
             parts = [t.fmt]
             if t.bitrate:
@@ -2258,7 +2361,8 @@ class Plativka(App, PlayerExtras, RemoteHost):
         width = max(20, tbl.size.width or 60)
         tbl.add_column("", width=1, key="m")
         tbl.add_column("#", width=4, key="n")
-        tbl.add_column(_("Трек"), width=max(10, width - 24), key="t")
+        tbl.add_column("", width=1, key="h")
+        tbl.add_column(_("Трек"), width=max(10, width - 26), key="t")
         tbl.add_column(_("Час"), width=6, key="d")
         total = 0.0
         for i, path in enumerate(self.playlist):
@@ -2281,8 +2385,88 @@ class Plativka(App, PlayerExtras, RemoteHost):
         st = Style(bold=True, color=self.primary_hex) if playing else Style()
         mark = Text("▶" if playing else "", style=st)
         return (mark, Text(f"{i + 1}.", style=Style(color=self.dim_hex) if not playing else st),
+                self._heart(i),
                 Text(t.display, style=st, overflow="ellipsis", no_wrap=True),
                 Text(fmt_time(t.length).rjust(6), style=st if playing else Style(color=self.dim_hex)))
+
+    def _heart(self, i: int, cursor: int | None = None) -> Text:
+        """♥ — улюблений; ♡ — лише на рядку під курсором (щоб список не рябів)."""
+        if not (0 <= i < len(self.playlist)):
+            return Text("")
+        if self.is_fav(self.playlist[i]):
+            return Text("♥", style=Style(color="#e0245e"))
+        cur = self.cursor_row() if cursor is None else cursor
+        return Text("♡", style=Style(color=self.dim_hex)) if i == cur else Text("")
+
+    def on_data_table_row_highlighted(self, event):
+        if not isinstance(event.data_table, PlaylistTable):
+            return
+        tbl = event.data_table
+        prev = getattr(self, "_hl_row", None)
+        self._hl_row = event.cursor_row
+        for r in {prev, event.cursor_row}:
+            if r is not None and 0 <= r < tbl.row_count:
+                try:
+                    tbl.update_cell(str(r), "h", self._heart(r, event.cursor_row))
+                except Exception:
+                    pass
+
+    def like(self, path: str | None = None):
+        """Лайк: рядок під курсором, якщо список у фокусі, інакше те, що грає."""
+        if path is None and self.main:
+            tbl = self.main.query_one(PlaylistTable)
+            r = tbl.cursor_row
+            if self.focused is tbl and 0 <= r < len(self.playlist):
+                path = self.playlist[r]
+            elif 0 <= self.current < len(self.playlist):
+                path = self.playlist[self.current]
+        state = self.toggle_fav(path)
+        if state is None:
+            self.notify(_("Спершу увімкніть трек"), timeout=3)
+            return
+        t = self.track(path)
+        self.notify((_("♥ В улюблених: {t}") if state else _("Прибрано з улюблених: {t}")).format(t=t.display),
+                    timeout=3, markup=False)
+        self.rebuild_playlist(keep_cursor=True)
+        self.update_now_playing()
+        self.rebuild_tree()
+
+    def remote_like(self, path: str):
+        self.like(path)
+
+    def play_favorites(self):
+        paths = [p for p in self.favs.paths() if p in self.lib.tracks or os.path.exists(real_path(p))]
+        if not paths:
+            self.notify(_("Улюблених поки немає — вподобайте трек сердечком або клавішею F"), timeout=4)
+            return
+        self.add_to_playlist(paths, replace=True, quiet=True)
+        self.run_worker(self.play_index(random.randrange(len(paths)) if self.shuffle else 0))
+        self.notify(_("Грають улюблені: {n}").format(n=n_tracks(len(paths))), timeout=3)
+
+    def remove_unliked(self):
+        """Shift+D: вузол бібліотеки (якщо вона у фокусі) або список відтворення."""
+        paths, where = list(self.playlist), _("У списку")
+        if self.main:
+            tree = self.main.query_one(LibraryTree)
+            node = tree.cursor_node
+            if self.focused is tree and node is not None and node.data and node.data[0] in ("group", "smart"):
+                paths = self.node_paths(node)
+                where = _("У «{name}»").format(name=str(node.label.plain).split("  ")[0].lstrip("♥◦ "))
+        if not paths:
+            self.notify(_("Тут немає треків"), timeout=3)
+            return
+        self.push_screen(RemoveUnlikedScreen(paths, where))
+
+    def drop_from_playlist(self, gone: set):
+        if not gone:
+            return
+        cur = self.playlist[self.current] if 0 <= self.current < len(self.playlist) else None
+        self.playlist = [p for p in self.playlist if p not in gone]
+        self.current = self.playlist.index(cur) if cur in self.playlist else -1
+        self.history = []
+        self.rebuild_playlist()
+        self.update_now_playing()
+        self.save_cfg()
 
     def mark_current(self):
         self.rebuild_playlist(keep_cursor=True)
@@ -2354,6 +2538,17 @@ class Plativka(App, PlayerExtras, RemoteHost):
         if not has:
             return
         dim = Style(color=self.dim_hex)
+        for key, title, paths in self.smart_lists(self.lib.tracks):     # розумні списки — нагорі
+            if key != "favorites" and not paths:
+                continue
+            lbl = Text("♥ " + title, style=Style(color="#e0245e", bold=True)) if key == "favorites" \
+                else Text("◦ " + title)
+            node = tree.root.add(lbl.append(f"  {len(paths)}", dim), data=("smart", paths), expand=False)
+            for p in paths:
+                t = self.track(p)
+                node.add_leaf(Text(t.display).append(f"  {fmt_time(t.length)}", dim), data=("track", p))
+            if key == "favorites" and not paths:
+                node.add_leaf(Text(_("Вподобайте трек клавішею F"), dim), data=None)
         if self.lib_mode == "artists":
             artists: dict[str, dict[str, list[Track]]] = {}
             for t in self.lib.tracks.values():
@@ -2434,6 +2629,8 @@ class Plativka(App, PlayerExtras, RemoteHost):
         tree = self.main.query_one(LibraryTree)
         paths, seen = [], set()
         for node in tree.root.children:
+            if node.data and node.data[0] == "smart":
+                continue                          # розумні списки — ті самі треки, не дублюємо
             for p in self.node_paths(node):
                 if p not in seen:
                     seen.add(p)
@@ -2538,6 +2735,11 @@ class Plativka(App, PlayerExtras, RemoteHost):
 
     def _scan_done(self, total, quiet):
         self.scanning = False
+        try:
+            if self.favs.relink(self.lib.tracks):
+                self.notify(_("Улюблені знайдено на новому місці — лайки збережено"), timeout=4)
+        except Exception as e:
+            log(f"улюблені: {e}")
         self.rebuild_tree()
         self.rebuild_playlist()
         self.update_now_playing()

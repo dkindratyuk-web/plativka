@@ -1872,8 +1872,11 @@ class Plativka(App, PlayerExtras, RemoteHost):
         self.set_interval(5, self.save_cfg)
         if self.lib.folders:
             self.start_scan(quiet=True)
-        if self.check_updates and not self.demo:
-            self.run_worker(self.look_for_update(delay=3))
+        if not self.demo:
+            if self.check_updates:
+                self.run_worker(self.look_for_update(delay=3))
+            # поки Платівка відкрита — ще раз на 6 годин
+            self.set_interval(UPDATE_EVERY, lambda: self.check_updates and self.run_worker(self.look_for_update()))
         if self.remote_cfg.get("enabled"):
             self.run_worker(self.set_remote(True))
         if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
@@ -2316,6 +2319,10 @@ class Plativka(App, PlayerExtras, RemoteHost):
         if delay:
             await asyncio.sleep(delay)
         info = await asyncio.to_thread(check_update, manual)
+        if info and info.get("error"):
+            if manual:
+                self.notify(_("Не вдалося перевірити оновлення: немає зв'язку з GitHub. Спробуйте пізніше."), timeout=5)
+            return
         self.update_info = info
         self.update_flags()
         if info:

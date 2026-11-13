@@ -1,5 +1,19 @@
 # Changelog / Історія змін
 
+## 1.5.3
+
+**English**
+
+- Update check works in the downloaded app on macOS and Windows: before, it could not open a secure connection to GitHub and so never found new versions. **Versions 1.5.2 and older won't tell you about this update — download 1.5.3 once by hand**, after that the update check works by itself.
+- If GitHub can't be reached, "Check for updates" now says so instead of "you have the latest version".
+- While Plativka stays open, it checks for updates every 6 hours (before: only at start, once a day).
+
+**Українська**
+
+- Перевірка оновлень працює в завантаженій програмі на macOS і Windows: раніше вона не могла встановити захищене з'єднання з GitHub і тому ніколи не знаходила нових версій. **Версії 1.5.2 і старші про це оновлення не повідомлять — завантажте 1.5.3 один раз вручну**, далі перевірка працюватиме сама.
+- Якщо GitHub недоступний, «Перевірити оновлення» тепер так і каже, а не «у вас найновіша версія».
+- Поки Платівка відкрита, вона перевіряє оновлення раз на 6 годин (раніше — лише під час запуску, раз на добу).
+
 ## 1.5.2
 
 **English**

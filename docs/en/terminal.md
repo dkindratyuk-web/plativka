@@ -182,7 +182,7 @@ If the page does not open on the phone, see [Troubleshooting](troubleshooting.md
 
 ## Updates
 
-Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.x.x — U** appears in the player — press `U` to open the download page. Nothing is downloaded or installed by itself, and nothing about you is sent. `U` also checks right away. To turn the daily check off, set `"check_updates": false` in `config.json`.
+At start and then every 6 hours Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.x.x — U** appears in the player — press `U` to open the download page. Nothing is downloaded or installed by itself, and nothing about you is sent. `U` also checks right away. To turn the automatic check off, set `"check_updates": false` in `config.json`.
 
 ## Themes and language
 

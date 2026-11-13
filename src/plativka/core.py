@@ -989,10 +989,25 @@ def version_tuple(v: str) -> tuple:
     return tuple(int(x) for x in re.findall(r"\d+", v)[:3])
 
 
-def check_update(force: bool = False, every: float = 20 * 3600) -> dict | None:
-    """Чи вийшла новіша Платівка. Не частіше ніж раз на добу; без мережі — тихо None.
+def https_context():
+    """Сертифікати для HTTPS. У зібраній програмі (macOS, Windows) системних сертифікатів Python
+    не бачить, тож беремо їх із certifi; без нього — звичайні системні."""
+    import ssl
+    try:
+        import certifi
+        return ssl.create_default_context(cafile=certifi.where())
+    except Exception:
+        return ssl.create_default_context()
 
-    Повертає {"version": "1.3.6", "url": сторінка випуску}, якщо новіша за поточну.
+
+UPDATE_EVERY = 6 * 3600
+
+
+def check_update(force: bool = False, every: float = UPDATE_EVERY) -> dict | None:
+    """Чи вийшла новіша Платівка. Не частіше ніж раз на 6 годин (вручну — завжди).
+
+    Повертає {"version": "1.3.6", "url": сторінка випуску}, якщо новіша за поточну;
+    None — якщо у вас найновіша; {"error": "..."} — якщо GitHub недоступний.
     Запит лише один — до GitHub, про останній випуск; нічого про вас не надсилається.
     """
     import urllib.request
@@ -1007,13 +1022,13 @@ def check_update(force: bool = False, every: float = 20 * 3600) -> dict | None:
         try:
             req = urllib.request.Request(RELEASES_API, headers={
                 "Accept": "application/vnd.github+json", "User-Agent": f"Plativka/{VERSION}"})
-            with urllib.request.urlopen(req, timeout=8) as r:
+            with urllib.request.urlopen(req, timeout=8, context=https_context()) as r:
                 rel = json.loads(r.read().decode("utf-8"))
             latest = {"version": str(rel.get("tag_name", "")).lstrip("v"),
                       "url": rel.get("html_url") or GITHUB_URL + "/releases/latest"}
         except Exception as e:
             log(f"перевірка оновлень: {e}")
-            return None
+            return {"error": str(getattr(e, "reason", e))}
         try:
             CACHE_DIR.mkdir(parents=True, exist_ok=True)
             state_file.write_text(json.dumps({"checked": time.time(), "latest": latest}), "utf-8")

@@ -173,7 +173,7 @@ If the page does not open on the phone, see [Troubleshooting](troubleshooting.md
 
 ## Updates
 
-Once a day Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.x.x** appears next to shuffle and repeat — click it to open the download page. Nothing is downloaded or installed by itself, and nothing about you is sent. To check right now or to turn the check off: ☰ → **Help → Check for updates…** / **Check for updates automatically** (on a Mac — the **Help** menu in the menu bar).
+At start and then every 6 hours Plativka asks GitHub whether a new version is out. If it is, **⬆ 1.x.x** appears next to shuffle and repeat — click it to open the download page. Nothing is downloaded or installed by itself, and nothing about you is sent. To check right now or to turn the check off: ☰ → **Help → Check for updates…** / **Check for updates automatically** (on a Mac — the **Help** menu in the menu bar).
 
 ## Language
 

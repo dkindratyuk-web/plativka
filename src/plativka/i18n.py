@@ -398,6 +398,7 @@ EN: dict[str, str] = {
     "Наведіть камеру телефона на QR-код і відкрийте посилання. Телефон запам'ятає підключення.": "Point your phone's camera at the QR code and open the link. The phone remembers the connection.",
     "Не вдалося увімкнути пульт: {e}": "Could not turn the phone remote on: {e}",
     "Показати код": "Show code",
+    "Не вдалося перевірити оновлення: немає зв'язку з GitHub. Спробуйте пізніше.": "Couldn't check for updates: no connection to GitHub. Try again later.",
     "Завантажую…": "Downloading…",
     "Знайти обкладинку": "Find cover art",
     "Знайти обкладинку…": "Find cover art…",

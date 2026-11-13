@@ -36,7 +36,7 @@ from . import sysdeps, sysvol
 from .remote import RemoteHost
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
                    SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
-                   check_update, clamp, fmt_time, load_cover, log, read_track, real_path, rgb_hex, rotate_log,
+                   UPDATE_EVERY, check_update, clamp, fmt_time, load_cover, log, read_track, real_path, rgb_hex, rotate_log,
                    scan_dir, tune)
 from .i18n import LANG, _, n_tracks
 
@@ -2305,6 +2305,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     async def look_for_update(self, manual: bool = False):
         info = await asyncio.to_thread(check_update, manual)
+        if info and info.get("error"):
+            if manual:          # не кажемо «найновіша», якщо насправді не змогли спитати
+                self.toast(_("Не вдалося перевірити оновлення: немає зв'язку з GitHub. Спробуйте пізніше."))
+            return
         self.update_info = info
         self.update_flags()
         if info:
@@ -3159,9 +3163,12 @@ def main():
             win.start_scan()
         if win.remote_cfg.get("enabled"):
             await win.set_remote(True)
-        if win.check_updates and not win.demo:
+        if not win.demo:
             await asyncio.sleep(3)
-            await win.look_for_update()
+            while True:             # і далі, поки Платівка відкрита, — раз на 6 годин
+                if win.check_updates:
+                    await win.look_for_update()
+                await asyncio.sleep(UPDATE_EVERY)
     with loop:
         loop.create_task(boot())
         loop.run_forever()

@@ -12,7 +12,6 @@ import io
 import json
 import os
 import re
-import ssl
 import threading
 import time
 import unicodedata
@@ -123,11 +122,8 @@ def store(t: Track, data: bytes, folder_copy: bool = False) -> bytes | None:
 
 # ── мережа ──
 def _ctx():
-    try:
-        import certifi
-        return ssl.create_default_context(cafile=certifi.where())
-    except Exception:
-        return ssl.create_default_context()
+    from .core import https_context
+    return https_context()
 
 
 def _get(url: str, accept: str = "application/json", limit: int = 2 * 1024 * 1024) -> bytes:

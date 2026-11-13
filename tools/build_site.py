@@ -37,8 +37,8 @@ T = {
         "help_toc": "On this page",
         "help_more": "Did not find your problem? <a href=\"{issues}\">Tell us about it on GitHub</a> — attach the logs, it helps a lot.",
         "h1": "Your music,<br>Winamp-style.",
-        "lead": "A free player for the music already on your disk — for macOS, Windows and Linux. "
-                "Offline, fast, no account, no ads.",
+        "lead": "A free player for the music already on your disk, for macOS, Windows and Linux. "
+                "Works offline, starts fast, no account and no ads.",
         "dl_for": {"mac": "Download for macOS", "win": "Download for Windows",
                    "linux": "Download for Linux", "other": "Download"},
         "hero_note": "Free and open source · MIT license",
@@ -46,31 +46,31 @@ T = {
         "github": "Source on GitHub",
         "feat_h": "What it can do",
         "features": [
-            ("🎨", "Colour from the cover",
+            ("palette", "Colour from the cover",
              "The clock, the level meter, the window and the playlist take their colour "
              "from the album art and change with every album. Light, dark or system theme."),
-            ("🗔", "Three sizes",
+            ("sizes", "Three sizes",
              "The full Winamp view, a compact view with large type, and a mini player that "
              "can stay on top of all windows."),
-            ("📚", "Playlist and library",
+            ("library", "Playlist and library",
              "Your library by artist and album or by folder, instant search, drag folders "
              "into the window, play a whole album with a double-click."),
-            ("⌨️", "Fits into your system",
+            ("keyboard", "Fits into your system",
              "Media keys and headphone buttons, Now Playing, MPRIS on Linux, track "
              "notifications with the album cover, a tray icon."),
-            ("🎧", "Plays what you have",
+            ("headphones", "Plays what you have",
              "MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE and WavPack through mpv. Files without tags are "
              "named from the file name, old Windows-1251 tags are fixed automatically."),
-            ("♥", "Favorites that don't get lost",
+            ("heart", "Favorites that don't get lost",
              "Like a song with a heart and play only your favorites from all folders at once. "
              "Moved or renamed your music? The likes follow it."),
-            ("💿", "Plays like an album",
+            ("disc", "Plays like an album",
              "No pauses between tracks, so live albums and mixes flow on. Volume levelling by album "
              "or by track (ReplayGain). One-file albums with a .cue sheet show up as separate tracks."),
-            ("📱", "Phone remote",
-             "Pause, skip, turn it down or set the sleep timer from your phone — scan a QR code, "
+            ("phone", "Phone remote",
+             "Pause, skip, turn it down or set the sleep timer from your phone. Scan a QR code, "
              "nothing to install. The page looks like Plativka itself, tinted by the cover."),
-            ("💾", "Remembers everything",
+            ("memory", "Remembers everything",
              "Playlist, position, volume, view and window size are there next time. "
              "Tells you when a new version is out. English and Ukrainian interface."),
         ],
@@ -89,48 +89,48 @@ T = {
         },
         "mini": [("desk-mac-en-mini.png", "Mini player, macOS"),
                  ("desk-mac-en-mini-dark.png", "Mini player, dark theme, macOS")],
-        "mini_cap": "The mini player — just the player strip, pinned above other windows.",
+        "mini_cap": "The mini player: just the player strip, pinned above other windows.",
         "fav_h": "Favorites that don't get lost",
-        "fav_p": "Listening to a long playlist? Tap the heart on the songs you like — later you can play only them, "
+        "fav_p": "Listening to a long playlist? Tap the heart on the songs you like, then play only them, "
                  "from all your folders and albums at once.",
         "fav_steps": [
-            ("Like", "Click the ♡ next to a song or press <b>F</b>. A filled ♥ stays only next to the songs you liked — "
-                     "no wall of empty hearts."),
-            ("Play your favorites", "<b>♥ Favorites</b> at the top of the library, or <b>Shift+F</b>. Next to it — "
+            ("Like", "Click the ♡ next to a song or press <b>F</b>. A filled ♥ stays only next to the songs you liked, "
+                     "so the list isn't covered in empty hearts."),
+            ("Play your favorites", "<b>♥ Favorites</b> at the top of the library, or <b>Shift+F</b>. Next to it: "
                                     "<i>Recently added</i>, <i>Most played</i> and <i>Not played for a while</i>."),
-            ("Clean up", "<b>Remove non-favorites…</b> removes the rest from the list — or, if you choose, moves the files "
-                         "to the Trash. Never deleted permanently."),
+            ("Clean up", "<b>Remove non-favorites…</b> removes the rest from the list or, if you choose, moves the files "
+                         "to the Trash. Nothing is deleted permanently."),
         ],
-        "fav_safe": "Why your likes survive: most players remember a like by where the file lies — move the album to another "
+        "fav_safe": "Why your likes survive: most players remember a like by where the file lies. Move the album to another "
                     "disk, and the like is gone. Plativka also remembers <i>which song it is</i> (artist, title and length) "
                     "and finds it in its new place by itself.",
         "fav_more": "How favorites work",
         "tl_h": "Small things that save time",
         "tl_p": "New in 1.5: everyday chores that usually need a separate program.",
         "tools": [
-            ("⏭", "Play next", "Want this song right after the current one? <b>Shift+N</b> or right-click → <b>Play next</b> "
-                               "— the order of the list stays as it is. On the phone remote: touch and hold a song."),
-            ("💾", "Copy to a USB stick", "The playlist for the car in one go: numbered files so the stereo keeps your order, "
+            ("next", "Play next", "Want this song right after the current one? <b>Shift+N</b> or right-click → <b>Play next</b>; "
+                               "the order of the list stays as it is. On the phone remote, touch and hold a song."),
+            ("usb", "Copy to a USB stick", "The playlist for the car in one go: numbered files so the stereo keeps your order, "
                                          "the size and free space shown first, nothing overwritten without asking."),
-            ("🧹", "Find duplicates", "The same song as an MP3 and a FLAC, or one file in two folders? Plativka shows them "
+            ("dupes", "Find duplicates", "The same song as an MP3 and a FLAC, or one file in two folders? Plativka shows them "
                                      "side by side, ticks the best copy, and you decide what goes."),
         ],
-        "tl_cov": "Covers from the internet: if a file has no cover, Plativka can find it on MusicBrainz or Apple — only a "
+        "tl_cov": "Covers from the internet. If a file has no cover, Plativka can find it on MusicBrainz or Apple: only a "
                   "confident match (Океан Ельзи = Okean Elzy), or pick one yourself. Off until you turn it on; only the "
                   "artist and album name are sent.",
         "tl_more": "How it works",
         "rm_h": "Control it from your phone",
-        "rm_p": "Music plays from the computer to the speakers, and you are on the sofa? Your phone becomes the remote — "
+        "rm_p": "Music plays from the computer to the speakers, and you are on the sofa? Your phone becomes the remote: "
                 "a web page right in the phone's browser, nothing to install.",
         "rm_steps": [
             ("Turn it on", "Plativka Desktop: ☰ → <b>Playback → Phone remote…</b> → tick <b>Allow control from a phone</b>. "
                            "Terminal edition: <b>F3</b>, then <b>Space</b>."),
             ("Scan the QR code", "Point the phone's camera at the code and open the link. The phone must be on the same Wi-Fi."),
-            ("Keep it on the home screen", "The phone remembers the connection. Add the page to the home screen — "
+            ("Keep it on the home screen", "The phone remembers the connection. Add the page to the home screen, and "
                                            "next time it opens like an app."),
         ],
-        "rm_safe": "Safe by design: off until you turn it on, works only in your home network and only for the phones you "
-                   "connected, and can only control the music — no access to files or settings.",
+        "rm_safe": "Safe by design. Off until you turn it on, works only in your home network and only for the phones you "
+                   "connected, and can only control the music. No access to files or settings.",
         "rm_more": "How the remote works and how it is protected",
         "rm_shots": [("remote-phone-en.png", "The phone remote: the same song as on the computer, tinted by its cover"),
                      ("remote-phone-en-list.png", "Sleep timer and the playlist; touch and hold a song to play it next"),
@@ -182,9 +182,9 @@ T = {
         "help_lead": "Щось працює не так, як очікували? Знайдіть свій випадок нижче.",
         "help_toc": "На цій сторінці",
         "help_more": "Не знайшли своєї проблеми? <a href=\"{issues}\">Напишіть про неї на GitHub</a> і додайте журнали — це дуже допомагає.",
-        "h1": "Ваша музика —<br>як у Winamp.",
-        "lead": "Безплатний плеєр для музики, яка вже є на вашому диску, — для macOS, Windows і Linux. "
-                "Офлайн, швидкий, без акаунтів і реклами.",
+        "h1": "Ваша музика&nbsp;—<br>як у Winamp.",
+        "lead": "Безплатний плеєр для музики, яка вже є на вашому диску. macOS, Windows і Linux, "
+                "працює без інтернету, без акаунтів і реклами.",
         "dl_for": {"mac": "Завантажити для macOS", "win": "Завантажити для Windows",
                    "linux": "Завантажити для Linux", "other": "Завантажити"},
         "hero_note": "Безплатно, відкритий код · ліцензія MIT",
@@ -192,32 +192,32 @@ T = {
         "github": "Код на GitHub",
         "feat_h": "Що вміє",
         "features": [
-            ("🎨", "Колір з обкладинки",
+            ("palette", "Колір з обкладинки",
              "Годинник, індикатор рівня, вікно й список треків беруть колір з обкладинки "
              "й змінюються з кожним альбомом. Світла, темна або системна тема."),
-            ("🗔", "Три розміри",
+            ("sizes", "Три розміри",
              "Повний вигляд як у Winamp, компактний з великою назвою треку і міні-плеєр, "
              "який може бути поверх усіх вікон."),
-            ("📚", "Плейлист і бібліотека",
+            ("library", "Плейлист і бібліотека",
              "Бібліотека за виконавцями й альбомами або за теками, миттєвий пошук, теки "
              "можна просто перетягнути у вікно, подвійний клік грає весь альбом."),
-            ("⌨️", "Дружить із системою",
+            ("keyboard", "Дружить із системою",
              "Медіаклавіші й кнопки навушників, «Зараз грає», MPRIS у Linux, сповіщення "
              "про трек з обкладинкою, іконка в треї."),
-            ("🎧", "Грає те, що у вас є",
+            ("headphones", "Грає те, що у вас є",
              "MP3, FLAC, M4A/AAC, OGG/Opus, WAV, APE і WavPack через mpv. Файли без тегів підписуються "
              "з назви файлу, старі теги у Windows-1251 виправляються самі."),
-            ("♥", "Улюблені, які не губляться",
+            ("heart", "Улюблені, які не губляться",
              "Вподобайте пісню сердечком і слухайте лише улюблені з усіх тек разом. "
-             "Перенесли чи перейменували музику — лайки підуть за нею."),
-            ("💿", "Грає як альбом",
-             "Без пауз між треками — концертні альбоми й мікси не розриваються. Вирівнювання "
-             "гучності за альбомом або за треком (ReplayGain). Альбом одним файлом з .cue — окремими треками."),
-            ("📱", "Пульт з телефона",
-             "Пауза, наступний трек, гучність і таймер сну — з телефона, не встаючи з дивана. "
+             "Перенесли чи перейменували музику? Лайки підуть за нею."),
+            ("disc", "Грає як альбом",
+             "Без пауз між треками, тож концертні альбоми й мікси не розриваються. Вирівнювання "
+             "гучності за альбомом або за треком (ReplayGain). Альбом одним файлом з .cue грає окремими треками."),
+            ("phone", "Пульт з телефона",
+             "Пауза, наступний трек, гучність і таймер сну з телефона, не встаючи з дивана. "
              "Відскануйте QR-код, нічого встановлювати не треба. Сторінка схожа на саму Платівку."),
-            ("💾", "Усе пам'ятає",
-             "Плейлист, позиція, гучність, вигляд і розмір вікна — наступного разу все "
+            ("memory", "Усе пам'ятає",
+             "Плейлист, позиція, гучність, вигляд і розмір вікна наступного разу будуть "
              "на місці. Підкаже, коли вийде нова версія. Українська й англійська мова інтерфейсу."),
         ],
         "shots_h": "Той самий плеєр на кожній системі",
@@ -235,55 +235,55 @@ T = {
         },
         "mini": [("desk-mac-uk-mini-dark.png", "Міні-плеєр, темна тема, macOS"),
                  ("desk-linux-uk-mini.png", "Міні-плеєр, Kubuntu")],
-        "mini_cap": "Міні-плеєр — лише смужка керування, закріплена поверх інших вікон.",
+        "mini_cap": "Міні-плеєр: лише смужка керування, закріплена поверх інших вікон.",
         "fav_h": "Улюблені, які не губляться",
-        "fav_p": "Слухаєте довгий плейлист? Натискайте сердечко на піснях, які сподобались, — потім можна слухати лише їх, "
+        "fav_p": "Слухаєте довгий плейлист? Натискайте сердечко на піснях, які сподобались, а потім слухайте лише їх, "
                  "з усіх тек і альбомів разом.",
         "fav_steps": [
-            ("Вподобайте", "Клацніть ♡ біля пісні або натисніть <b>F</b>. Заповнене ♥ лишається тільки біля вподобаних — "
-                           "жодної стіни порожніх сердечок."),
-            ("Слухайте улюблені", "<b>♥ Улюблені</b> нагорі медіатеки або <b>Shift+F</b>. Поруч — <i>Нещодавно додані</i>, "
+            ("Вподобайте", "Клацніть ♡ біля пісні або натисніть <b>F</b>. Заповнене ♥ лишається тільки біля вподобаних, "
+                           "тож список не обвішаний порожніми сердечками."),
+            ("Слухайте улюблені", "<b>♥ Улюблені</b> нагорі медіатеки або <b>Shift+F</b>. Поруч є <i>Нещодавно додані</i>, "
                                   "<i>Найчастіше слухаю</i> й <i>Давно не звучали</i>."),
-            ("Наведіть лад", "<b>Прибрати неулюблені…</b> прибирає решту зі списку — або, якщо оберете, переносить файли "
-                             "в Кошик. Ніколи не видаляє назавжди."),
+            ("Наведіть лад", "<b>Прибрати неулюблені…</b> прибирає решту зі списку, а якщо оберете, переносить файли "
+                             "в Кошик. Назавжди нічого не видаляє."),
         ],
-        "fav_safe": "Чому лайки не губляться: більшість плеєрів пам'ятає лайк за місцем, де лежить файл, — переніс альбом "
+        "fav_safe": "Чому лайки не губляться: більшість плеєрів пам'ятає лайк за місцем, де лежить файл. Переніс альбом "
                     "на інший диск, і лайка немає. Платівка пам'ятає ще й <i>яка це пісня</i> (виконавець, назва й тривалість) "
                     "і сама знаходить її на новому місці.",
         "fav_more": "Як працюють улюблені",
         "tl_h": "Дрібниці, які заощаджують час",
         "tl_p": "Нове в 1.5: щоденні справи, для яких зазвичай потрібна окрема програма.",
         "tools": [
-            ("⏭", "Грати наступним", "Хочете цю пісню одразу після поточної? <b>Shift+N</b> або правий клік → "
-                                     "<b>Грати наступним</b> — порядок списку не змінюється. На пульті з телефона — утримуйте пісню."),
-            ("💾", "Копіювати на флешку", "Список для машини за один раз: нумеровані файли, щоб магнітола тримала ваш порядок, "
+            ("next", "Грати наступним", "Хочете цю пісню одразу після поточної? <b>Shift+N</b> або правий клік → "
+                                     "<b>Грати наступним</b>, і порядок списку не зміниться. На пульті з телефона просто утримуйте пісню."),
+            ("usb", "Копіювати на флешку", "Список для машини за один раз: нумеровані файли, щоб магнітола тримала ваш порядок, "
                                          "розмір і вільне місце видно наперед, без питання нічого не перезаписується."),
-            ("🧹", "Знайти дублікати", "Та сама пісня в MP3 і FLAC чи один файл у двох теках? Платівка покаже їх поруч, "
-                                      "позначить найкращу копію, а що прибрати — вирішуєте ви."),
+            ("dupes", "Знайти дублікати", "Та сама пісня в MP3 і FLAC чи один файл у двох теках? Платівка покаже їх поруч, "
+                                      "позначить найкращу копію, а що прибрати, вирішуєте ви."),
         ],
-        "tl_cov": "Обкладинки з інтернету: якщо у файлі немає обкладинки, Платівка знайде її на MusicBrainz чи в Apple — лише "
+        "tl_cov": "Обкладинки з інтернету. Якщо у файлі немає обкладинки, Платівка знайде її на MusicBrainz чи в Apple: лише "
                   "впевнений збіг (Океан Ельзи = Okean Elzy), або оберіть самі. Вимкнено, доки не ввімкнете; надсилається "
                   "лише виконавець і назва альбому.",
         "tl_more": "Як це працює",
         "rm_h": "Керуйте з телефона",
-        "rm_p": "Музика грає з комп'ютера в колонки, а ви на дивані? Телефон стає пультом — це вебсторінка прямо "
+        "rm_p": "Музика грає з комп'ютера в колонки, а ви на дивані? Телефон стає пультом: це вебсторінка прямо "
                 "в браузері телефона, нічого встановлювати не треба.",
         "rm_steps": [
             ("Увімкніть", "Віконна версія: ☰ → <b>Відтворення → Пульт з телефона…</b> → галочка "
                           "<b>Дозволити керування з телефона</b>. Консольна: <b>F3</b>, потім <b>Пробіл</b>."),
             ("Відскануйте QR-код", "Наведіть камеру телефона на код і відкрийте посилання. Телефон має бути в тій самій Wi-Fi-мережі."),
-            ("Додайте на головний екран", "Телефон запам'ятає підключення. Додайте сторінку на головний екран — "
+            ("Додайте на головний екран", "Телефон запам'ятає підключення. Додайте сторінку на головний екран, і "
                                           "наступного разу вона відкриється як застосунок."),
         ],
-        "rm_safe": "Безпечно: вимкнено, доки ви не ввімкнете, працює лише в домашній мережі й лише для телефонів, які "
-                   "ви підключили, і вміє тільки керувати музикою — жодного доступу до файлів чи налаштувань.",
+        "rm_safe": "Безпечно. Вимкнено, доки ви не ввімкнете, працює лише в домашній мережі й лише для телефонів, які "
+                   "ви підключили, і вміє тільки керувати музикою. Доступу до файлів чи налаштувань немає.",
         "rm_more": "Як працює пульт і як він захищений",
         "rm_shots": [("remote-phone-uk.png", "Пульт на телефоні: та сама пісня, що й на комп'ютері, у кольорах її обкладинки"),
                      ("remote-phone-uk-list.png", "Таймер сну й список; утримайте пісню — заграє наступною"),
                      ("remote-player-uk.png", "Платівка на Mac грає ту саму пісню"),
                      ("remote-window-uk.png", "Вікно пульта: QR-код і підключені телефони")],
         "dl_h": "Завантажити",
-        "dl_sub": "Основна версія — Платівка у власному вікні (Plativka Desktop). Версія для термінала — для тих, хто живе в терміналі; можна встановити обидві.",
+        "dl_sub": "Основна версія відкривається у власному вікні (Plativka Desktop). Версія для термінала для тих, хто живе в терміналі. Можна встановити обидві.",
         "version": "Остання версія",
         "desktop": "Plativka Desktop",
         "terminal": "Версія для термінала",
@@ -315,6 +315,30 @@ T = {
     },
 }
 
+ICONS = {
+    "palette": '<circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 1.7-.9 1.7-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.7-1.7H16a6 6 0 0 0 6-6c0-4.4-4.5-8-10-8z"/>',
+    "sizes": '<rect x="2" y="3" width="13" height="11" rx="2"/><rect x="11" y="10" width="11" height="8" rx="2"/><path d="M4 21h8"/>',
+    "library": '<path d="M4 4v16M8 4v16"/><path d="m12.5 4.5 3.9 15.4M17 4l3.6 15"/>',
+    "keyboard": '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0M10 10h0M14 10h0M18 10h0M7 14h10"/>',
+    "headphones": '<path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>',
+    "heart": '<path d="M19 14c1.5-1.5 3-3.2 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.8 0-3 .5-4.5 2-1.5-1.5-2.7-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4 3 5.5l7 7z"/>',
+    "disc": '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="2.5"/><path d="M7 12a5 5 0 0 1 5-5"/>',
+    "phone": '<rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/>',
+    "memory": '<path d="M12 8v4l3 2"/><path d="M3.1 11a9 9 0 1 1 .9 5"/><path d="M3 21v-5h5"/>',
+    "list": '<path d="M8 6h13M8 12h13M8 18h13M3 6h0M3 12h0M3 18h0"/>',
+    "broom": '<path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/>',
+    "next": '<path d="M5 5l9 7-9 7z"/><path d="M19 5v14"/>',
+    "usb": '<path d="M12 2v14"/><path d="m8 6 4-4 4 4"/><path d="M8 11v2l4 3 4-3v-3"/><circle cx="12" cy="19" r="2.5"/>',
+    "dupes": '<rect x="8" y="8" width="13" height="13" rx="2"/><path d="M4 16a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2"/>',
+    "image": '<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-4.5-4.5L5 21"/>',
+    "lock": '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    "arrow": '<path d="M5 12h14M13 6l6 6-6 6"/>',
+}
+
+
+def ico(name: str, cls: str = "ico") -> str:
+    return f'<svg class="{cls}" viewBox="0 0 24 24" aria-hidden="true">{ICONS[name]}</svg>'
+
 
 def img(prefix: str, name: str, alt: str, cls: str = "", lazy: bool = True) -> str:
     from PIL import Image
@@ -345,19 +369,20 @@ def page(t: dict) -> str:
         "author": {"@type": "Person", "name": "dkindratyuk-web", "url": "https://github.com/dkindratyuk-web"},
     }
     features = "\n".join(
-        f'<li><span class="f-ico" aria-hidden="true">{i}</span><h3>{h}</h3><p>{d}</p></li>'
+        f'<li>{ico(i, "f-ico")}<div><h3>{h}</h3><p>{d}</p></div></li>'
         for i, h, d in t["features"])
+    fav_icons = ("heart", "list", "broom")
     tabs = "".join(
         f'<button role="tab" data-tab="{k}" aria-selected="{"true" if k == "mac" else "false"}">{name}</button>'
         for k, name in zip(("mac", "win", "linux"), t["tabs"]))
     panels = "".join(
         f'<div class="shots" data-panel="{k}"{"" if k == "mac" else " hidden"}>'
-        + "".join(f"<figure>{img(p, n, a)}<figcaption>{a}</figcaption></figure>" for n, a in v)
+        + "".join(f"<figure>{img(p, n, a)}</figure>" for n, a in v)
         + "</div>" for k, v in t["shots"].items())
-    mini = "".join(f"<figure>{img(p, n, a)}<figcaption>{a}</figcaption></figure>" for n, a in t["mini"])
-    term = "".join(f"<figure>{img(p, n, a)}<figcaption>{a}</figcaption></figure>" for n, a in t["term_shots"])
+    mini = "".join(f"<figure>{img(p, n, a)}</figure>" for n, a in t["mini"])
+    term = "".join(f"<figure>{img(p, n, a)}</figure>" for n, a in t["term_shots"])
+    # перший екран: одне велике вікно програми й міні-плеєр поруч
     hero_shots = (img(p, t["shots"]["mac"][0][0], t["shots"]["mac"][0][1], "h1-shot", lazy=False)
-                  + img(p, "desk-win-full-dark.png", t["shots"]["win"][1][1], "h2-shot", lazy=False)
                   + img(p, t["mini"][0][0], t["mini"][0][1], "h3-shot", lazy=False))
     body = f"""<main>
 <section class="hero">
@@ -369,7 +394,7 @@ def page(t: dict) -> str:
         <a class="btn btn-primary btn-big" id="hero-dl" href="#download">{t['dl_for']['other']}</a>
         <a class="btn btn-ghost btn-big" href="{REPO}">{t['github']}</a>
       </div>
-      <p class="hero-note"><span data-version-label>{t['version']}</span> <b data-version>…</b> · {t['hero_note']}</p>
+      <p class="hero-note"><span data-version-label>{t['version']} <b data-version>…</b> · </span>{t['hero_note']}</p>
     </div>
     <div class="hero-shots" aria-hidden="false">{hero_shots}</div>
   </div>
@@ -387,23 +412,29 @@ def page(t: dict) -> str:
     <h2>{t['shots_h']}</h2>
     <div class="tabs" role="tablist">{tabs}</div>
     {panels}
-    <div class="shots shots-mini">{mini}</div>
     <p class="cap">{t['mini_cap']}</p>
+    <div class="shots shots-mini">{mini}</div>
   </div>
 </section>
 
-<section id="favorites" class="wrap sec">
-  <h2>{t['fav_h']}</h2>
-  <p class="sub">{t['fav_p']}</p>
-  <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['fav_steps'])}</ol>
-  <p class="note-box">♥ {t['fav_safe']} <a href="{docs}desktop.md#{'favorites' if t['lang'] == 'en' else 'улюблені'}">{t['fav_more']} →</a></p>
+<section id="favorites" class="wrap sec split">
+  <div class="split-text">
+    <h2>{t['fav_h']}</h2>
+    <p class="sub">{t['fav_p']}</p>
+    <p class="aside">{t['fav_safe']}</p>
+    <a class="more" href="{docs}desktop.md#{'favorites' if t['lang'] == 'en' else 'улюблені'}">{t['fav_more']} {ico("arrow", "ico-a")}</a>
+  </div>
+  <ul class="rows">{''.join(f'<li>{ico(i, "f-ico")}<div><h3>{h}</h3><p>{d}</p></div></li>' for i, (h, d) in zip(fav_icons, t['fav_steps']))}</ul>
 </section>
 
-<section id="tools" class="wrap sec sec-top">
-  <h2>{t['tl_h']}</h2>
-  <p class="sub">{t['tl_p']}</p>
-  <ul class="features">{''.join(f'<li><span class="f-ico" aria-hidden="true">{i}</span><h3>{h}</h3><p>{d}</p></li>' for i, h, d in t['tools'])}</ul>
-  <p class="note-box">🖼 {t['tl_cov']} <a href="{docs}desktop.md#{'covers-from-the-internet' if t['lang'] == 'en' else 'обкладинки-з-інтернету'}">{t['tl_more']} →</a></p>
+<section id="tools" class="wrap sec split split-rev">
+  <div class="split-text">
+    <h2>{t['tl_h']}</h2>
+    <p class="sub">{t['tl_p']}</p>
+    <p class="aside">{ico("image", "ico-i")}{t['tl_cov']}</p>
+    <a class="more" href="{docs}desktop.md#{'covers-from-the-internet' if t['lang'] == 'en' else 'обкладинки-з-інтернету'}">{t['tl_more']} {ico("arrow", "ico-a")}</a>
+  </div>
+  <ul class="rows">{''.join(f'<li>{ico(i, "f-ico")}<div><h3>{h}</h3><p>{d}</p></div></li>' for i, h, d in t['tools'])}</ul>
 </section>
 
 <section id="remote" class="wrap sec sec-top">
@@ -411,10 +442,10 @@ def page(t: dict) -> str:
   <p class="sub">{t['rm_p']}</p>
   <ol class="steps">{''.join(f"<li><h3>{h}</h3><p>{d}</p></li>" for h, d in t['rm_steps'])}</ol>
   <div class="rm-shots">
-    {''.join(f'<figure class="rm-phone">{img(p, n, a)}<figcaption>{a}</figcaption></figure>' for n, a in t['rm_shots'][:2])}
-    <div class="rm-mac">{''.join(f'<figure>{img(p, n, a)}<figcaption>{a}</figcaption></figure>' for n, a in t['rm_shots'][2:])}</div>
+    {''.join(f'<figure class="rm-phone">{img(p, n, a)}</figure>' for n, a in t['rm_shots'][:2])}
+    <div class="rm-mac">{''.join(f'<figure>{img(p, n, a)}</figure>' for n, a in t['rm_shots'][2:])}</div>
   </div>
-  <p class="note-box">🔒 {t['rm_safe']} <a href="{docs}desktop.md#{'phone-remote' if t['lang'] == 'en' else 'пульт-з-телефона'}">{t['rm_more']} →</a></p>
+  <p class="aside safe">{ico("lock", "ico-i")}<span>{t['rm_safe']} <a href="{docs}desktop.md#{'phone-remote' if t['lang'] == 'en' else 'пульт-з-телефона'}">{t['rm_more']}</a></span></p>
 </section>
 
 <section id="download" class="wrap sec sec-top">
@@ -429,7 +460,7 @@ def page(t: dict) -> str:
       <h4>{t['terminal']}</h4>
       <div class="row">{dl("term-mac-arm", "Apple Silicon")}{dl("term-mac-intel", "Intel")}</div>
       <p class="note">{t['mac_note']}</p>
-      <a class="more" href="{docs}install-macos.md">{t['guide']} →</a>
+      <a class="more" href="{docs}install-macos.md">{t['guide']} {ico("arrow", "ico-a")}</a>
     </article>
     <article class="dl-card" data-os="win">
       <h3>Windows</h3>
@@ -438,7 +469,7 @@ def page(t: dict) -> str:
       <h4>{t['terminal']}</h4>
       {dl("term-win", t['win_btn'], ".exe")}
       <p class="note">{t['win_note']}</p>
-      <a class="more" href="{docs}install-windows.md">{t['guide']} →</a>
+      <a class="more" href="{docs}install-windows.md">{t['guide']} {ico("arrow", "ico-a")}</a>
     </article>
     <article class="dl-card" data-os="linux">
       <h3>Linux</h3>
@@ -448,7 +479,7 @@ def page(t: dict) -> str:
       <pre><code>tar -xzf plativka-*-linux.tar.gz
 cd plativka-*-linux
 ./install.sh --desktop</code></pre>
-      <a class="more" href="{docs}install-linux.md">{t['guide']} →</a>
+      <a class="more" href="{docs}install-linux.md">{t['guide']} {ico("arrow", "ico-a")}</a>
     </article>
   </div>
   <p class="dl-foot"><a href="{LATEST}">{t['all_dl']}</a> · <a data-asset="sums" href="{LATEST}">{t['checksums']}</a></p>
@@ -459,7 +490,7 @@ cd plativka-*-linux
     <div>
       <h2>{t['term_h']}</h2>
       <p>{t['term_p']}</p>
-      <a class="more" href="{docs}terminal.md">{t['term_more']} →</a>
+      <a class="more" href="{docs}terminal.md">{t['term_more']} {ico("arrow", "ico-a")}</a>
     </div>
     <div class="shots shots-term">{term}</div>
   </div>

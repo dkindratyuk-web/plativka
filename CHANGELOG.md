@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## 1.5.2
+
+**English**
+
+- Phone remote: the icon on the phone's Home Screen no longer has a white frame around it. If you already added the remote to the Home Screen, remove the icon and add the page again to get the new one.
+
+**Українська**
+
+- Пульт з телефона: іконка на головному екрані телефона більше не має білої рамки. Якщо ви вже додали пульт на головний екран, видаліть іконку й додайте сторінку ще раз, щоб з'явилася нова.
+
 ## 1.5.1
 
 **English**

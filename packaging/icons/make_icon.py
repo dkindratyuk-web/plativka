@@ -37,6 +37,20 @@ else:
     bg.resize((256, 256), Image.LANCZOS).save("../../src/plativka/assets/icon.png")
     bg.save("plativka.ico", sizes=[(16, 16), (24, 24), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
 
+def touch_variant(icon):
+    """iPhone/Android, головний екран: квадрат без прозорих країв — заокруглює сама система
+    (з прозорими кутами iOS малює навколо іконки білу рамку)."""
+    grad = Image.new("RGBA", (S, S))
+    g = ImageDraw.Draw(grad)
+    for y in range(S):
+        g.line([(0, y), (S, y)], fill=lerp(top, bottom, y / S) + (255,))
+    return Image.alpha_composite(grad, icon).convert("RGB")
+
+
+if "--mac-only" not in sys.argv:
+    touch_variant(bg).resize((180, 180), Image.LANCZOS).save("../../src/plativka/assets/icon-touch.png", optimize=True)
+
+
 def mac_variant(icon):
     """macOS: тіло іконки 824×824 з полями 100 px і тінню — як у системних іконок у доці."""
     body = icon.crop((40, 40, S - 40, S - 40)).resize((824, 824), Image.LANCZOS)

@@ -386,6 +386,9 @@ class RemoteServer:
         if method == "GET" and path == "/icon.png":
             from .remote_page import icon_png
             return await self._send(writer, 200, icon_png(), "image/png", cache=86400)
+        if method == "GET" and path == "/apple-touch-icon.png":   # головний екран телефона: без прозорих кутів
+            from .remote_page import icon_png
+            return await self._send(writer, 200, icon_png("icon-touch.png"), "image/png", cache=86400)
         if method == "GET" and path == "/manifest.webmanifest":
             from .remote_page import MANIFEST
             return await self._send(writer, 200, MANIFEST.encode(), "application/manifest+json", cache=86400)

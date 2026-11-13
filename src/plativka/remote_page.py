@@ -21,7 +21,7 @@ INDEX = """<!doctype html>
 <title>Plativka</title>
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.png">
-<link rel="apple-touch-icon" href="/icon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="stylesheet" href="/app.css?v={{V}}">
 <script src="/app.js?v={{V}}" defer></script>
 </head>
@@ -412,12 +412,13 @@ JS = r"""
 
 MANIFEST = """{"name": "Plativka", "short_name": "Plativka", "start_url": "/", "display": "standalone",
 "background_color": "#f6f3ee", "theme_color": "#f6f3ee",
-"icons": [{"src": "/icon.png", "sizes": "256x256", "type": "image/png"}]}"""
+"icons": [{"src": "/icon.png", "sizes": "256x256", "type": "image/png", "purpose": "any"},
+          {"src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "maskable"}]}"""
 
 
 @lru_cache(maxsize=1)
-def icon_png() -> bytes:
-    p = Path(__file__).resolve().parent / "assets" / "icon.png"
+def icon_png(name: str = "icon.png") -> bytes:
+    p = Path(__file__).resolve().parent / "assets" / name
     try:
         return p.read_bytes()
     except OSError:

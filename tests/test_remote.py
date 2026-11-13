@@ -292,3 +292,17 @@ async def test_page_cached_api_not(server):
         assert s == 200 and h["cache-control"] == "no-store"
     finally:
         await srv.stop()
+
+
+@pytest.mark.asyncio
+async def test_home_screen_icon_is_opaque(server):
+    import io
+    from PIL import Image
+    srv, host, _ = await server()
+    try:
+        s, h, b = await req(srv.port, "GET", "/apple-touch-icon.png")
+        assert s == 200 and h["content-type"] == "image/png"
+        im = Image.open(io.BytesIO(b))
+        assert im.mode == "RGB" and im.size == (180, 180)      # без прозорості — iOS не малює білу рамку
+    finally:
+        await srv.stop()

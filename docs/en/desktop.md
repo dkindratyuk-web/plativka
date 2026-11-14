@@ -269,7 +269,7 @@ At start and then every 6 hours Plativka asks GitHub whether a new version is ou
 
 The first time Plativka Desktop starts, it takes the music folders and the playlist from the terminal edition (if it is installed); after that each edition keeps its own settings. The library cache is shared.
 
-Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe.
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe. Saved playlists are in the settings folder, in `playlists/` (M3U8 files).
 
 ## Command-line options
 

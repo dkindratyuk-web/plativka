@@ -3020,6 +3020,12 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 num.setToolTip(_("У черзі: {k}-й").format(k=k) if k else "")
                 if k:
                     num.setForeground(QColor(self._acc))
+        # колонка номерів — за найдовшим номером («▶ 485.» не мало обрізатися до «▶ 4…»)
+        bf = QFont(self.table.font())
+        bf.setBold(True)
+        digits = len(str(max(1, self.table.rowCount())))
+        need = QFontMetrics(bf).horizontalAdvance("→9 " + "9" * digits + ".")
+        self.table.setColumnWidth(0, max(56, need + (18 if self.skin == "fluent" else 12)))
         self.table.viewport().update()
         if 0 <= self.current < self.table.rowCount():
             self.table.scrollToItem(self.table.item(self.current, 0), QAbstractItemView.EnsureVisible)

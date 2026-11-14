@@ -1765,8 +1765,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         # Вікно — тонований фон, картки — помітно світліші (у темній темі — світліші за фон):
         # інакше картки, кнопки й список зливаються в одну пляму.
         if self.vibrancy:          # macOS: під цим шаром — розмиті шпалери, тож фон майже прозорий
-            bg = tint("#1E1E20" if dark else "#EEECE8", .22, .20 if dark else .16)
-            card = tint("#2C2C30" if dark else "#FFFFFF", .07, .62 if dark else .72)
+            bg = tint("#1E1E20" if dark else "#EEECE8", .22, .14 if dark else .10)
+            card = tint("#2C2C30" if dark else "#FFFFFF", .07, .40 if dark else .48)
         elif glass:                # Windows 11: Mica
             bg = tint("#202020" if dark else "#F3F3F3", .25, .18 if dark else .22)
             card = tint("#2B2B2B" if dark else "#FFFFFF", .10, .38 if dark else .55)

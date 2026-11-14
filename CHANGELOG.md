@@ -1,5 +1,21 @@
 # Changelog / Історія змін
 
+## 1.6.1
+
+**English**
+
+- Skins: the cards stand out from the window again — in the macOS and Windows 11 skins the window and the panels had almost the same colour, so the buttons and the playlist blended together. The Plativka skin has not changed.
+- macOS skin on a Mac: the window background is now light enough for the blurred desktop to show through.
+- The playing track stays readable when it is also selected (it was dark text on a dark bar in the macOS skin).
+- The speaker icon next to the volume mutes the sound, and a second click brings the previous volume back.
+
+**Українська**
+
+- Скіни: картки знову помітно виділяються на тлі вікна — у скінах macOS і Windows 11 вікно й панелі мали майже однаковий колір, тож кнопки й список зливалися. Скін «Платівка» не змінився.
+- Скін «macOS» на Mac: фон вікна тепер достатньо прозорий, щоб крізь нього було видно розмитий робочий стіл.
+- Трек, що грає, читається, навіть коли він ще й виділений (у скіні macOS був темний текст на темній плашці).
+- Іконка динаміка біля гучності вимикає звук, а другий клік повертає попередню гучність.
+
 ## 1.6.0
 
 **English**

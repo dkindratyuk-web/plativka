@@ -29,7 +29,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
                                QFileDialog, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                                QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox,
                                QPushButton, QRadioButton, QSizePolicy, QSlider, QStackedWidget, QSystemTrayIcon,
-                               QSpacerItem, QStyledItemDelegate, QTableWidget, QTableWidgetItem, QToolButton,
+                               QSpacerItem, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTableWidget, QTableWidgetItem, QToolButton,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
 from . import skins, sysdeps, sysvol
@@ -437,6 +437,9 @@ class CurrentMark(QStyledItemDelegate):
             rad = 6 if w.skin == "mac" else 4
             p.drawRoundedRect(QRectF(2, r.top() + 1, vp - 4, r.height() - 2), rad, rad)
             p.restore()
+            # виділення поверх цієї плашки робило текст нечитабельним (темне на темному)
+            opt = QStyleOptionViewItem(opt)
+            opt.state &= ~(QStyle.State_Selected | QStyle.State_MouseOver | QStyle.State_HasFocus)
         super().paint(p, opt, idx)
         if w.skin == "fluent" and idx.row() == w.current and idx.column() == 0:
             r = opt.rect
@@ -1481,7 +1484,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.vol_icon.setObjectName("plain")
         self.vol_icon.setIconSize(QSize(14, 14))
         self.vol_icon.setToolTip(_("Гучність"))
-        self.vol_icon.clicked.connect(lambda: self.spawn(self.set_volume(0 if self.volume else 50)))
+        self.vol_icon.clicked.connect(self._vol_icon_clicked)
         self.vol_label = Clickable(_("гучн"))
         self.vol_label.setObjectName("dim")
         self.vol_label.setToolTip(_("Гучність:") + " " + _("як у системі (клавіші гучності керують і плеєром)"))
@@ -2406,6 +2409,14 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             if self.player:
                 await self.player.set_volume(self.volume)
         self._refresh_volume()
+
+    def _vol_icon_clicked(self):
+        """Іконка гучності: вимкнути звук, а якщо він вимкнений — повернути попередню гучність."""
+        if self.sys_muted or self.volume == 0:
+            self.spawn(self.set_volume(getattr(self, "_vol_before_mute", 0) or 40))
+        else:
+            self._vol_before_mute = self.volume
+            self.spawn(self.set_volume(0))
 
     def _vol_moved(self, v: int):
         if v != self.volume and not getattr(self, "_vol_sync", False):

@@ -184,6 +184,10 @@ def set_unified_titlebar(widget, on: bool) -> int:
         # Лише прозорий заголовок: під ним той самий матеріал, що й під вікном. Вміст Qt під заголовок
         # не заходить (перевірено на Mac), тож відступ і власне перетягування вікна не потрібні.
         win.setTitlebarAppearsTransparent_(bool(on))
+        # В інших скінах заголовок звичайний сірий: інакше крізь прозоре (для скіна «macOS») вікно
+        # під ним проступав колір робочого столу.
+        from AppKit import NSColor
+        win.setBackgroundColor_(NSColor.clearColor() if on else NSColor.windowBackgroundColor())
         return 0
     except Exception as e:
         log(f"titlebar: {e}")

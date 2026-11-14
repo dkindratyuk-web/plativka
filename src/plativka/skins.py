@@ -127,6 +127,9 @@ def set_vibrancy(widget, on: bool, dark: bool) -> bool:
                                                          else "NSAppearanceNameAqua"))
         vev.setHidden_(not on)
         return on
+    except Exception as e:
+        log(f"vibrancy: {e}")
+        return False
 
 
 def set_tint(widget, rgba) -> bool:
@@ -162,9 +165,6 @@ def set_tint(widget, rgba) -> bool:
         return True
     except Exception as e:
         log(f"tint: {e}")
-        return False
-    except Exception as e:
-        log(f"vibrancy: {e}")
         return False
 
 

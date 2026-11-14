@@ -60,7 +60,7 @@ T = {
              "translucency, the same layout. Switch any time, no restart."),
             ("library", "Playlist and library",
              "Your library by artist and album or by folder, instant search, drag folders "
-             "into the window, play a whole album with a double-click. Saved playlists as M3U8 (coming in 1.8)."),
+             "into the window, play a whole album with a double-click. Saved playlists as M3U8, new in 1.8."),
             ("keyboard", "Fits into your system",
              "Media keys and headphone buttons, Now Playing, MPRIS on Linux, track "
              "notifications with the album cover, a tray icon."),
@@ -139,8 +139,10 @@ T = {
                     "and finds it in its new place by itself.",
         "fav_more": "How favorites work",
         "tl_h": "Small things that save time",
-        "tl_p": "New in 1.5: everyday chores that usually need a separate program.",
+        "tl_p": "Everyday chores that usually need a separate program.",
         "tools": [
+            ("list", "Saved playlists", "\"For the car\", \"Work\", \"Evening\": save the list with <b>Ctrl+S</b>, open it from "
+                                      "the library later. Ordinary M3U8 files, so other players open them too. New in 1.8."),
             ("next", "Play next", "Want this song right after the current one? <b>Shift+N</b> or right-click → <b>Play next</b>; "
                                "the order of the list stays as it is. On the phone remote, touch and hold a song."),
             ("usb", "Copy to a USB stick", "The playlist for the car in one go: numbered files so the stereo keeps your order, "
@@ -239,7 +241,7 @@ T = {
              "системі, розташування те саме. Перемикається будь-коли, без перезапуску."),
             ("library", "Плейлист і бібліотека",
              "Бібліотека за виконавцями й альбомами або за теками, миттєвий пошук, теки "
-             "можна просто перетягнути у вікно, подвійний клік грає весь альбом. Збережені списки в M3U8 (у версії 1.8)."),
+             "можна просто перетягнути у вікно, подвійний клік грає весь альбом. Збережені списки в M3U8 — нове у версії 1.8."),
             ("keyboard", "Дружить із системою",
              "Медіаклавіші й кнопки навушників, «Зараз грає», MPRIS у Linux, сповіщення "
              "про трек з обкладинкою, іконка в треї."),
@@ -318,8 +320,10 @@ T = {
                     "і сама знаходить її на новому місці.",
         "fav_more": "Як працюють улюблені",
         "tl_h": "Дрібниці, які заощаджують час",
-        "tl_p": "Нове в 1.5: щоденні справи, для яких зазвичай потрібна окрема програма.",
+        "tl_p": "Щоденні справи, для яких зазвичай потрібна окрема програма.",
         "tools": [
+            ("list", "Збережені списки", "«Для машини», «Робота», «Вечір»: збережіть список клавішами <b>Ctrl+S</b> і відкривайте "
+                                       "з медіатеки. Звичайні файли M3U8, тож їх відкриють і інші плеєри. Нове в 1.8."),
             ("next", "Грати наступним", "Хочете цю пісню одразу після поточної? <b>Shift+N</b> або правий клік → "
                                      "<b>Грати наступним</b>, і порядок списку не зміниться. На пульті з телефона просто утримуйте пісню."),
             ("usb", "Копіювати на флешку", "Список для машини за один раз: нумеровані файли, щоб магнітола тримала ваш порядок, "

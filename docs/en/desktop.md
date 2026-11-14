@@ -79,8 +79,6 @@ In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or
 
 ## Saved playlists
 
-*Coming in version 1.8.*
-
 Keep several playlists ("For the car", "Work", "Evening") and switch between them.
 
 | | How |

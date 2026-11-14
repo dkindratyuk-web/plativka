@@ -1,5 +1,23 @@
 # Changelog / Історія змін
 
+## 1.8.0
+
+**English**
+
+- **Saved playlists**: keep "For the car", "Work" and more. **Save…** under the playlist or `Ctrl+S` (`Ctrl+Shift+S` — under a new name); open them from **Library → ▤ Playlists**; rename or delete with a right-click (the file goes to the Trash, the music stays). **☰ → File → Open an M3U playlist…** opens lists from other players. Playlists are ordinary M3U8 files, so VLC and others can open them too. [How to use it](docs/en/desktop.md#saved-playlists)
+- **The title bar takes the colour of the window on a Mac**, in every skin: the window is one piece, the cover colour reaches the very top. In the macOS skin it is filled with the same translucent material. (The blurred desktop appears from the next start after switching to the macOS skin.)
+- **The cover colour is clearly visible again** in the window background, the playlist and the buttons, in all skins — like on Windows 11 with Mica.
+- Compact view: the level meter is back when the window is wide enough; the shuffle, repeat and notification icons and the buttons are tinted by the cover.
+- The status line no longer shows a white strip; the time of the playing track and long track numbers are no longer cut; no grey patch when hovering over the playing track.
+
+**Українська**
+
+- **Збережені списки**: «Для машини», «Робота» та інші. **Зберегти…** під списком або `Ctrl+S` (`Ctrl+Shift+S` — під новою назвою); відкриваються з **Медіатека → ▤ Списки відтворення**; перейменувати чи видалити — правим кліком (файл іде в Кошик, музика лишається). **☰ → Файл → Відкрити список M3U…** відкриває списки з інших плеєрів. Списки — звичайні файли M3U8, тож їх відкриють і VLC та інші. [Як користуватися](docs/uk/desktop.md#збережені-списки)
+- **Заголовок вікна на Mac — того ж кольору, що й вікно**, у кожному скіні: вікно — одне ціле, колір обкладинки доходить до самого верху. У скіні «macOS» він залитий тим самим напівпрозорим матеріалом. (Розмитий робочий стіл з'являється з наступного запуску після перемикання на скін «macOS».)
+- **Колір обкладинки знову добре помітний** у фоні вікна, списку й кнопках, у всіх скінах — як на Windows 11 з Mica.
+- Компактний вигляд: індикатор рівня повернувся, коли вікно досить широке; іконки «перемішати», «повтор», «сповіщення» і кнопки підфарбовані кольором обкладинки.
+- Рядок повідомлень більше не біла смуга; час треку, що грає, і довгі номери не обрізаються; без сірої плями під курсором на треку, що грає.
+
 ## 1.7.0
 
 **English**

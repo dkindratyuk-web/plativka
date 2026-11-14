@@ -1,0 +1,35 @@
+name: Test build (macOS desktop)
+
+# Пробна збірка віконної Платівки для macOS — щоб перевірити зміни до випуску.
+# Нічого не публікує: DMG лежить в Actions → цей запуск → Artifacts (зберігається 7 днів).
+# Запуск: git push origin main:test-build  або  Actions → Test build → Run workflow.
+on:
+  push:
+    branches: [test-build]
+  workflow_dispatch:
+
+env:
+  MPV_VERSION: v0.41.0
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  desktop-macos:
+    name: Desktop DMG (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: arm64
+            runner: macos-15
+            mpv: macos-14-arm
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Build
+        env:
+          MPV_ZIP_URL: https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-${{ matrix.mpv }}.zip
+        run: bash packaging/macos/build_desktop.sh ${{ matrix.arch }}
+      - uses: actions/upload-artifact@v4
+        with: { name: "test-desktop-macos-${{ matrix.arch }}", path: dist/*.dmg, retention-days: 7 }

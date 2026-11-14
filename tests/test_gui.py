@@ -47,6 +47,19 @@ def test_desktop_window_views():
         assert win.f_eq.isVisible() and win.eq_headroom < 0 and win._eq_dialog.on.isChecked()
         win.set_eq(on=False)
         assert not win.f_eq.isVisible() and win.eq_headroom == 0
+        import tempfile                                          # збережені списки
+        from plativka import playlists
+        tune = tempfile.mkdtemp()
+        p1, p2 = tune + "/1.mp3", tune + "/2.mp3"
+        for p in (p1, p2):
+            open(p, "wb").close()
+        playlists.save("Тест", [p1, p2])
+        win.rebuild_tree()
+        win.open_saved("Тест")
+        assert win.playlist == [p1, p2] and win.pl_name == "Тест" and "Тест" in win.pl_count.text()
+        win.save_playlist()                                      # Ctrl+S — під тією ж назвою, без питань
+        win.clear_playlist()
+        assert win.pl_name is None
         h = win.height()
         win.toggle_view()
         win.toggle_view()

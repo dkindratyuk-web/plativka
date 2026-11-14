@@ -130,3 +130,28 @@ def set_vibrancy(widget, on: bool, dark: bool) -> bool:
     except Exception as e:
         log(f"vibrancy: {e}")
         return False
+
+
+def set_unified_titlebar(widget, on: bool) -> int:
+    """macOS: заголовок вікна прозорий, вміст і матеріал — під ним, кнопки вікна — поверх.
+
+    Повертає висоту заголовка (стільки треба відступити згори), 0 — вимкнено або не вдалося.
+    """
+    if not vibrancy_supported():
+        return 0
+    try:
+        import objc
+        view = objc.objc_object(c_void_p=int(widget.winId()))
+        win = view.window()
+        if win is None:
+            return 0
+        full = 1 << 15                                # NSWindowStyleMaskFullSizeContentView
+        mask = win.styleMask()
+        win.setStyleMask_((mask | full) if on else (mask & ~full))
+        win.setTitlebarAppearsTransparent_(bool(on))
+        if not on:
+            return 0
+        return max(0, int(round(win.frame().size.height - win.contentLayoutRect().size.height)))
+    except Exception as e:
+        log(f"titlebar: {e}")
+        return 0

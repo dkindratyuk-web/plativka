@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
                                QSpacerItem, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTableWidget, QTableWidgetItem, QToolButton,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from . import eq, skins, sysdeps, sysvol
+from . import eq, playlists, skins, sysdeps, sysvol
 from .remote import RemoteHost
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
                    SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
@@ -1394,6 +1394,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.check_updates = bool(self.cfg.get("check_updates", True))
         self.online_covers = bool(self.cfg.get("online_covers", False))
         self.eq_cfg = dict(self.cfg.get("eq") or {})
+        self.pl_name = self.cfg.get("pl_name") if isinstance(self.cfg.get("pl_name"), str) else None
         self.eq_headroom = 0.0
         self._eq_dialog = None
         self.cover_rev = 0
@@ -1403,6 +1404,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.base = self.cfg.get("theme", "auto")
         self.skin = self.cfg.get("skin") if self.cfg.get("skin") in skins.SKINS else "classic"
         self.vibrancy = False
+        self._title_h = 0                   # macOS-скін: висота прозорого заголовка над вмістом
         self.view = self.cfg.get("view", "full") if self.cfg.get("view") in ("full", "compact") else "full"
         self.collapsed = bool(self.cfg.get("collapsed", False))
         self.on_top = bool(self.cfg.get("on_top", False))
@@ -1483,7 +1485,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                         skin=self.skin, view=self.view, collapsed=self.collapsed, on_top=self.on_top, lib_mode=self.lib_mode,
                         tab=self.tab, remaining=self.remaining, expanded_h=self._expanded_h,
                         minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
-                        check_updates=self.check_updates, online_covers=self.online_covers, eq=self.eq_cfg,
+                        check_updates=self.check_updates, online_covers=self.online_covers, eq=self.eq_cfg, pl_name=self.pl_name,
                         geometry=[g.x(), g.y(), g.width(), g.height()])
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
@@ -1742,16 +1744,23 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.pl_empty.setWordWrap(True)
         pv.addWidget(self.pl_empty, 1)
         pb = QHBoxLayout()
-        for t, fn in ((_(" + Тека "), self.add_playlist_folder), (_(" − Прибрати "), self.remove_selected),
-                      (_(" Очистити "), self.clear_playlist)):
+        self.pl_buttons = []
+        for t, tip, fn in ((_(" + Тека "), _("Додати теку до списку"), self.add_playlist_folder),
+                           (_(" − Прибрати "), _("Прибрати виділені зі списку"), self.remove_selected),
+                           (_(" Очистити "), "", self.clear_playlist),
+                           (_(" Зберегти… "), _("Зберегти список під назвою (Ctrl+S)"), lambda: self.save_playlist())):
             b = QPushButton(t.strip())
             b.setObjectName("small")
+            b.setToolTip(tip)
             b.clicked.connect(fn)
             pb.addWidget(b)
+            self.pl_buttons.append((b, t.strip()))
         pb.addStretch()
-        self.pl_count = QLabel()
+        self.pl_count = ElidedLabel()
         self.pl_count.setObjectName("dim")
-        pb.addWidget(self.pl_count)
+        self.pl_count.setMinimumWidth(40)
+        self.pl_count.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+        pb.addWidget(self.pl_count, 1)
         pv.addLayout(pb)
         self.stack.addWidget(pl)
         # медіатека
@@ -1822,6 +1831,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         a_repeat = act(_("Повтор: вимк → усе → один"), self.cycle_repeat, ["R"])
         a_add = act(_("Додати теку до медіатеки…"), self.add_library_folder, ["L", "Ctrl+O"])
         a_folders = act(_("Теки медіатеки…"), self.manage_folders)
+        a_plsave = act(_("Зберегти список"), lambda: self.save_playlist(), ["Ctrl+S"])
+        a_plsaveas = act(_("Зберегти список як…"), lambda: self.save_playlist(as_new=True), ["Ctrl+Shift+S"])
+        a_plopen = act(_("Відкрити список M3U…"), self.import_playlist)
         a_find = act(_("Знайти"), self.focus_search, ["J", "/", "Ctrl+F"])
         act("tab", lambda: self.set_tab("library" if self.tab == "playlist" else "playlist"), ["Tab"])
         act("1", lambda: self.set_tab("playlist"), ["1"])
@@ -1879,7 +1891,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         a_qnext = act(_("Грати наступним"), lambda: self.play_next(), ["Shift+N"])
         a_qclear = act(_("Очистити чергу"), self.clear_queue)
         menus = [
-            (_("Файл"), [a_add, a_folders, None, a_copy, a_dupes, None, a_quit]),
+            (_("Файл"), [a_add, a_folders, None, a_plsave, a_plsaveas, a_plopen, None, a_copy, a_dupes, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
                                  None, a_qnext, a_qclear, None, a_eq, self.a_eq_on, m_rg, m_sleep, None, a_remote]),
             (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
@@ -1925,6 +1937,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         sk = self.skin
         if skins.vibrancy_supported() and (sk == "mac" or self.vibrancy):
             self.vibrancy = skins.set_vibrancy(self, sk == "mac", dark)
+            # заголовок вікна — тим самим матеріалом, як у Finder і Музиці
+            self._title_h = skins.set_unified_titlebar(self, self.vibrancy)
+            if hasattr(self, "_outer"):
+                self._apply_margins()
         glass = self.mica or self.vibrancy
         fg = "#F2F3F5" if dark else "#1A1D24"
         sub = "rgba(255,255,255,0.58)" if dark else "rgba(0,0,0,0.52)"
@@ -2205,6 +2221,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.a_view.setChecked(self.view == "compact")
         self.a_mini.setChecked(self.collapsed)
         self.tab_pl.setText(_("Список відтворення") if full else _("Список"))
+        # у вузькому компактному вікні «+ Тека» і «− Прибрати» — лише знаками (назва — у підказці)
+        for (b, text), short in zip(self.pl_buttons, ("+", "−", None, None)):
+            b.setText(text if full or short is None else short)
         self._layout_card(full)
         self._lcd_gap.changeSize(0, 6 if full else 0)
         self.lcd.layout().setContentsMargins(*(10, 6, 10, 6) if full else (0, 0, 0, 0))
@@ -2215,7 +2234,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.lcd.style().polish(self.lcd)
         self.card.layout().setSpacing(6 if full else 5)
         self.card.layout().setContentsMargins(*(10, 10, 10, 8) if full else (8, 6, 8, 6))
-        self._outer.setContentsMargins(*(8, 8, 8, 8) if full else (6, 6, 6, 6))
+        self._apply_margins()
         self.top_row.setSpacing(10 if full else 8)
         self._size_buttons()
         self._paint_icons()
@@ -2229,6 +2248,24 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         else:
             self.setMaximumHeight(16777215)
         self.update_now_playing()
+
+    def _apply_margins(self):
+        m = 8 if self.is_full() else 6
+        self._outer.setContentsMargins(m, m + self._title_h, m, m)
+
+    def mousePressEvent(self, e):
+        # прозорий заголовок (скін «macOS»): за смугу над вмістом вікно тягнеться, як звичайно
+        if self._title_h and e.button() == Qt.LeftButton and e.position().y() < self._title_h:
+            h = self.windowHandle()
+            if h is not None and h.startSystemMove():
+                return
+        super().mousePressEvent(e)
+
+    def mouseDoubleClickEvent(self, e):
+        if self._title_h and e.position().y() < self._title_h:
+            self.showNormal() if self.isMaximized() else self.showMaximized()
+            return
+        super().mouseDoubleClickEvent(e)
 
     def _layout_card(self, full: bool):
         """Розкласти кнопки, смугу й гучність по рядах картки — для повного чи компактного вигляду."""
@@ -2884,6 +2921,113 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.toast(_("У вас найновіша версія ({v})").format(v=VERSION))
 
     # ── пульт з телефона ──
+    # ───────────── збережені списки ─────────────
+    @staticmethod
+    def saved_paths(name: str) -> list[str]:
+        try:
+            return playlists.load(playlists.path_for(name))
+        except OSError:
+            return []
+
+    def save_playlist(self, as_new: bool = False):
+        """Ctrl+S — зберегти поточний список (під його назвою, якщо він уже збережений), Ctrl+Shift+S — під новою."""
+        if not self.playlist:
+            self.toast(_("Список відтворення порожній"))
+            return
+        name = self.pl_name if self.pl_name and not as_new else None
+        if name is None:
+            from PySide6.QtWidgets import QInputDialog
+            text, ok = QInputDialog.getText(self, _("Зберегти список"), _("Назва списку:"), text=self.pl_name or "")
+            name = playlists.clean_name(text) if ok else ""
+            if not name:
+                return
+            if name != self.pl_name and playlists.path_for(name).exists():
+                if QMessageBox.question(self, _("Зберегти список"),
+                                        _("Список «{name}» уже є. Замінити його?").format(name=name)) != QMessageBox.Yes:
+                    return
+        try:
+            playlists.save(name, self.playlist, self.track)
+        except (OSError, ValueError) as e:
+            self.toast(_("Не вдалося зберегти: {e}").format(e=e))
+            return
+        self.pl_name = name
+        self.rebuild_playlist_info()
+        self.rebuild_tree()
+        self.save_cfg()
+        self.toast(_("Список збережено: {name}").format(name=name))
+
+    def rebuild_playlist_info(self):
+        has = bool(self.playlist)
+        total = sum(self.track(p).length for p in self.playlist)
+        info = f"{n_tracks(len(self.playlist))} · {fmt_time(total)}" if has else ""
+        self.pl_count.setText(f"{self.pl_name} · {info}" if self.pl_name and has else info)
+
+    def open_saved(self, name: str, append: bool = False):
+        paths = self.saved_paths(name)
+        ok = [p for p in paths if os.path.exists(real_path(p))]
+        if not ok:
+            self.toast(_("У списку «{name}» немає доступних файлів").format(name=name))
+            return
+        if append:
+            self.add_to_playlist(ok)
+        else:
+            self.add_to_playlist(ok, play=True, replace=True)
+            self.pl_name = name
+            self.rebuild_playlist_info()
+            self.save_cfg()
+        miss = len(paths) - len(ok)
+        self.toast(_("Список «{name}»: {n}").format(name=name, n=n_tracks(len(ok)))
+                   + (" · " + _("не знайдено файлів: {m}").format(m=miss) if miss else ""))
+
+    def import_playlist(self):
+        f, _f = QFileDialog.getOpenFileName(self, _("Відкрити список M3U"), str(Path.home()), "M3U (*.m3u *.m3u8)")
+        if not f:
+            return
+        try:
+            paths = playlists.load(f)
+        except OSError as e:
+            self.toast(_("Не вдалося відкрити: {e}").format(e=e))
+            return
+        ok = [p for p in paths if os.path.exists(real_path(p))]
+        if not ok:
+            self.toast(_("У цьому списку немає доступних файлів"))
+            return
+        self.add_to_playlist(ok, play=True, replace=True)
+        self.toast(_("Відкрито: {n}").format(n=n_tracks(len(ok))))
+
+    def rename_saved(self, name: str):
+        from PySide6.QtWidgets import QInputDialog
+        text, ok = QInputDialog.getText(self, _("Перейменувати список"), _("Нова назва:"), text=name)
+        new = playlists.clean_name(text) if ok else ""
+        if not new or new == name:
+            return
+        try:
+            playlists.rename(name, new)
+        except FileExistsError:
+            self.toast(_("Список «{name}» уже є").format(name=new))
+            return
+        except (OSError, ValueError) as e:
+            self.toast(_("Не вдалося: {e}").format(e=e))
+            return
+        if self.pl_name == name:
+            self.pl_name = new
+            self.rebuild_playlist_info()
+            self.save_cfg()
+        self.rebuild_tree()
+
+    def delete_saved(self, name: str):
+        if QMessageBox.question(self, _("Видалити список"),
+                                _("Видалити список «{name}»? Файл піде в Кошик, сама музика лишиться.").format(name=name)
+                                ) != QMessageBox.Yes:
+            return
+        if playlists.delete(name):
+            if self.pl_name == name:
+                self.pl_name = None
+                self.rebuild_playlist_info()
+                self.save_cfg()
+            self.rebuild_tree()
+            self.toast(_("Список «{name}» видалено").format(name=name))
+
     # ───────────── еквалайзер ─────────────
     def open_equalizer(self):
         if self._eq_dialog is None:
@@ -3105,7 +3249,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.table.setVisible(has)
         self.pl_empty.setVisible(not has)
         total = sum(self.track(p).length for p in self.playlist)
-        self.pl_count.setText(f"{n_tracks(len(self.playlist))} · {fmt_time(total)}" if has else "")
+        info = f"{n_tracks(len(self.playlist))} · {fmt_time(total)}" if has else ""
+        self.pl_count.setText(f"{self.pl_name} · {info}" if self.pl_name and has else info)
+        self.pl_count.setToolTip(_("Збережений список: {name}").format(name=self.pl_name) if self.pl_name else "")
         self.mark_current()
         self.apply_filter(self.search.text())
         if self.player is not None:
@@ -3280,6 +3426,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             return
         if replace:
             self.playlist = list(paths)
+            self.pl_name = None             # уже не збережений список, а новий
             self.current = -1
             self.history = []
             start = 0
@@ -3321,6 +3468,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def clear_playlist(self):
         self.playlist = []
+        self.pl_name = None
         self.current = -1
         self.history = []
         self.spawn(self.stop())
@@ -3398,6 +3546,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             if key == "favorites" and not paths:
                 hint = item(node, _("Вподобайте трек сердечком або клавішею F"), "", None)
                 hint.setForeground(0, dim)
+        saved = playlists.list_all()
+        if saved:
+            node = item(tree, "▤ " + _("Списки відтворення"), str(len(saved)), ("saved_root", None))
+            for name, _f in saved:
+                item(node, name, "", ("saved", name))
         sep = item(tree, "", "", None)
         sep.setFlags(Qt.NoItemFlags)
 
@@ -3448,11 +3601,16 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         data = it.data(0, Qt.UserRole) if it is not None else None
         if not data:
             return []
+        if data[0] == "saved":
+            return MainWindow.saved_paths(data[1])
         return [data[1]] if data[0] == "track" else list(data[1] or [])
 
     def lib_activate(self, it):
         data = it.data(0, Qt.UserRole)
-        if not data:
+        if not data or data[0] == "saved_root":
+            return
+        if data[0] == "saved":
+            self.open_saved(data[1])
             return
         if data[0] == "track":
             parent = it.parent()
@@ -3502,6 +3660,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             if data and data[0] == "track":
                 fav = self.is_fav(data[1])
                 m.addAction(_("Прибрати з улюблених") if fav else _("До улюблених"), lambda: self.like(data[1]))
+            elif data and data[0] == "saved":
+                m.addSeparator()
+                m.addAction(_("Перейменувати…"), lambda: self.rename_saved(data[1]))
+                m.addAction(_("Видалити…"), lambda: self.delete_saved(data[1]))
             elif data and data[0] in ("group", "smart"):
                 m.addAction(_("Прибрати неулюблені…"),
                             lambda: self.remove_unliked(self.item_paths(it), _("У «{name}»").format(name=it.text(0).lstrip("♥◦ "))))

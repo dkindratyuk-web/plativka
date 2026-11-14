@@ -34,6 +34,8 @@ The colour from the album cover works in every skin: the window, the panels, the
 
 Switch skins in **☰ → View → Skin** (on a Mac: the **View** menu) or press **Shift+T**. The window changes at once, without a restart; the skin is remembered. Any skin works on any system: the macOS skin on Windows or Linux just has a solid background instead of the blur.
 
+From version 1.8, on a Mac the macOS skin also fills the **title bar** with the same translucent material, like Finder and Music: the window is one piece, the traffic-light buttons sit on top. Drag the window by the strip at the top, as usual; a double-click there maximises it.
+
 ## Three sizes
 
 | | How | What you see |
@@ -72,6 +74,25 @@ The **Library** tab shows your music by **Artists** (artist → album → tracks
 In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or **− Remove**) removes the selected tracks, **Clear** empties the list. The playing track is marked with ▶ and highlighted in the cover colour.
 
 **Search**: **J**, **/** or **Ctrl+F** jumps to the search field; it filters the current tab as you type. **Enter** in the search field plays the first match in the playlist, or jumps to it in the library. **Esc** clears the search.
+
+## Saved playlists
+
+*Coming in version 1.8.*
+
+Keep several playlists ("For the car", "Work", "Evening") and switch between them.
+
+| | How |
+|---|---|
+| **Save** the current playlist | **Save…** under the playlist, **Ctrl+S**, or **☰ → File → Save playlist** — type a name |
+| **Save under a new name** | **Ctrl+Shift+S** or **☰ → File → Save playlist as…** |
+| **Open** a saved playlist | **Library** → **▤ Playlists** at the top → double-click the name (it replaces the current list and starts playing) |
+| **Add** a saved playlist to the end | right-click its name → **Add to the end of the playlist** |
+| **Rename / delete** | right-click its name → **Rename…** / **Delete…** (the file goes to the Trash; the music itself stays) |
+| **Open an M3U** from another player | **☰ → File → Open an M3U playlist…** |
+
+When a saved playlist is open, its name is shown under the list ("For the car · 24 tracks · 1:32:10"), and **Ctrl+S** saves your changes to it without asking. Any action that replaces the whole list (an album from the library, **▶ All**, **Clear**) makes it a new, unsaved list again.
+
+Playlists are ordinary **M3U8** files in Plativka's settings folder (`playlists`, see [Where Plativka keeps its data](#where-plativka-keeps-its-data)), so VLC, foobar2000 and other players can open them too. Tracks from albums with a `.cue` sheet are understood only by Plativka. Missing files are skipped when a list is opened, and Plativka tells you how many.
 
 ## Playback
 

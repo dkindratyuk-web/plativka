@@ -60,7 +60,7 @@ T = {
              "translucency, the same layout. Switch any time, no restart."),
             ("library", "Playlist and library",
              "Your library by artist and album or by folder, instant search, drag folders "
-             "into the window, play a whole album with a double-click."),
+             "into the window, play a whole album with a double-click. Saved playlists as M3U8 (coming in 1.8)."),
             ("keyboard", "Fits into your system",
              "Media keys and headphone buttons, Now Playing, MPRIS on Linux, track "
              "notifications with the album cover, a tray icon."),
@@ -239,7 +239,7 @@ T = {
              "системі, розташування те саме. Перемикається будь-коли, без перезапуску."),
             ("library", "Плейлист і бібліотека",
              "Бібліотека за виконавцями й альбомами або за теками, миттєвий пошук, теки "
-             "можна просто перетягнути у вікно, подвійний клік грає весь альбом."),
+             "можна просто перетягнути у вікно, подвійний клік грає весь альбом. Збережені списки в M3U8 (у версії 1.8)."),
             ("keyboard", "Дружить із системою",
              "Медіаклавіші й кнопки навушників, «Зараз грає», MPRIS у Linux, сповіщення "
              "про трек з обкладинкою, іконка в треї."),

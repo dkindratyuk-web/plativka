@@ -1438,9 +1438,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if self._want_mica:
             self.setAttribute(Qt.WA_TranslucentBackground, True)
             self.setAttribute(Qt.WA_NoSystemBackground, True)
-        # macOS: прозорість вмикається одразу — тоді скін «macOS» перемикається без перезапуску;
-        # в інших скінах фон усе одно суцільний
-        if skins.vibrancy_supported():
+        # macOS: прозоре вікно — лише якщо Платівка стартує в скіні «macOS». Прозоре вікно в інших скінах
+        # мало блакитний заголовок (крізь нього проступав робочий стіл), тож розмиття після перемикання
+        # на «macOS» з'являється з наступного запуску; кольори й кнопки скіна — одразу.
+        self._translucent = skins.vibrancy_supported() and self.skin == "mac"
+        if self._translucent:
             self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAcceptDrops(True)
         self.build_ui()
@@ -1935,9 +1937,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if self.mica:
             apply_mica(self, dark)
         sk = self.skin
-        if skins.vibrancy_supported() and (sk == "mac" or self.vibrancy):
+        if self._translucent and (sk == "mac" or self.vibrancy):
             self.vibrancy = skins.set_vibrancy(self, sk == "mac", dark)
-        if skins.vibrancy_supported():
+        if self._translucent:
             # заголовок вікна — тим самим матеріалом, як у Finder і Музиці (у скіні «macOS»), інакше звичайний
             skins.set_unified_titlebar(self, self.vibrancy)
         glass = self.mica or self.vibrancy
@@ -2191,12 +2193,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def showEvent(self, e):
         super().showEvent(e)
-        if self.skin == "mac" and skins.vibrancy_supported() and not self.vibrancy:
+        if self.skin == "mac" and self._translucent and not self.vibrancy:
             QTimer.singleShot(0, self.apply_theme)      # NSWindow з'являється лише після показу
-        elif skins.vibrancy_supported() and not self.vibrancy:
-            # Qt доналаштовує вікно вже після показу (і знову робить його «прозорим»), тож — трохи згодом
-            for ms in (0, 400, 1500):
-                QTimer.singleShot(ms, lambda: None if self.vibrancy else skins.set_unified_titlebar(self, False))
         if self._want_mica and not self.mica:
             self.mica = apply_mica(self, self.is_dark())
             log(f"mica: {self.mica}")
@@ -2381,7 +2379,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.apply_theme()
         self.apply_view()
         if toast:
-            self.toast(_("Скін: {name}").format(name=self.skin_names()[skin]))
+            msg = _("Скін: {name}").format(name=self.skin_names()[skin])
+            if skin == "mac" and skins.vibrancy_supported() and not self._translucent:
+                msg += " · " + _("розмитий фон — з наступного запуску")
+            self.toast(msg)
         self.save_cfg()
 
     def cycle_skin(self):

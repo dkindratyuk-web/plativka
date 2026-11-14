@@ -128,6 +128,7 @@ EN: dict[str, str] = {
     'Тема: авто → світла → темна': 'Theme: auto → light → dark',
     'Тема: світла': 'Theme: light',
     'Тема: темна': 'Theme: dark',
+    'розмитий фон — з наступного запуску': 'the blurred background appears from the next start',
     'Прибрати виділені зі списку': 'Remove the selected tracks from the playlist',
     'Зберегти список під назвою (Ctrl+S)': 'Save the playlist under a name (Ctrl+S)',
     ' Зберегти… ': ' Save… ',

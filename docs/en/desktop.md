@@ -34,7 +34,9 @@ The colour from the album cover works in every skin: the window, the panels, the
 
 Switch skins in **☰ → View → Skin** (on a Mac: the **View** menu) or press **Shift+T**. The window changes at once, without a restart; the skin is remembered. Any skin works on any system: the macOS skin on Windows or Linux just has a solid background instead of the blur.
 
-From version 1.8, on a Mac the macOS skin also fills the **title bar** with the same translucent material, like Finder and Music: the window is one piece, the traffic-light buttons sit on top. Drag the window by the strip at the top, as usual; a double-click there maximises it.
+From version 1.8, on a Mac the macOS skin also fills the **title bar** with the same translucent material, like Finder and Music: the window is one piece, the traffic-light buttons sit on top. Drag the window by the title bar, as usual.
+
+On a Mac, if you switch to the macOS skin from another skin, its colours and buttons change at once, and the blurred desktop behind the window appears from the next start of Plativka (a translucent window in the other skins would tint their title bar with the desktop colour).
 
 ## Three sizes
 

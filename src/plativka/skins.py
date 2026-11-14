@@ -168,29 +168,29 @@ def set_tint(widget, rgba) -> bool:
         return False
 
 
-def set_unified_titlebar(widget, on: bool) -> int:
-    """macOS: заголовок вікна прозорий, вміст і матеріал — під ним, кнопки вікна — поверх.
+def set_unified_titlebar(widget, rgb) -> bool:
+    """macOS: заголовок вікна прозорий і того ж кольору, що й вікно, — у кожному скіні.
 
-    Повертає висоту заголовка (стільки треба відступити згори), 0 — вимкнено або не вдалося.
+    rgb — (r, g, b) фону вікна; None — під вікном матеріал (скін «macOS» з розмиттям), заголовок
+    показує його. Без цього системний заголовок брав відтінок шпалер і здавався блакитним.
     """
     if not vibrancy_supported():
-        return 0
+        return False
     try:
         import objc
-        view = objc.objc_object(c_void_p=int(widget.winId()))
-        win = view.window()
-        if win is None:
-            return 0
-        # Лише прозорий заголовок: під ним той самий матеріал, що й під вікном. Вміст Qt під заголовок
-        # не заходить (перевірено на Mac), тож відступ і власне перетягування вікна не потрібні.
-        win.setTitlebarAppearsTransparent_(bool(on))
-        # В інших скінах заголовок звичайний сірий: інакше крізь прозоре (для скіна «macOS») вікно
-        # під ним проступав колір робочого столу.
         from AppKit import NSColor
-        win.setBackgroundColor_(NSColor.clearColor() if on else NSColor.windowBackgroundColor())
-        # непрозоре вікно — заголовок не бере колір робочого столу (Qt усе одно малює суцільний фон)
-        win.setOpaque_(not on)
-        return 0
+        win = objc.objc_object(c_void_p=int(widget.winId())).window()
+        if win is None:
+            return False
+        win.setTitlebarAppearsTransparent_(True)
+        if rgb is None:
+            win.setBackgroundColor_(NSColor.clearColor())
+            win.setOpaque_(False)
+        else:
+            r, g, b = rgb
+            win.setBackgroundColor_(NSColor.colorWithSRGBRed_green_blue_alpha_(r / 255, g / 255, b / 255, 1.0))
+            win.setOpaque_(True)
+        return True
     except Exception as e:
         log(f"titlebar: {e}")
-        return 0
+        return False

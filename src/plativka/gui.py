@@ -1939,9 +1939,6 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         sk = self.skin
         if self._translucent and (sk == "mac" or self.vibrancy):
             self.vibrancy = skins.set_vibrancy(self, sk == "mac", dark)
-        if self._translucent:
-            # заголовок вікна — тим самим матеріалом, як у Finder і Музиці (у скіні «macOS»), інакше звичайний
-            skins.set_unified_titlebar(self, self.vibrancy)
         glass = self.mica or self.vibrancy
         fg = "#F2F3F5" if dark else "#1A1D24"
         sub = "rgba(255,255,255,0.58)" if dark else "rgba(0,0,0,0.52)"
@@ -1984,6 +1981,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 win_bg = "transparent"
         elif getattr(self, "_plativka_tint", None) is not None:
             skins.set_tint(self, None)
+        # macOS: заголовок вікна — того ж кольору, що й вікно (у скіні «macOS» — разом із матеріалом)
+        if skins.vibrancy_supported():
+            c = QColor(bg)
+            skins.set_unified_titlebar(self, None if self.vibrancy else (c.red(), c.green(), c.blue()))
         lcd = QColor(acc)
         lcd.setAlpha(22 if dark else 18)
         lcd_bg = f"rgba({lcd.red()},{lcd.green()},{lcd.blue()},{lcd.alpha() / 255:.2f})"
@@ -2193,7 +2194,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def showEvent(self, e):
         super().showEvent(e)
-        if self.skin == "mac" and self._translucent and not self.vibrancy:
+        if skins.vibrancy_supported() and not getattr(self, "_shown_once", False):
+            self._shown_once = True
             QTimer.singleShot(0, self.apply_theme)      # NSWindow з'являється лише після показу
         if self._want_mica and not self.mica:
             self.mica = apply_mica(self, self.is_dark())

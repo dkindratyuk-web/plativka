@@ -54,7 +54,7 @@ T = {
              "small enough for a corner of the screen, on top of all windows."),
             ("eq", "Equalizer with headphone correction",
              "10 bands and presets that never distort, plus measured corrections for thousands of "
-             "headphone models from AutoEQ. Coming in 1.7."),
+             "headphone models from AutoEQ. New in 1.7."),
             ("skins", "Three skins",
              "Plativka's own look, macOS or Windows 11: native-style buttons, sliders and "
              "translucency, the same layout. Switch any time, no restart."),
@@ -120,7 +120,7 @@ T = {
         ],
         "eq_aside": "Same filters as most hardware equalizers, inside the mpv engine. Plativka's curve is checked in "
                     "its tests against what FFmpeg actually does to a test tone: within 0.3 dB.",
-        "eq_soon": "Coming in version 1.7.",
+        "eq_soon": "New in version 1.7.",
         "eq_more": "How to use the equalizer",
         "eq_alt": "The equalizer window with a preset and a headphone correction",
         "fav_h": "Favorites that don't get lost",
@@ -233,7 +233,7 @@ T = {
              "що вміщається в куток екрана й може бути поверх усіх вікон."),
             ("eq", "Еквалайзер з корекцією навушників",
              "10 смуг і готові налаштування без спотворень, а ще виміряні корекції для тисяч "
-             "моделей навушників з AutoEQ. У версії 1.7."),
+             "моделей навушників з AutoEQ. Нове у версії 1.7."),
             ("skins", "Три скіни",
              "Власний вигляд Платівки, macOS або Windows 11: кнопки, повзунки й прозорість як у "
              "системі, розташування те саме. Перемикається будь-коли, без перезапуску."),
@@ -299,7 +299,7 @@ T = {
         ],
         "eq_aside": "Ті самі фільтри, що в більшості апаратних еквалайзерів, усередині рушія mpv. Криву Платівки "
                     "перевірено в тестах із тим, що FFmpeg справді робить із тестовим тоном: розбіжність до 0,3 дБ.",
-        "eq_soon": "З'явиться у версії 1.7.",
+        "eq_soon": "Нове у версії 1.7.",
         "eq_more": "Як користуватися еквалайзером",
         "eq_alt": "Вікно еквалайзера з готовим налаштуванням і корекцією навушників",
         "fav_h": "Улюблені, які не губляться",

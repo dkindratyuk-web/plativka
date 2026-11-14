@@ -111,8 +111,6 @@ If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plat
 
 ## Equalizer
 
-*Coming in version 1.7.*
-
 **☰ → Playback → Equalizer…** (on a Mac: the **Playback** menu) or **Shift+E**. The sound changes as you move a slider; the window can stay open while the music plays.
 
 <img src="../img/eq-en.png" width="420" alt="The equalizer window">

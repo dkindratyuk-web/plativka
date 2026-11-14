@@ -1,5 +1,23 @@
 # Changelog / Історія змін
 
+## 1.7.0
+
+**English**
+
+- **Equalizer** (☰ → Playback → Equalizer…, or `Shift+E`): 10 bands from 31 Hz to 16 kHz, presets (More bass, Vocal, Rock, Quiet listening and more), and **automatic headroom** — Plativka works out the peak of your curve and lowers the level by exactly that much, so boosted frequencies never distort. The sound changes as you move a slider; **eq** next to the switches shows it is on.
+- **Headphone correction from AutoEQ**: open the `ParametricEQ.txt` for your model from autoeq.app (choose *EqualizerAPO ParametricEq*), and your headphones get closer to a neutral sound. The sliders still work on top. [How to use it](docs/en/desktop.md#equalizer).
+- The level meter shows the sound after the equalizer, i.e. what you hear.
+- macOS skin on a Mac: the panels are more translucent, so the blurred desktop shows through.
+- Long playlists: the number of the playing track is no longer cut (▶ 485. instead of ▶ 4…).
+
+**Українська**
+
+- **Еквалайзер** (☰ → Відтворення → Еквалайзер… або `Shift+E`): 10 смуг від 31 Гц до 16 кГц, готові налаштування (Більше басу, Голос, Рок, Тихе прослуховування та інші) і **автоматичний запас гучності** — Платівка рахує найвищу точку вашої кривої й зменшує рівень рівно настільки, тож підсилені частоти не спотворюються. Звук змінюється, щойно рухаєте повзунок; **екв** поруч із перемикачами показує, що його увімкнено.
+- **Корекція навушників з AutoEQ**: відкрийте `ParametricEQ.txt` для своєї моделі з autoeq.app (оберіть *EqualizerAPO ParametricEq*) — навушники звучатимуть ближче до нейтрального. Повзунки працюють і далі, поверх корекції. [Як користуватися](docs/uk/desktop.md#еквалайзер).
+- Індикатор рівня показує звук після еквалайзера — те, що ви чуєте.
+- Скін «macOS» на Mac: панелі прозоріші, крізь них видно розмитий робочий стіл.
+- Довгі списки: номер треку, що грає, більше не обрізається («▶ 485.» замість «▶ 4…»).
+
 ## 1.6.1
 
 **English**

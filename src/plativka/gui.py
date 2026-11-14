@@ -2055,7 +2055,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                                alternate-background-color: transparent; }}
             QTableWidget::item, QTreeWidget::item {{ padding: 0 3px; border: none; }}
             QTableWidget::item:selected, QTreeWidget::item:selected {{ background: {hl_bg}; color: {fg}; }}
-            QTreeWidget::item:hover, QTableWidget::item:hover {{ background: {btn}; }}
+            QTreeWidget::item:hover {{ background: {btn}; }}
             QScrollBar:vertical {{ width: 8px; background: transparent; }}
             QScrollBar::handle:vertical {{ background: {groove}; border-radius: 4px; min-height: 30px; }}
             QScrollBar::add-line, QScrollBar::sub-line {{ height: 0; }}
@@ -2194,7 +2194,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if self.skin == "mac" and skins.vibrancy_supported() and not self.vibrancy:
             QTimer.singleShot(0, self.apply_theme)      # NSWindow з'являється лише після показу
         elif skins.vibrancy_supported() and not self.vibrancy:
-            QTimer.singleShot(0, lambda: skins.set_unified_titlebar(self, False))
+            # Qt доналаштовує вікно вже після показу (і знову робить його «прозорим»), тож — трохи згодом
+            for ms in (0, 400, 1500):
+                QTimer.singleShot(ms, lambda: None if self.vibrancy else skins.set_unified_titlebar(self, False))
         if self._want_mica and not self.mica:
             self.mica = apply_mica(self, self.is_dark())
             log(f"mica: {self.mica}")

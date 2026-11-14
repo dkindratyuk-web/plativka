@@ -1944,19 +1944,20 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         # інакше картки, кнопки й список зливаються в одну пляму.
         if self.vibrancy:          # macOS: під цим шаром — розмиті шпалери, тож фон майже прозорий
             bg = tint("#1E1E20" if dark else "#EEECE8", .22, .14 if dark else .10)
-            card = tint("#2C2C30" if dark else "#FFFFFF", .07, .40 if dark else .48)
+            card = tint("#2C2C30" if dark else "#FFFFFF", .14, .40 if dark else .48)
         elif glass:                # Windows 11: Mica
             bg = tint("#202020" if dark else "#F3F3F3", .25, .18 if dark else .22)
             card = tint("#2B2B2B" if dark else "#FFFFFF", .10, .38 if dark else .55)
         elif sk == "mac":
-            bg = blend("#18191C" if dark else "#E7E5DF", .12 if dark else .11)
-            card = blend("#2A2C31" if dark else "#FCFBF8", .07 if dark else .035)
+            bg = blend("#18191C" if dark else "#E7E5DF", .17 if dark else .18)
+            card = blend("#2A2C31" if dark else "#FCFBF8", .10 if dark else .085)
         elif sk == "fluent":
-            bg = blend("#1C1C1C" if dark else "#E8E8E5", .10 if dark else .11)
-            card = blend("#2D2D2D" if dark else "#FDFDFC", .05 if dark else .035)
+            bg = blend("#1C1C1C" if dark else "#E8E8E5", .16 if dark else .18)
+            card = blend("#2D2D2D" if dark else "#FDFDFC", .09 if dark else .085)
         else:
-            bg = blend("#16181E" if dark else "#ECEFF4", .10 if dark else .08)
-            card = blend("#1E2129" if dark else "#F7F8FB", .06 if dark else .045)
+            # як на Windows з Mica: колір обкладинки помітний у фоні вікна й у самому списку
+            bg = blend("#16181E" if dark else "#ECEFF4", .17 if dark else .18)
+            card = blend("#1E2129" if dark else "#F7F8FB", .10 if dark else .09)
         stroke = "rgba(255,255,255,0.09)" if dark else "rgba(0,0,0,0.08)"
         lcd = QColor(acc)
         lcd.setAlpha(22 if dark else 18)

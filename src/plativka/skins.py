@@ -188,6 +188,8 @@ def set_unified_titlebar(widget, on: bool) -> int:
         # під ним проступав колір робочого столу.
         from AppKit import NSColor
         win.setBackgroundColor_(NSColor.clearColor() if on else NSColor.windowBackgroundColor())
+        # непрозоре вікно — заголовок не бере колір робочого столу (Qt усе одно малює суцільний фон)
+        win.setOpaque_(not on)
         return 0
     except Exception as e:
         log(f"titlebar: {e}")

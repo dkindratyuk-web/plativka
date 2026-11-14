@@ -32,7 +32,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
                                QSpacerItem, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTableWidget, QTableWidgetItem, QToolButton,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from . import skins, sysdeps, sysvol
+from . import eq, skins, sysdeps, sysvol
 from .remote import RemoteHost
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
                    SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
@@ -640,6 +640,174 @@ def qr_pixmap(text: str, size: int) -> QPixmap:
     return QPixmap.fromImage(img).scaled(size, size, Qt.KeepAspectRatio, Qt.FastTransformation)
 
 
+class EqualizerDialog(QDialog):
+    """Еквалайзер: 10 смуг, готові налаштування, корекція навушників з AutoEQ. Звук змінюється одразу."""
+
+    def __init__(self, win: "MainWindow"):
+        super().__init__(win)
+        self.win = win
+        self.setWindowTitle(_("Еквалайзер"))
+        from PySide6.QtWidgets import QComboBox, QGridLayout
+        lay = QVBoxLayout(self)
+        top = QHBoxLayout()
+        self.on = QCheckBox(_("Увімкнути"))
+        self.on.setToolTip(_("Вимкніть і ввімкніть, щоб порівняти звук з еквалайзером і без"))
+        self.on.toggled.connect(self._changed)
+        top.addWidget(self.on)
+        top.addSpacing(12)
+        self.preset = QComboBox()
+        for key, name in self.preset_names().items():
+            self.preset.addItem(name, key)
+        self.preset.activated.connect(self._preset_chosen)
+        top.addWidget(self.preset, 1)
+        lay.addLayout(top)
+
+        grid = QGridLayout()
+        grid.setHorizontalSpacing(6)
+        self.sliders, self.values = [], []
+        for i, hz in enumerate(eq.BANDS):
+            v = QLabel("0")
+            v.setObjectName("dim")
+            v.setAlignment(Qt.AlignCenter)
+            sl = QSlider(Qt.Vertical)
+            sl.setRange(int(-eq.LIMIT * 10), int(eq.LIMIT * 10))
+            sl.setSingleStep(5)
+            sl.setPageStep(10)
+            sl.setMinimumHeight(150)
+            sl.setToolTip(_("Подвійний клік — 0 дБ"))
+            sl.valueChanged.connect(lambda _v, i=i: self._slider(i))
+            lbl = QLabel(f"{hz // 1000}k" if hz >= 1000 else str(hz))
+            lbl.setObjectName("dim")
+            lbl.setAlignment(Qt.AlignCenter)
+            grid.addWidget(v, 0, i)
+            grid.addWidget(sl, 1, i, Qt.AlignHCenter)
+            grid.addWidget(lbl, 2, i)
+            self.sliders.append(sl)
+            self.values.append(v)
+        lay.addLayout(grid)
+        self.head = QLabel()
+        self.head.setObjectName("dim")
+        self.head.setWordWrap(True)
+        lay.addWidget(self.head)
+
+        box = QFrame()
+        box.setObjectName("listcard")
+        bl = QVBoxLayout(box)
+        t = QLabel(_("Корекція навушників (AutoEQ)"))
+        t.setObjectName("title")
+        bl.addWidget(t)
+        self.corr = QLabel()
+        self.corr.setWordWrap(True)
+        bl.addWidget(self.corr)
+        hint = QLabel(_("Знайдіть свою модель на <a href=\"https://autoeq.app\">autoeq.app</a>, у списку програм "
+                        "оберіть «EqualizerAPO ParametricEq», завантажте файл і відкрийте його тут. "
+                        "Повзунки вище додаються зверху — для вашого смаку."))
+        hint.setObjectName("dim")
+        hint.setWordWrap(True)
+        hint.setOpenExternalLinks(True)
+        bl.addWidget(hint)
+        br = QHBoxLayout()
+        b_open = QPushButton(_("Відкрити файл…"))
+        b_open.clicked.connect(self._open_file)
+        self.b_drop = QPushButton(_("Прибрати"))
+        self.b_drop.clicked.connect(self._drop)
+        br.addWidget(b_open)
+        br.addWidget(self.b_drop)
+        br.addStretch()
+        bl.addLayout(br)
+        lay.addWidget(box)
+        bc = QHBoxLayout()
+        bc.addStretch()
+        b_close = QPushButton(_("Закрити"))
+        b_close.clicked.connect(self.close)
+        bc.addWidget(b_close)
+        lay.addLayout(bc)
+        self._load()
+
+    @staticmethod
+    def preset_names() -> dict:
+        return {"flat": _("Рівно"), "bass": _("Більше басу"), "treble": _("Більше високих"),
+                "vocal": _("Голос"), "rock": _("Рок"), "pop": _("Поп"), "electronic": _("Електроніка"),
+                "classical": _("Класика"), "quiet": _("Тихе прослуховування"), "custom": _("Власне")}
+
+    def _load(self):
+        c = self.win.eq_cfg
+        self._busy = True
+        self.on.setChecked(bool(c.get("on")))
+        for sl, g in zip(self.sliders, c.get("gains", [0] * 10)):
+            sl.setValue(round(float(g) * 10))
+        self.preset.setCurrentIndex(max(0, self.preset.findData(c.get("preset", "flat"))))
+        self._busy = False
+        self._refresh()
+
+    def _refresh(self):
+        c = self.win.eq_cfg
+        for sl, v in zip(self.sliders, self.values):
+            g = sl.value() / 10
+            v.setText(f"{g:+.1f}".replace("-", "−") if g else "0")
+        corr = eq.Correction.from_dict(c.get("correction")) if c.get("correction") else None
+        self.corr.setText(_("Завантажено: {name} ({n} фільтрів)").format(name=corr.name, n=len(corr.filters))
+                          if corr else _("Не завантажено — звук навушників як є."))
+        self.b_drop.setEnabled(corr is not None)
+        pre = self.win.eq_headroom
+        self.head.setText(_("Запас гучності: {db} дБ — щоб підсилені частоти не спотворювались. "
+                            "Здається тихіше? Додайте гучність.").format(db=f"{pre:.1f}".replace("-", "−"))
+                          if pre < 0 and c.get("on") else "")
+
+    def _gains(self):
+        return [sl.value() / 10 for sl in self.sliders]
+
+    def _changed(self):
+        if self._busy:
+            return
+        self.win.set_eq(on=self.on.isChecked(), gains=self._gains(), preset=self.preset.currentData())
+        self._refresh()
+
+    def _slider(self, i):
+        if self._busy:
+            return
+        self._busy = True
+        self.preset.setCurrentIndex(self.preset.findData("custom"))
+        if not self.on.isChecked():
+            self.on.setChecked(True)
+        self._busy = False
+        self._changed()
+
+    def _preset_chosen(self, idx):
+        key = self.preset.itemData(idx)
+        if key in eq.PRESETS:
+            self._busy = True
+            for sl, g in zip(self.sliders, eq.PRESETS[key]):
+                sl.setValue(round(g * 10))
+            self.on.setChecked(True)
+            self._busy = False
+        self._changed()
+
+    def mouseDoubleClickEvent(self, e):
+        w = self.childAt(e.position().toPoint())
+        if w in self.sliders:
+            w.setValue(0)
+        super().mouseDoubleClickEvent(e)
+
+    def _open_file(self):
+        f, _f = QFileDialog.getOpenFileName(self, _("Файл корекції AutoEQ"), str(Path.home() / "Downloads"),
+                                            _("Параметричний еквалайзер (*.txt)"))
+        if not f:
+            return
+        try:
+            corr = eq.parse_parametric(Path(f).read_text("utf-8", errors="replace"), eq.correction_name(Path(f).name))
+        except (OSError, ValueError):
+            QMessageBox.warning(self, _("Еквалайзер"), _("У цьому файлі немає фільтрів еквалайзера. Потрібен файл "
+                                                         "«ParametricEQ.txt» з AutoEQ (формат Equalizer APO)."))
+            return
+        self.win.set_eq(on=True, correction=corr)
+        self._load()
+
+    def _drop(self):
+        self.win.set_eq(correction=False)
+        self._load()
+
+
 class CopyDialog(QDialog):
     """«Копіювати на флешку»: спершу показати розмір і вільне місце, нічого не перезаписувати без дозволу."""
 
@@ -1225,6 +1393,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.replaygain = self.cfg.get("replaygain", "album")
         self.check_updates = bool(self.cfg.get("check_updates", True))
         self.online_covers = bool(self.cfg.get("online_covers", False))
+        self.eq_cfg = dict(self.cfg.get("eq") or {})
+        self.eq_headroom = 0.0
+        self._eq_dialog = None
         self.cover_rev = 0
         self.update_info = None
         self.remote = None              # пульт з телефона (RemoteServer), коли увімкнено
@@ -1312,7 +1483,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                         skin=self.skin, view=self.view, collapsed=self.collapsed, on_top=self.on_top, lib_mode=self.lib_mode,
                         tab=self.tab, remaining=self.remaining, expanded_h=self._expanded_h,
                         minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
-                        check_updates=self.check_updates, online_covers=self.online_covers,
+                        check_updates=self.check_updates, online_covers=self.online_covers, eq=self.eq_cfg,
                         geometry=[g.x(), g.y(), g.width(), g.height()])
         try:
             CONF_DIR.mkdir(parents=True, exist_ok=True)
@@ -1408,11 +1579,15 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.f_remote.setObjectName("flagon")
         self.f_remote.clicked.connect(self.open_remote)
         self.f_remote.hide()
+        self.f_eq = Clickable()             # еквалайзер увімкнено: клік — вікно еквалайзера
+        self.f_eq.setObjectName("flagon")
+        self.f_eq.clicked.connect(self.open_equalizer)
+        self.f_eq.hide()
         self.f_update = Clickable()         # «вийшла нова версія»: клік — сторінка завантаження
         self.f_update.setObjectName("flagon")
         self.f_update.clicked.connect(self.open_update)
         self.f_update.hide()
-        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_sleep, self.f_remote, self.f_update):
+        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_eq, self.f_sleep, self.f_remote, self.f_update):
             flags.addWidget(w)
         flags.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         lv.addWidget(self.flagw)
@@ -1692,6 +1867,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         a_findcover = act(_("Знайти обкладинку…"), lambda: self.pick_cover())
         a_upd = act(_("Перевірити оновлення…"), lambda: self.spawn(self.look_for_update(manual=True)))
         a_remote = act(_("Пульт з телефона…"), self.open_remote)
+        a_eq = act(_("Еквалайзер…"), self.open_equalizer, ["Shift+E"])
+        self.a_eq_on = act(_("Еквалайзер увімкнено"), lambda: self.set_eq(on=not self.eq_cfg.get("on")), None, True)
         a_like = act(_("До улюблених / прибрати"), lambda: self.like(), ["F"])
         a_favplay = act(_("Грати лише улюблені"), self.play_favorites, ["Shift+F"])
         a_favm3u = act(_("Зберегти улюблені як M3U…"), self.export_favorites)
@@ -1703,7 +1880,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         menus = [
             (_("Файл"), [a_add, a_folders, None, a_copy, a_dupes, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
-                                 None, a_qnext, a_qclear, None, m_sleep, m_rg, None, a_remote]),
+                                 None, a_qnext, a_qclear, None, a_eq, self.a_eq_on, m_rg, m_sleep, None, a_remote]),
             (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
             (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, m_skin, a_theme, self.a_popups, a_lang, None,
                            self.a_online, a_findcover, None, a_find]
@@ -2249,6 +2426,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             await self.player.start(self.player_volume)
         if self.volume_mode == "system" and not self.demo:
             self._init_sysvol()
+        await self.apply_eq()
         if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
             await self.play_index(self.current, start=float(self.cfg.get("position", 0)), paused=True)
         else:
@@ -2589,6 +2767,12 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             b.style().polish(b)
         for key, a in getattr(self, "a_skin", {}).items():
             a.setChecked(key == self.skin)
+        on_eq = bool(self.eq_cfg.get("on"))
+        self.f_eq.setText(_("екв"))
+        self.f_eq.setToolTip(_("Еквалайзер увімкнено — клацніть, щоб налаштувати"))
+        self.f_eq.setVisible(on_eq)
+        if hasattr(self, "a_eq_on"):
+            self.a_eq_on.setChecked(on_eq)
         u = self.update_info
         self.f_update.setVisible(bool(u))
         if u:
@@ -2683,6 +2867,49 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.toast(_("У вас найновіша версія ({v})").format(v=VERSION))
 
     # ── пульт з телефона ──
+    # ───────────── еквалайзер ─────────────
+    def open_equalizer(self):
+        if self._eq_dialog is None:
+            self._eq_dialog = EqualizerDialog(self)
+        self._eq_dialog._load()
+        self._eq_dialog.show()
+        self._eq_dialog.raise_()
+        self._eq_dialog.activateWindow()
+
+    def set_eq(self, on=None, gains=None, preset=None, correction=None):
+        """correction: Correction — завантажити, False — прибрати, None — не чіпати."""
+        c = self.eq_cfg
+        was = bool(c.get("on"))
+        if on is not None:
+            c["on"] = bool(on)
+        if gains is not None:
+            c["gains"] = [round(float(g), 1) for g in gains]
+        if preset is not None:
+            c["preset"] = preset
+        if correction is False:
+            c.pop("correction", None)
+        elif correction is not None:
+            c["correction"] = correction.to_dict()
+        self._eq_chain()
+        self.spawn(self.apply_eq())
+        self.update_flags()
+        if bool(c.get("on")) != was:
+            self.toast(_("Еквалайзер: увімкнено") if c["on"] else _("Еквалайзер: вимкнено"))
+        self.save_cfg()
+        if self._eq_dialog is not None and self._eq_dialog.isVisible() and on is not None and gains is None:
+            self._eq_dialog._load()
+
+    def _eq_chain(self):
+        c = self.eq_cfg
+        corr = eq.Correction.from_dict(c["correction"]) if c.get("correction") else None
+        chain, self.eq_headroom = eq.chain(c.get("gains") or [0] * 10, corr) if c.get("on") else (None, 0.0)
+        return chain
+
+    async def apply_eq(self):
+        chain = self._eq_chain()
+        if self.player is not None:
+            await self.player.set_eq(chain)
+
     def open_remote(self):
         RemoteDialog(self).exec()
 

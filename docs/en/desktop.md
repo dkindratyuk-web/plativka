@@ -109,6 +109,49 @@ Tracks follow each other without a pause, as on the album — live recordings an
 
 If an album is one big FLAC, APE or WAV file with a `.cue` file next to it, Plativka shows it as separate tracks with their own titles, and they play one after another without a gap. The `.cue` file can be in UTF-8 or in the old Windows encoding (Cyrillic `.cue` files from the 2000s too).
 
+## Equalizer
+
+*Coming in version 1.7.*
+
+**☰ → Playback → Equalizer…** (on a Mac: the **Playback** menu) or **Shift+E**. The sound changes as you move a slider; the window can stay open while the music plays.
+
+<img src="../img/eq-en.png" width="420" alt="The equalizer window">
+
+### Presets and sliders
+
+- **Turn on** switches the equalizer on and off. Turn it off and on a few times to hear the difference: that is the most honest way to judge a setting.
+- **Presets**: Flat, More bass, More treble, Vocal, Rock, Pop, Electronic, Classical and **Quiet listening** (at low volume the ear hears the lowest and highest notes worse; this preset brings them back a little).
+- **10 sliders** from 31 Hz to 16 kHz, ±12 dB each. Moving one turns the preset into *Custom*. Double-click a slider to put it back to 0.
+- When the equalizer is on, **eq** is shown next to the shuffle and repeat switches; a click opens the window. **☰ → Playback → Equalizer on** switches it without opening the window.
+
+Roughly what the bands do: 31–62 Hz is the deep bass you feel more than hear; 125–250 Hz is the body of bass and drums (too much sounds boomy); 500 Hz–2 kHz is the voice and most instruments; 4 kHz is clarity and attack (too much is harsh); 8–16 kHz is air and cymbals.
+
+### Headroom: why it gets a bit quieter
+
+Raising a frequency by 6 dB makes the loudest moments of a song go over the maximum, and the sound distorts (clipping). Plativka prevents this: it works out the highest point of your whole curve and lowers the overall level by exactly that much. The window shows it as **Headroom: −6.7 dB**. So with boosted bass the music is a little quieter — turn the volume up a bit. Lowering frequencies needs no headroom, and with the equalizer turned off nothing is lowered.
+
+### Headphone correction (AutoEQ)
+
+Every model of headphones changes the sound in its own way: one has too much bass, another a sharp peak around 6 kHz. The open project [AutoEQ](https://autoeq.app) has measured thousands of models and calculated, for each of them, the equalizer settings that bring its sound close to a neutral reference. These are numbers from measurements, not someone's taste.
+
+1. Open [autoeq.app](https://autoeq.app) and find your headphones by name.
+2. In the list of equalizer apps choose **EqualizerAPO ParametricEq** and download the file. It is called like *Your Model ParametricEQ.txt*.
+3. In Plativka: **Equalizer… → Open file…** and choose that file. The window shows *Loaded: Your Model (10 filters)*, and the equalizer turns on.
+4. Listen with the equalizer on and off. The sliders above still work and are added on top of the correction — for your own taste.
+
+Good to know:
+
+- The correction is for **one model**. On other headphones or on speakers press **Remove** (or turn the equalizer off), otherwise you are correcting the wrong thing.
+- AutoEQ often has several measurements of one model (from different labs); any of them will do, they are usually close.
+- The correction doesn't add detail that isn't in the recording, and it doesn't turn cheap headphones into expensive ones: it evens out their frequency balance. Most people hear clearer vocals and tidier bass.
+- Plativka reads the standard Equalizer APO format, so a file made by another tool in that format works too.
+
+### How exact it is
+
+The equalizer uses the same filters as most hardware and software equalizers (peaking bands and shelves), inside the mpv sound engine, with floating-point processing. Plativka's own calculation of the curve and of the headroom is checked in its tests against what FFmpeg actually does to a test tone: they match to within 0.3 dB.
+
+The equalizer is in Plativka Desktop. Its settings and the loaded correction are remembered.
+
 ## Favorites
 
 Like the songs you love and play only them — from all your folders at once.

@@ -95,6 +95,8 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: .6em; }
 .skins-mini { margin-top: 36px; align-items: center; }
 .skins-mini figure { margin: 0; max-width: 460px; justify-self: end; width: 100%; }
 .soon { font-weight: 500; }
+.eq-shot { margin: 0; }
+.eq-shot img { width: 100%; height: auto; display: block; border-radius: 12px; box-shadow: 0 1px 2px rgba(0,0,0,.06), 0 12px 32px rgba(0,0,0,.10); }
 .split-rev .split-text { order: 2; }
 .split .sub { margin-bottom: 18px; }
 .aside { color: var(--muted); font-size: 1rem; line-height: 1.65; margin: 0 0 14px; max-width: 34em; }

@@ -42,6 +42,11 @@ def test_desktop_window_views():
             assert win.icon_flags["shuffle"].isVisible() and not win.f_shuffle.isVisible()
             win.toggle_view()
             assert win.buttons["play"].isVisible() == (sk == "classic")
+        win.set_eq(on=True, gains=[3] * 10, preset="custom")      # еквалайзер: вікно й прапорець «екв»
+        win.open_equalizer()
+        assert win.f_eq.isVisible() and win.eq_headroom < 0 and win._eq_dialog.on.isChecked()
+        win.set_eq(on=False)
+        assert not win.f_eq.isVisible() and win.eq_headroom == 0
         h = win.height()
         win.toggle_view()
         win.toggle_view()

@@ -127,6 +127,13 @@ Versions up to 1.5.2 could not reach GitHub from the downloaded app on macOS and
 
 The blurred desktop behind the window works only on a Mac; on Windows and Linux the macOS skin has a solid background — that is expected. If on a Mac the window looks broken in this skin (black or empty areas), switch to another skin with **Shift+T** and tell us on GitHub. To start Plativka without the blur, run it once with `PLATIVKA_NO_VIBRANCY=1` (Terminal: `PLATIVKA_NO_VIBRANCY=1 open -a "Plativka Desktop"`); `plativka.log` has lines starting with `vibrancy:` if something failed.
 
+## Equalizer: the music got quieter or sounds distorted
+
+- **Quieter** with the equalizer on is expected when you raise some bands: Plativka lowers the overall level by the shown **headroom** so that the boosted frequencies don't distort. Turn the volume up.
+- **Distorted** sound with the equalizer should not happen; if it does, turn the equalizer off (**Shift+E** → **Turn on**) and tell us on GitHub which preset or file you used.
+- **"This file has no equalizer filters"**: the file is not in the Equalizer APO format. On autoeq.app choose **EqualizerAPO ParametricEq** (not the graphic or another app's format).
+- **Headphone correction on speakers** makes the sound worse — it is for one model of headphones. Press **Remove** in the equalizer window.
+
 ## A cover was not found online
 
 - **Is it on?** Plativka Desktop: ☰ → View → **Find missing covers online**; terminal edition: `Shift+O`. It only looks when there is no cover in the file and no `cover.jpg` next to it.

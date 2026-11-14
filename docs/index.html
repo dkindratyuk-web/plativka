@@ -53,6 +53,7 @@
   <ul class="features">
 <li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 1.7-.9 1.7-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.7-1.7H16a6 6 0 0 0 6-6c0-4.4-4.5-8-10-8z"/></svg><div><h3>Colour from the cover</h3><p>The clock, the level meter, the window and the playlist take their colour from the album art and change with every album. Light, dark or system theme.</p></div></li>
 <li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="13" height="11" rx="2"/><rect x="11" y="10" width="11" height="8" rx="2"/><path d="M4 21h8"/></svg><div><h3>Three sizes</h3><p>The full Winamp view, a compact view in two rows above the playlist, and a mini player small enough for a corner of the screen, on top of all windows.</p></div></li>
+<li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v6M5 13v8M12 3v10M12 17v4M19 3v3M19 10v11"/><path d="M3 11h4M10 15h4M17 8h4"/></svg><div><h3>Equalizer with headphone correction</h3><p>10 bands and presets that never distort, plus measured corrections for thousands of headphone models from AutoEQ. Coming in 1.7.</p></div></li>
 <li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="M3 8.5h18"/><circle cx="6" cy="6.3" r=".6"/><path d="M8 21h8"/></svg><div><h3>Three skins</h3><p>Plativka's own look, macOS or Windows 11: native-style buttons, sliders and translucency, the same layout. Switch any time, no restart.</p></div></li>
 <li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16M8 4v16"/><path d="m12.5 4.5 3.9 15.4M17 4l3.6 15"/></svg><div><h3>Playlist and library</h3><p>Your library by artist and album or by folder, instant search, drag folders into the window, play a whole album with a double-click.</p></div></li>
 <li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0M10 10h0M14 10h0M18 10h0M7 14h10"/></svg><div><h3>Fits into your system</h3><p>Media keys and headphone buttons, Now Playing, MPRIS on Linux, track notifications with the album cover, a tray icon.</p></div></li>
@@ -86,6 +87,18 @@
     </div>
     <figure><img src="img/skins-mini.png" alt="Mini player in the three skins" width="760" height="678" loading="lazy"></figure>
   </div>
+</section>
+
+<section id="equalizer" class="wrap sec split">
+  <div class="split-text">
+    <h2>An equalizer that knows your headphones</h2>
+    <p class="sub">Shape the sound with 10 sliders, or let measurements do it: AutoEQ has measured thousands of headphone models, and Plativka applies the correction for yours.</p>
+    <ul class="rows"><li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h3l3-7 4 14 3-7h5"/></svg><div><h3>Presets and sliders</h3><p>More bass, Vocal, Rock, Quiet listening and more, or your own curve from 31 Hz to 16 kHz. <b>Shift+E</b> opens the window; the sound changes as you move a slider.</p></div></li><li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3v6M5 13v8M12 3v10M12 17v4M19 3v3M19 10v11"/><path d="M3 11h4M10 15h4M17 8h4"/></svg><div><h3>No distortion</h3><p>Boosted frequencies can push loud moments over the limit. Plativka works out the peak of your curve and leaves exactly that much headroom, so the sound stays clean.</p></div></li><li><svg class="f-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/></svg><div><h3>Headphone correction</h3><p>Find your model on autoeq.app, choose <b>EqualizerAPO ParametricEq</b>, download the file and open it in Plativka. Your headphones get closer to a neutral sound; the sliders still work on top.</p></div></li></ul>
+    <p class="aside">Same filters as most hardware equalizers, inside the mpv engine. Plativka's curve is checked in its tests against what FFmpeg actually does to a test tone: within 0.3 dB.</p>
+    <p class="aside soon">Coming in version 1.7.</p>
+    <a class="more" href="https://github.com/dkindratyuk-web/plativka/blob/main/docs/en/desktop.md#equalizer">How to use the equalizer <svg class="ico-a" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+  </div>
+  <figure class="eq-shot"><img src="img/eq-en.png" alt="The equalizer window with a preset and a headphone correction" width="1120" height="954" loading="lazy"></figure>
 </section>
 
 <section id="favorites" class="wrap sec split">

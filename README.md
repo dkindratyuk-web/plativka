@@ -50,6 +50,7 @@ It comes in two editions; install either one or both — the first time Plativka
 - **System integration**: media keys ⏮ ⏯ ⏭ and headphone buttons, Now Playing / the Windows media overlay / MPRIS on Linux, track notifications **with the album cover**, a tray icon, the volume mirrors the system volume (your keyboard's volume keys move the slider).
 - **Windows 11**: the translucent Mica background, tinted by the cover.
 - **Plays like an album**: no pauses between tracks (gapless), volume levelling with ReplayGain (by album or by track), albums as one FLAC/APE/WAV file with a `.cue` sheet shown as separate tracks.
+- **Equalizer** *(coming in 1.7)*: 10 bands, presets, automatic headroom so boosted bass never distorts, and **headphone correction** from [AutoEQ](https://autoeq.app) — measured settings for thousands of headphone models. `Shift+E`. [How to use it](docs/en/desktop.md#equalizer).
 - **Favorites that don't get lost**: like a song with a heart (or `F`) and play only your favorites from all folders at once. Likes survive moving and renaming files — Plativka recognises the song by artist, title and length. Plus smart lists (*Recently added*, *Most played*, *Not played for a while*) and **Remove non-favorites** — from the list, or to the Trash, never permanently.
 - **Play next**: `Shift+N` puts a song (or a whole album) right after the current one, without breaking the order of the list.
 - **Copy to a USB stick** for the car: numbered files so the stereo keeps your order, the size and free space shown first, nothing overwritten without asking.
@@ -146,6 +147,7 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 | `N` | track notifications on / off |
 | `T` | theme: system → light → dark |
 | `Shift+T` | skin: Plativka → macOS → Windows 11 |
+| `Shift+E` | equalizer *(1.7)* |
 | `Delete` | remove the selected tracks from the playlist |
 | `F1` | about Plativka |
 | `Q` or `Ctrl+Q` (`⌘Q` on a Mac) | quit |

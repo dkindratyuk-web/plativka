@@ -52,6 +52,9 @@ T = {
             ("sizes", "Three sizes",
              "The full Winamp view, a compact view in two rows above the playlist, and a mini player "
              "small enough for a corner of the screen, on top of all windows."),
+            ("eq", "Equalizer with headphone correction",
+             "10 bands and presets that never distort, plus measured corrections for thousands of "
+             "headphone models from AutoEQ. Coming in 1.7."),
             ("skins", "Three skins",
              "Plativka's own look, macOS or Windows 11: native-style buttons, sliders and "
              "translucency, the same layout. Switch any time, no restart."),
@@ -103,6 +106,23 @@ T = {
                   "has the Mica background.",
         "sk_soon": "New in version 1.6.",
         "sk_more": "More about skins",
+        "eq_h": "An equalizer that knows your headphones",
+        "eq_p": "Shape the sound with 10 sliders, or let measurements do it: AutoEQ has measured thousands of headphone "
+                "models, and Plativka applies the correction for yours.",
+        "eq_steps": [
+            ("Presets and sliders", "More bass, Vocal, Rock, Quiet listening and more, or your own curve from 31 Hz to "
+                                    "16 kHz. <b>Shift+E</b> opens the window; the sound changes as you move a slider."),
+            ("No distortion", "Boosted frequencies can push loud moments over the limit. Plativka works out the peak "
+                              "of your curve and leaves exactly that much headroom, so the sound stays clean."),
+            ("Headphone correction", "Find your model on autoeq.app, choose <b>EqualizerAPO ParametricEq</b>, download "
+                                     "the file and open it in Plativka. Your headphones get closer to a neutral sound; "
+                                     "the sliders still work on top."),
+        ],
+        "eq_aside": "Same filters as most hardware equalizers, inside the mpv engine. Plativka's curve is checked in "
+                    "its tests against what FFmpeg actually does to a test tone: within 0.3 dB.",
+        "eq_soon": "Coming in version 1.7.",
+        "eq_more": "How to use the equalizer",
+        "eq_alt": "The equalizer window with a preset and a headphone correction",
         "fav_h": "Favorites that don't get lost",
         "fav_p": "Listening to a long playlist? Tap the heart on the songs you like, then play only them, "
                  "from all your folders and albums at once.",
@@ -211,6 +231,9 @@ T = {
             ("sizes", "Три розміри",
              "Повний вигляд як у Winamp, компактний у два ряди над списком і міні-плеєр, "
              "що вміщається в куток екрана й може бути поверх усіх вікон."),
+            ("eq", "Еквалайзер з корекцією навушників",
+             "10 смуг і готові налаштування без спотворень, а ще виміряні корекції для тисяч "
+             "моделей навушників з AutoEQ. У версії 1.7."),
             ("skins", "Три скіни",
              "Власний вигляд Платівки, macOS або Windows 11: кнопки, повзунки й прозорість як у "
              "системі, розташування те саме. Перемикається будь-коли, без перезапуску."),
@@ -261,6 +284,24 @@ T = {
                   "фон Mica.",
         "sk_soon": "Нове у версії 1.6.",
         "sk_more": "Докладніше про скіни",
+        "eq_h": "Еквалайзер, що знає ваші навушники",
+        "eq_p": "Налаштуйте звук 10 повзунками або довіртеся вимірюванням: AutoEQ виміряв тисячі моделей навушників, "
+                "а Платівка застосовує корекцію для ваших.",
+        "eq_steps": [
+            ("Готові налаштування й повзунки", "Більше басу, Голос, Рок, Тихе прослуховування та інші — або своя "
+                                               "крива від 31 Гц до 16 кГц. <b>Shift+E</b> відкриває вікно; звук "
+                                               "змінюється, щойно рухаєте повзунок."),
+            ("Без спотворень", "Підсилені частоти можуть вивести гучні місця за межу. Платівка рахує найвищу точку "
+                               "вашої кривої й лишає рівно такий запас гучності — звук лишається чистим."),
+            ("Корекція навушників", "Знайдіть свою модель на autoeq.app, оберіть <b>EqualizerAPO ParametricEq</b>, "
+                                    "завантажте файл і відкрийте його в Платівці. Навушники звучать ближче до "
+                                    "нейтрального, а повзунки працюють і далі — поверх корекції."),
+        ],
+        "eq_aside": "Ті самі фільтри, що в більшості апаратних еквалайзерів, усередині рушія mpv. Криву Платівки "
+                    "перевірено в тестах із тим, що FFmpeg справді робить із тестовим тоном: розбіжність до 0,3 дБ.",
+        "eq_soon": "З'явиться у версії 1.7.",
+        "eq_more": "Як користуватися еквалайзером",
+        "eq_alt": "Вікно еквалайзера з готовим налаштуванням і корекцією навушників",
         "fav_h": "Улюблені, які не губляться",
         "fav_p": "Слухаєте довгий плейлист? Натискайте сердечко на піснях, які сподобались, а потім слухайте лише їх, "
                  "з усіх тек і альбомів разом.",
@@ -342,6 +383,9 @@ T = {
 
 ICONS = {
     "palette": '<circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 1.7-.9 1.7-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.7-1.7H16a6 6 0 0 0 6-6c0-4.4-4.5-8-10-8z"/>',
+    "eq": '<path d="M5 3v6M5 13v8M12 3v10M12 17v4M19 3v3M19 10v11"/><path d="M3 11h4M10 15h4M17 8h4"/>',
+    "tune": '<path d="M3 12h3l3-7 4 14 3-7h5"/>',
+    "ear": '<path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/>',
     "skins": '<rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="M3 8.5h18"/><circle cx="6" cy="6.3" r=".6"/><path d="M8 21h8"/>',
     "sizes": '<rect x="2" y="3" width="13" height="11" rx="2"/><rect x="11" y="10" width="11" height="8" rx="2"/><path d="M4 21h8"/>',
     "library": '<path d="M4 4v16M8 4v16"/><path d="m12.5 4.5 3.9 15.4M17 4l3.6 15"/>',
@@ -455,6 +499,18 @@ def page(t: dict) -> str:
     </div>
     <figure>{img(p, "skins-mini.png", t['sk_alt'][1])}</figure>
   </div>
+</section>
+
+<section id="equalizer" class="wrap sec split">
+  <div class="split-text">
+    <h2>{t['eq_h']}</h2>
+    <p class="sub">{t['eq_p']}</p>
+    <ul class="rows">{''.join(f'<li>{ico(i, "f-ico")}<div><h3>{h}</h3><p>{d}</p></div></li>' for i, (h, d) in zip(("tune", "eq", "ear"), t['eq_steps']))}</ul>
+    <p class="aside">{t['eq_aside']}</p>
+    <p class="aside soon">{t['eq_soon']}</p>
+    <a class="more" href="{docs}desktop.md#{'equalizer' if t['lang'] == 'en' else 'еквалайзер'}">{t['eq_more']} {ico("arrow", "ico-a")}</a>
+  </div>
+  <figure class="eq-shot">{img(p, f"eq-{t['lang']}.png", t['eq_alt'])}</figure>
 </section>
 
 <section id="favorites" class="wrap sec split">

@@ -623,6 +623,10 @@ class BasePlayer:
         self.replaygain = "album"     # off | track | album
         self.on_advance = None        # gapless: mpv сам перейшов до наступного файлу (шлях)
         self.seg = None               # трек з CUE: (початок, кінець) у спільному файлі
+        self.eq_chain = None          # фільтри еквалайзера (lavfi) або None
+
+    async def set_eq(self, chain: str | None):
+        self.eq_chain = chain
 
     def _decay(self, l, r):
         for i, v in enumerate((l, r)):
@@ -860,6 +864,26 @@ class MpvPlayer(BasePlayer):
         res = await self._safe("loadfile", path, "append")
         nid = res.get("playlist_entry_id") if isinstance(res, dict) else None
         self._next = (path, nid)
+
+    async def set_eq(self, chain: str | None):
+        """Еквалайзер: фільтри стоять перед індикатором рівня, тож він показує те, що ви чуєте."""
+        self.eq_chain = chain
+        await self._safe("af", "remove", "@eq")
+        if not chain:
+            return
+        vu = False
+        if self.vu_ok:
+            try:
+                await self.cmd("af", "remove", "@vu")
+                vu = True
+            except Exception:
+                pass
+        try:
+            await self.cmd("af", "add", f"@eq:lavfi=[{chain}]")
+        except Exception as e:
+            log(f"еквалайзер: {e} ({chain})")
+        if vu:
+            await self._safe("af", "add", "@vu:lavfi=[astats=metadata=1:reset=1]")
 
     async def set_replaygain(self, mode: str):
         self.replaygain = mode

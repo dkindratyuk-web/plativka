@@ -1592,9 +1592,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         flags.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         lv.addWidget(self.flagw)
         top.addWidget(self.lcd, 1)
-        self.mini_vu = LevelBars(12, 6)          # більше не показується: у компактному вигляді місце — назві
-        self.mini_vu.setFixedSize(92, 40)
+        self.mini_vu = LevelBars(10, 6)          # компактний вигляд: лише коли вікно досить широке для назви й нього
+        self.mini_vu.setFixedSize(60, 30)
         self.mini_vu.hide()
+        top.addWidget(self.mini_vu, 0, Qt.AlignVCenter)
         self.tcl = QHBoxLayout()                 # компактний вигляд: кнопки в одному ряду з назвою
         self.tcl.setSpacing(4)
         top.addLayout(self.tcl)
@@ -1964,8 +1965,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         hl.setAlpha(50)
         hl_bg = f"rgba({hl.red()},{hl.green()},{hl.blue()},{hl.alpha() / 255:.2f})"
         groove = "rgba(255,255,255,0.16)" if dark else "rgba(0,0,0,0.14)"
-        btn = "rgba(255,255,255,0.07)" if dark else "rgba(0,0,0,0.055)"
-        btn_h = "rgba(255,255,255,0.14)" if dark else "rgba(0,0,0,0.10)"
+        # кнопки теж у кольорі обкладинки (ледь-ледь), а не просто сірі
+        btn = tint("#FFFFFF" if dark else "#000000", .55 if dark else .62, .09 if dark else .075)
+        btn_h = tint("#FFFFFF" if dark else "#000000", .55 if dark else .62, .17 if dark else .14)
         listcard = card
         for w in (self.table, self.tree):
             pal = w.palette()
@@ -2048,6 +2050,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         a_h = QColor(acc).lighter(112) if not dark else QColor(acc).lighter(118)
         self._acc, self._sec, self._sub, self._acc_h = acc, sec, sub, a_h.name()
         self._sub_hex = "#9A9DA4" if dark else "#6E7178"
+        self._muted_acc = blend(self._sub_hex, .45)
         self._on_acc = "#101215" if dark else "#FFFFFF"
         self._size_buttons()
         self._paint_icons()
@@ -2267,6 +2270,19 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         for w in self._card_widgets:
             w.setVisible(w in shown)
         self.flagw.show()
+        self._fit_mini_vu()
+
+    MINI_VU_WIDTH = 440
+
+    def _fit_mini_vu(self):
+        """Індикатор рівня в компактному вигляді — якщо вікно ширше за ~440 px (інакше місце потрібне назві)."""
+        if hasattr(self, "mini_vu"):
+            self.mini_vu.setVisible(not self.is_full() and self.width() >= self.MINI_VU_WIDTH)
+
+    def resizeEvent(self, e):
+        super().resizeEvent(e)
+        if hasattr(self, "mini_vu") and not self.is_full():
+            self._fit_mini_vu()
 
     def _size_buttons(self):
         """Розміри кнопок залежать від скіна: у Windows вони більші (так велить Fluent), у macOS — без рамок."""
@@ -2761,7 +2777,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             b = self.icon_flags[key]
             b.setVisible(icons and (on if key == "remote" else True))
             b.setProperty("on", bool(state))
-            b.setIcon(self._icon(kind, on_col if state else self._sub_hex))
+            b.setIcon(self._icon(kind, on_col if state else self._muted_acc))
             b.setToolTip(tip)
             b.style().unpolish(b)
             b.style().polish(b)

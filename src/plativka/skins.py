@@ -127,6 +127,42 @@ def set_vibrancy(widget, on: bool, dark: bool) -> bool:
                                                          else "NSAppearanceNameAqua"))
         vev.setHidden_(not on)
         return on
+
+
+def set_tint(widget, rgba) -> bool:
+    """Колір обкладинки поверх матеріалу — на все вікно разом із заголовком (а не лише під вмістом Qt).
+
+    rgba — (r, g, b, a) 0..255 / 0..1, або None — прибрати.
+    """
+    if not vibrancy_supported():
+        return False
+    try:
+        import objc
+        from AppKit import NSColor, NSView
+        win = objc.objc_object(c_void_p=int(widget.winId())).window()
+        if win is None:
+            return False
+        content = win.contentView()
+        frame = content.superview()
+        tv = getattr(widget, "_plativka_tint", None)
+        if tv is None:
+            if rgba is None:
+                return False
+            tv = NSView.alloc().initWithFrame_(frame.bounds())
+            tv.setAutoresizingMask_(2 | 16)
+            tv.setWantsLayer_(True)
+            frame.addSubview_positioned_relativeTo_(tv, -1, content)    # над матеріалом, під вмістом
+            widget._plativka_tint = tv
+        if rgba is None:
+            tv.setHidden_(True)
+            return False
+        r, g, b, a = rgba
+        tv.layer().setBackgroundColor_(NSColor.colorWithSRGBRed_green_blue_alpha_(r / 255, g / 255, b / 255, a).CGColor())
+        tv.setHidden_(False)
+        return True
+    except Exception as e:
+        log(f"tint: {e}")
+        return False
     except Exception as e:
         log(f"vibrancy: {e}")
         return False

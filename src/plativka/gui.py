@@ -1973,6 +1973,14 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             bg = blend("#16181E" if dark else "#ECEFF4", .17 if dark else .18)
             card = blend("#1E2129" if dark else "#F7F8FB", .10 if dark else .09)
         stroke = "rgba(255,255,255,0.09)" if dark else "rgba(0,0,0,0.08)"
+        # macOS-скін на Mac: тонований шар лежить на всьому вікні разом із заголовком, тож вікно Qt — прозоре
+        win_bg = bg
+        if self.vibrancy:
+            c = QColor(blend("#1E1E20" if dark else "#EEECE8", .38))
+            if skins.set_tint(self, (c.red(), c.green(), c.blue(), .30)):
+                win_bg = "transparent"
+        elif getattr(self, "_plativka_tint", None) is not None:
+            skins.set_tint(self, None)
         lcd = QColor(acc)
         lcd.setAlpha(22 if dark else 18)
         lcd_bg = f"rgba({lcd.red()},{lcd.green()},{lcd.blue()},{lcd.alpha() / 255:.2f})"
@@ -2006,7 +2014,9 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             pal.setColor(role, QColor(col))
         QApplication.setPalette(pal)
         self.setStyleSheet(f"""
-            QMainWindow, #root {{ background: {bg}; }}
+            QMainWindow, #root {{ background: {win_bg}; }}
+            QStatusBar {{ background: {win_bg}; color: {sub}; font-size: 11px; }}
+            QStatusBar::item {{ border: none; }}
             QWidget {{ color: {fg}; }}
             #card {{ background: {card}; border: 1px solid {stroke}; border-radius: 8px; }}
             #listcard {{ background: {listcard}; border: 1px solid {stroke}; border-radius: 8px; }}
@@ -3399,7 +3409,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         bf.setBold(True)
         digits = len(str(max(1, self.table.rowCount())))
         need = QFontMetrics(bf).horizontalAdvance("→9 " + "9" * digits + ".")
-        self.table.setColumnWidth(0, max(56, need + (18 if self.skin == "fluent" else 12)))
+        pad = 18 if self.skin == "fluent" else 12
+        self.table.setColumnWidth(0, max(56, need + pad))
+        # колонка часу: жирний «4:08» на рядку, що грає, теж має влазити («3:…» не годиться)
+        self.table.setColumnWidth(2, max(50, QFontMetrics(bf).horizontalAdvance("88:88") + pad))
         self.table.viewport().update()
         if 0 <= self.current < self.table.rowCount():
             self.table.scrollToItem(self.table.item(self.current, 0), QAbstractItemView.EnsureVisible)

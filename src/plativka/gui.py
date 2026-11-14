@@ -29,10 +29,10 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
                                QFileDialog, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
                                QListWidget, QListWidgetItem, QMainWindow, QMenu, QMessageBox,
                                QPushButton, QRadioButton, QSizePolicy, QSlider, QStackedWidget, QSystemTrayIcon,
-                               QTableWidget, QTableWidgetItem, QToolButton, QTreeWidget,
-                               QTreeWidgetItem, QVBoxLayout, QWidget)
+                               QSpacerItem, QStyledItemDelegate, QTableWidget, QTableWidgetItem, QToolButton,
+                               QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from . import sysdeps, sysvol
+from . import skins, sysdeps, sysvol
 from .remote import RemoteHost
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
                    SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
@@ -183,6 +183,19 @@ class Clickable(QLabel):
     def mousePressEvent(self, e):
         if e.button() == Qt.LeftButton:
             self.clicked.emit()
+
+
+class ElidedLabel(QLabel):
+    """Рядок, що не влазить, закінчується «…», а не обривається на півслові."""
+
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setPen(self.palette().windowText().color())
+        p.setFont(self.font())
+        fm = QFontMetrics(self.font())
+        r = self.contentsRect()
+        p.drawText(r, Qt.AlignLeft | Qt.AlignVCenter, fm.elidedText(self.text(), Qt.ElideRight, r.width()))
+        p.end()
 
 
 class CoverLabel(QLabel):
@@ -397,6 +410,43 @@ class TrackTable(QTableWidget):
             self.delete_pressed.emit()
             return
         super().keyPressEvent(e)
+
+
+class CurrentMark(QStyledItemDelegate):
+    """Рядок, що грає: у скіні «macOS» — заокруглена плашка кольору обкладинки на весь рядок,
+    у «Windows 11» — легка плашка й коротка вертикальна риска зліва."""
+
+    def __init__(self, win):
+        super().__init__(win.table)
+        self.win = win
+
+    def paint(self, p, opt, idx):
+        w = self.win
+        cur = idx.row() == w.current and w.skin in ("mac", "fluent") and hasattr(w, "_acc")
+        if cur:
+            vp = w.table.viewport().width()
+            r = opt.rect
+            a = QColor(w._acc)
+            if w.skin == "fluent":
+                a.setAlpha(46)
+            p.save()
+            p.setRenderHint(QPainter.Antialiasing)
+            p.setClipRect(r)
+            p.setPen(Qt.NoPen)
+            p.setBrush(a)
+            rad = 6 if w.skin == "mac" else 4
+            p.drawRoundedRect(QRectF(2, r.top() + 1, vp - 4, r.height() - 2), rad, rad)
+            p.restore()
+        super().paint(p, opt, idx)
+        if w.skin == "fluent" and idx.row() == w.current and idx.column() == 0:
+            r = opt.rect
+            p.save()
+            p.setRenderHint(QPainter.Antialiasing)
+            p.setPen(Qt.NoPen)
+            p.setBrush(QColor(w._acc))
+            h = min(16, r.height() - 8)
+            p.drawRoundedRect(QRectF(r.left() + 3, r.center().y() - h / 2 + 1, 3, h), 1.5, 1.5)
+            p.restore()
 
 
 class LibraryTree(QTreeWidget):
@@ -1177,6 +1227,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.remote = None              # пульт з телефона (RemoteServer), коли увімкнено
         self.remote_cfg = self.cfg.setdefault("remote", {})
         self.base = self.cfg.get("theme", "auto")
+        self.skin = self.cfg.get("skin") if self.cfg.get("skin") in skins.SKINS else "classic"
+        self.vibrancy = False
         self.view = self.cfg.get("view", "full") if self.cfg.get("view") in ("full", "compact") else "full"
         self.collapsed = bool(self.cfg.get("collapsed", False))
         self.on_top = bool(self.cfg.get("on_top", False))
@@ -1210,6 +1262,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if self._want_mica:
             self.setAttribute(Qt.WA_TranslucentBackground, True)
             self.setAttribute(Qt.WA_NoSystemBackground, True)
+        # macOS: прозорість вмикається одразу — тоді скін «macOS» перемикається без перезапуску;
+        # в інших скінах фон усе одно суцільний
+        if skins.vibrancy_supported():
+            self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setAcceptDrops(True)
         self.build_ui()
         self.build_actions()
@@ -1250,7 +1306,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.cfg.update(folders=self.lib.folders, playlist=self.playlist, current=self.current,
                         position=round(pos or 0, 1), volume=self.player_volume, volume_mode=self.volume_mode,
                         shuffle=self.shuffle, repeat=self.repeat, popups=self.popups, theme=self.base,
-                        view=self.view, collapsed=self.collapsed, on_top=self.on_top, lib_mode=self.lib_mode,
+                        skin=self.skin, view=self.view, collapsed=self.collapsed, on_top=self.on_top, lib_mode=self.lib_mode,
                         tab=self.tab, remaining=self.remaining, expanded_h=self._expanded_h,
                         minimize_to_tray=self.minimize_to_tray, replaygain=self.replaygain,
                         check_updates=self.check_updates, online_covers=self.online_covers,
@@ -1269,6 +1325,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         root.setObjectName("root")
         self.setCentralWidget(root)
         outer = QVBoxLayout(root)
+        self._outer = outer
         outer.setContentsMargins(8, 8, 8, 8)
         outer.setSpacing(6)
 
@@ -1301,11 +1358,12 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.vu.setFixedSize(112, 44)
         r1.addWidget(self.vu, 0, Qt.AlignVCenter)
         lv.addLayout(r1)
-        lv.addSpacing(6)
+        self._lcd_gap = QSpacerItem(0, 6)
+        lv.addSpacerItem(self._lcd_gap)
         # компактний вигляд: замість табло — назва великим шрифтом і рядок виконавця
         self.c_title = QLabel()
         self.c_title.setObjectName("bigtitle")
-        self.c_sub = QLabel()
+        self.c_sub = ElidedLabel()
         self.c_sub.setObjectName("sub")
         self.title = QLabel()
         self.title.setObjectName("title")
@@ -1317,8 +1375,22 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             w.setMinimumWidth(10)
             w.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
             lv.addWidget(w)
-        flags = QHBoxLayout()
+        self.flagw = QWidget()
+        flags = QHBoxLayout(self.flagw)
+        flags.setContentsMargins(0, 0, 0, 0)
         flags.setSpacing(14)
+        self._flags_l = flags
+        # іконки-перемикачі (скіни macOS і Windows, а також компактний вигляд у будь-якому скіні)
+        self.icon_flags = {}
+        for key, fn in (("shuffle", self.toggle_shuffle), ("repeat", self.cycle_repeat),
+                        ("popups", self.toggle_popups), ("remote", self.open_remote)):
+            b = QToolButton()
+            b.setObjectName("flagicon")
+            b.setCursor(Qt.PointingHandCursor)
+            b.setIconSize(QSize(14, 14))
+            b.clicked.connect(fn)
+            self.icon_flags[key] = b
+            flags.addWidget(b)
         self.f_shuffle = Clickable()
         self.f_shuffle.clicked.connect(self.toggle_shuffle)
         self.f_repeat = Clickable()
@@ -1339,16 +1411,23 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.f_update.hide()
         for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_sleep, self.f_remote, self.f_update):
             flags.addWidget(w)
-        flags.addStretch()
-        lv.addLayout(flags)
+        flags.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+        lv.addWidget(self.flagw)
         top.addWidget(self.lcd, 1)
-        self.mini_vu = LevelBars(12, 6)          # компактний вигляд: стовпчики праворуч від назви
+        self.mini_vu = LevelBars(12, 6)          # більше не показується: у компактному вигляді місце — назві
         self.mini_vu.setFixedSize(92, 40)
-        top.addWidget(self.mini_vu, 0, Qt.AlignVCenter)
+        self.mini_vu.hide()
+        self.tcl = QHBoxLayout()                 # компактний вигляд: кнопки в одному ряду з назвою
+        self.tcl.setSpacing(4)
+        top.addLayout(self.tcl)
         self.top_row = top
         cl.addLayout(top)
 
         sr = QHBoxLayout()
+        sr.setSpacing(6)
+        self.sr = sr
+        self.pos_lbl = QLabel("-:--")             # компактний вигляд: поточний час ліворуч від смуги
+        self.pos_lbl.setObjectName("dim")
         self.seek = SeekSlider()
         self.seek.setFixedHeight(16)
         self.seek.seek.connect(lambda f: self.spawn(self.seek_frac(f)))
@@ -1360,9 +1439,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
         tr = QHBoxLayout()
         tr.setSpacing(5)
+        self.tr = tr
         self.buttons = {}
         for key, glyph, tip, fn in (
                 ("prev", "prev", _("Попередній трек"), lambda: self.spawn(self.prev())),
+                ("toggle", "play", _("Грати / пауза"), lambda: self.spawn(self.toggle())),
                 ("play", "play", _("Грати"), lambda: self.spawn(self.play())),
                 ("pause", "pause", _("Пауза"), lambda: self.spawn(self.pause())),
                 ("stop", "stop", _("Стоп"), lambda: self.spawn(self.stop())),
@@ -1396,6 +1477,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.collapse_btn.setCursor(Qt.PointingHandCursor)
         self.collapse_btn.clicked.connect(self.toggle_collapsed)
         tr.addWidget(self.collapse_btn)
+        self.vol_icon = QToolButton()
+        self.vol_icon.setObjectName("plain")
+        self.vol_icon.setIconSize(QSize(14, 14))
+        self.vol_icon.setToolTip(_("Гучність"))
+        self.vol_icon.clicked.connect(lambda: self.spawn(self.set_volume(0 if self.volume else 50)))
         self.vol_label = Clickable(_("гучн"))
         self.vol_label.setObjectName("dim")
         self.vol_label.setToolTip(_("Гучність:") + " " + _("як у системі (клавіші гучності керують і плеєром)"))
@@ -1415,6 +1501,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         tr.addWidget(self.vol_pct)
         cl.addLayout(tr)
         outer.addWidget(self.card)
+        self._card_widgets = [self.seek, self.time, self.pos_lbl, self.pin, self.collapse_btn, self.vol_icon,
+                              self.vol_label, self.vol, self.vol_pct] + list(self.buttons.values())
 
         # ── список і медіатека ──
         self.lists = QFrame()
@@ -1426,11 +1514,17 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         head.setSpacing(4)
         self.tab_pl = QPushButton(_("Список відтворення"))
         self.tab_lib = QPushButton(_("Медіатека"))
+        self.seg = QFrame()
+        self.seg.setObjectName("seg")
+        sl = QHBoxLayout(self.seg)
+        sl.setContentsMargins(2, 2, 2, 2)
+        sl.setSpacing(2)
         for b, t in ((self.tab_pl, "playlist"), (self.tab_lib, "library")):
             b.setObjectName("tab")
             b.setCursor(Qt.PointingHandCursor)
             b.clicked.connect(lambda _c=False, t=t: self.set_tab(t))
-            head.addWidget(b)
+            sl.addWidget(b)
+        head.addWidget(self.seg)
         head.addSpacing(8)
         self.search = QLineEdit()
         self.search.setPlaceholderText(_("Знайти…"))
@@ -1453,6 +1547,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         pv = QVBoxLayout(pl)
         pv.setContentsMargins(0, 0, 0, 0)
         self.table = TrackTable()
+        self.table.setItemDelegate(CurrentMark(self))
         self.table.activated_row.connect(lambda r: self.spawn(self.play_index(r)))
         self.table.delete_pressed.connect(self.remove_selected)
         self.table.hover_changed.connect(lambda a, b: [self._heart_cell(r) for r in (a, b)])
@@ -1557,6 +1652,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.a_top = act(_("Поверх усіх вікон"), self.toggle_on_top, ["Ctrl+T"], True)
         self.a_popups = act(_("Сповіщення про трек"), self.toggle_popups, ["N"], True)
         a_theme = act(_("Тема: авто → світла → темна"), self.cycle_theme, ["T"])
+        act("skin", self.cycle_skin, ["Shift+T"])
         self.a_tray = act(_("Згортати в трей"), self.toggle_minimize_to_tray, None, True)
         a_gh = act(_("Платівка на GitHub"), lambda: self.open_url(GITHUB_URL))
         a_bug = act(_("Повідомити про помилку"), lambda: self.open_url(ISSUES_URL))
@@ -1583,6 +1679,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         m_sleep, self.a_sleep = group(_("Таймер сну"), [(None, _("Вимкнено"))]
                                       + [(n, _("Через {n} хв").format(n=n)) for n in SLEEP_CHOICES]
                                       + [("track", _("Після цього треку"))], self.choose_sleep)
+        m_skin, self.a_skin = group(_("Скін"), list(self.skin_names().items()), self.set_skin)
         m_rg, self.a_rg = group(_("Вирівнювання гучності (ReplayGain)"),
                                 [("off", _("Вимкнено")), ("track", _("За треком")), ("album", _("За альбомом"))],
                                 self.choose_replaygain)
@@ -1605,7 +1702,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
                                  None, a_qnext, a_qclear, None, m_sleep, m_rg, None, a_remote]),
             (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
-            (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, a_theme, self.a_popups, a_lang, None,
+            (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, m_skin, a_theme, self.a_popups, a_lang, None,
                            self.a_online, a_findcover, None, a_find]
              + ([self.a_tray] if not sysdeps.IS_MAC else [])),
             (_("Довідка"), [a_gh, a_bug, None, a_upd, self.a_autoupd, None, a_about]),
@@ -1644,7 +1741,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.vu.color = self.mini_vu.color = QColor(acc)
         if self.mica:
             apply_mica(self, dark)
-        glass = self.mica
+        sk = self.skin
+        if skins.vibrancy_supported() and (sk == "mac" or self.vibrancy):
+            self.vibrancy = skins.set_vibrancy(self, sk == "mac", dark)
+        glass = self.mica or self.vibrancy
         fg = "#F2F3F5" if dark else "#1A1D24"
         sub = "rgba(255,255,255,0.58)" if dark else "rgba(0,0,0,0.52)"
         a = QColor(acc)
@@ -1658,9 +1758,19 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             c = QColor(blend(base, k))
             return f"rgba({c.red()},{c.green()},{c.blue()},{alpha})"
         # усе вікно, а не лише табло, підфарбоване кольором обкладинки
-        if glass:
+        # колір обкладинки помітний у кожному скіні: ним підфарбоване все вікно й картки
+        if self.vibrancy:          # macOS: під цим шаром — розмиті шпалери
+            bg = tint("#1E1E20" if dark else "#F4F2EC", .30, .42 if dark else .50)
+            card = tint("#2A2A2E" if dark else "#FFFDF6", .14, .34 if dark else .50)
+        elif glass:                # Windows 11: Mica
             bg = tint("#202020" if dark else "#F3F3F3", .25, .18 if dark else .22)
             card = tint("#2B2B2B" if dark else "#FFFFFF", .10, .38 if dark else .55)
+        elif sk == "mac":
+            bg = blend("#1D1E21" if dark else "#ECEAE3", .14 if dark else .16)
+            card = blend("#26282C" if dark else "#F9F7F1", .08 if dark else .07)
+        elif sk == "fluent":
+            bg = blend("#202020" if dark else "#EDEDEA", .12 if dark else .13)
+            card = blend("#2C2C2C" if dark else "#FBFBF9", .06 if dark else .06)
         else:
             bg = blend("#16181E" if dark else "#ECEFF4", .10 if dark else .08)
             card = blend("#1E2129" if dark else "#F7F8FB", .06 if dark else .045)
@@ -1748,8 +1858,16 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             QDialog, QMessageBox {{ background: {menu_bg}; }}
             QListWidget {{ background: {card}; border: 1px solid {stroke}; border-radius: 6px; }}
             QToolTip {{ background: {menu_bg}; color: {fg}; border: 1px solid {stroke}; }}
-        """)
-        self._acc, self._sec, self._sub = acc, sec, sub
+            QToolButton#plain {{ background: transparent; border: none; padding: 0; }}
+            QToolButton#flagicon {{ background: transparent; border: none; border-radius: 5px; padding: 0; }}
+            QToolButton#flagicon:hover {{ background: {btn}; }}
+            #seg {{ background: transparent; }}
+        """ + self._skin_qss(dark, acc, fg, sub, card, stroke, hl_bg, btn, btn_h, groove))
+        a_h = QColor(acc).lighter(112) if not dark else QColor(acc).lighter(118)
+        self._acc, self._sec, self._sub, self._acc_h = acc, sec, sub, a_h.name()
+        self._sub_hex = "#9A9DA4" if dark else "#6E7178"
+        self._on_acc = "#101215" if dark else "#FFFFFF"
+        self._size_buttons()
         self._paint_icons()
         self.update_flags()
         self.set_tab(self.tab, save=False)
@@ -1759,12 +1877,100 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.cover.set_cover(placeholder_cover(acc, dark))
         self.clock.update()
 
+    def _skin_qss(self, dark, acc, fg, sub, card, stroke, hl_bg, btn, btn_h, groove) -> str:
+        """Що змінює скін поверх спільного оформлення: кнопки, вкладки, пошук, повзунки."""
+        a = QColor(acc)
+        rgba = lambda k: f"rgba({a.red()},{a.green()},{a.blue()},{k})"
+        if self.skin == "mac":
+            seg_on = "#5C5F66" if dark else "#FFFFFF"
+            return f"""
+            #card, #listcard {{ border-radius: 12px; border: 1px solid {stroke}; }}
+            QToolButton#tbtn {{ background: transparent; border-radius: 6px; }}
+            QToolButton#tbtn:hover {{ background: {btn}; }}
+            QToolButton#tbtn:checked {{ background: {rgba(.18)}; }}
+            QToolButton#flagicon[on="true"] {{ background: {rgba(.18)}; }}
+            #seg {{ background: {'rgba(255,255,255,0.08)' if dark else 'rgba(0,0,0,0.06)'}; border-radius: 7px; }}
+            QPushButton#tab {{ border-radius: 5px; padding: 2px 10px; color: {fg}; font-weight: 400; }}
+            QPushButton#tab:hover {{ background: transparent; }}
+            QPushButton#tab[on="true"] {{ background: {seg_on}; color: {fg}; font-weight: 500;
+                               border: 1px solid {'rgba(255,255,255,0.06)' if dark else 'rgba(0,0,0,0.08)'}; }}
+            QLineEdit {{ border-radius: 6px; padding: 3px 8px; font-size: 12px;
+                         background: {'rgba(255,255,255,0.07)' if dark else 'rgba(0,0,0,0.05)'}; }}
+            QSlider::groove:horizontal {{ background: {'rgba(255,255,255,0.14)' if dark else 'rgba(0,0,0,0.10)'}; }}
+            QSlider::handle:horizontal {{ width: 16px; height: 16px; margin: -6px 0; border-radius: 8px;
+                               background: {'#C9CBD0' if dark else 'white'};
+                               border: 1px solid {'rgba(0,0,0,0.35)' if dark else 'rgba(0,0,0,0.18)'}; }}
+            QPushButton#small {{ background: {'rgba(255,255,255,0.10)' if dark else 'rgba(255,255,255,0.75)'};
+                               border: 1px solid {'rgba(255,255,255,0.10)' if dark else 'rgba(0,0,0,0.14)'};
+                               border-radius: 5px; padding: 2px 9px; font-size: 11px; }}
+            QPushButton#primary {{ border-radius: 5px; }}
+            QMenu {{ border-radius: 8px; }}
+            """
+        if self.skin == "fluent":
+            ctl = "rgba(255,255,255,0.06)" if dark else "rgba(255,255,255,0.72)"
+            ctl_b = "rgba(255,255,255,0.09)" if dark else "rgba(0,0,0,0.08)"
+            ctl_bb = "rgba(255,255,255,0.05)" if dark else "rgba(0,0,0,0.18)"
+            return f"""
+            #card, #listcard {{ border-radius: 8px; border: 1px solid {stroke}; }}
+            QToolButton#tbtn {{ background: transparent; border-radius: 4px; }}
+            QToolButton#tbtn:hover {{ background: {btn}; }}
+            QToolButton#tbtn:checked {{ background: {rgba(.22)}; }}
+            QToolButton#flagicon {{ background: {ctl}; border: 1px solid {ctl_b}; border-bottom-color: {ctl_bb};
+                               border-radius: 4px; }}
+            QToolButton#flagicon:hover {{ background: {btn_h}; }}
+            QToolButton#flagicon[on="true"] {{ background: {acc}; border: 1px solid {acc}; }}
+            QPushButton#tab {{ border-radius: 0; padding: 4px 8px 2px; color: {sub}; font-size: 13px;
+                               border-bottom: 3px solid transparent; background: transparent; }}
+            QPushButton#tab:hover {{ background: transparent; color: {fg}; }}
+            QPushButton#tab[on="true"] {{ background: transparent; color: {fg}; font-weight: 600;
+                               border-bottom: 3px solid {acc}; }}
+            QLineEdit {{ border-radius: 4px; padding: 4px 8px; font-size: 12px; background: {ctl};
+                         border: 1px solid {ctl_b}; border-bottom: 1px solid {'rgba(255,255,255,0.5)' if dark else 'rgba(0,0,0,0.45)'}; }}
+            QLineEdit:focus {{ border-bottom: 2px solid {acc}; }}
+            QSlider::groove:horizontal {{ background: {'rgba(255,255,255,0.5)' if dark else 'rgba(0,0,0,0.42)'}; }}
+            QSlider::handle:horizontal {{ width: 18px; height: 18px; margin: -7px 0; border-radius: 9px;
+                               border: 1px solid {'rgba(0,0,0,0.3)' if dark else 'rgba(0,0,0,0.12)'};
+                               background: qradialgradient(cx:0.5, cy:0.5, radius:0.5, fx:0.5, fy:0.5,
+                                   stop:0 {acc}, stop:0.52 {acc}, stop:0.6 {'#454545' if dark else 'white'},
+                                   stop:1 {'#454545' if dark else 'white'}); }}
+            QPushButton#small {{ background: {ctl}; border: 1px solid {ctl_b}; border-bottom-color: {ctl_bb};
+                               border-radius: 4px; padding: 3px 10px; font-size: 12px; }}
+            QPushButton#primary {{ border-radius: 4px; padding: 3px 10px; font-size: 12px; }}
+            QMenu {{ border-radius: 8px; }}
+            QMenu::item {{ border-radius: 4px; }}
+            QTableWidget::item {{ padding: 0 3px 0 9px; }}
+            """
+        return ""
+
+    def _icon(self, kind: str, color: str):
+        fam = self.skin if self.skin != "classic" else None
+        if fam:
+            ic = skins.line_icon(kind, color, fam)
+            if ic is not None:
+                return ic
+        if kind in ("shuffle", "repeat", "repeat1", "bell", "bell_off", "phone", "speaker", "mute"):
+            return skins.line_icon(kind, color, "mac") or QIcon()
+        return glyph_icon(kind, color)
+
     def _paint_icons(self):
         fg = getattr(self, "_fg", "#1A1D24")
         for b in list(self.buttons.values()) + [self.pin, self.collapse_btn, self.menu_btn]:
             g = b.property("glyph")
             if g:
-                b.setIcon(glyph_icon(g, fg))
+                b.setIcon(self._icon(g, fg))
+        self._paint_toggle()
+        sub = getattr(self, "_sub_hex", "#6E7178")
+        self.vol_icon.setIcon(self._icon("mute" if self.sys_muted or self.volume == 0 else "speaker",
+                                         fg if self.skin == "fluent" else sub))
+
+    def _paint_toggle(self):
+        if not hasattr(self, "_fg"):
+            return
+        playing = getattr(self, "_playing", False)
+        col = self._on_acc if self.skin == "fluent" else self._fg
+        b = self.buttons["toggle"]
+        b.setIcon(self._icon("pause" if playing else "play", col))
+        b.setToolTip(_("Пауза") if playing else _("Грати"))
 
     def cycle_theme(self):
         self.base = {"auto": "light", "light": "dark", "dark": "auto"}.get(self.base, "auto")
@@ -1774,6 +1980,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def showEvent(self, e):
         super().showEvent(e)
+        if self.skin == "mac" and skins.vibrancy_supported() and not self.vibrancy:
+            QTimer.singleShot(0, self.apply_theme)      # NSWindow з'являється лише після показу
         if self._want_mica and not self.mica:
             self.mica = apply_mica(self, self.is_dark())
             log(f"mica: {self.mica}")
@@ -1791,36 +1999,131 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         super().changeEvent(e)
 
     # ───────────── вигляд ─────────────
-    def apply_view(self, initial=False):
-        full = self.view == "full" and not self.collapsed
-        self.cover.set_size(128 if full else 64)
+    def is_full(self) -> bool:
+        return self.view == "full" and not self.collapsed
+
+    def apply_view(self, initial=False, expand=False):
+        """Повний вигляд, компактний (два ряди над списком) чи міні-плеєр (лише ці два ряди).
+
+        expand — вікно щойно розгорнули з міні-плеєра: повертаємо йому колишню висоту.
+        """
+        full = self.is_full()
+        self.cover.set_size(128 if full else 44)
         for w in (self.clock, self.vu, self.state, self.title, self.info):
             w.setVisible(full)
-        for w in (self.c_title, self.c_sub, self.mini_vu):
+        for w in (self.c_title, self.c_sub):
             w.setVisible(not full)
         self.lists.setVisible(not self.collapsed)
-        self.pin.setVisible(self.collapsed or self.view == "compact")
-        self.buttons["eject"].setVisible(not self.collapsed)
         self.collapse_btn.setProperty("glyph", "down" if self.collapsed else "up")
-        self._paint_icons()
         self.collapse_btn.setToolTip(_("Розгорнути") if self.collapsed else _("Міні-плеєр"))
         self.a_view.setChecked(self.view == "compact")
         self.a_mini.setChecked(self.collapsed)
+        self.tab_pl.setText(_("Список відтворення") if full else _("Список"))
+        self._layout_card(full)
+        self._lcd_gap.changeSize(0, 6 if full else 0)
         self.lcd.layout().setContentsMargins(*(10, 6, 10, 6) if full else (0, 0, 0, 0))
-        self.lcd.layout().setSpacing(2 if full else 1)
+        self.lcd.layout().setSpacing(2 if full else 0)
+        self.lcd.layout().invalidate()
         self.lcd.setProperty("flat", not full)
         self.lcd.style().unpolish(self.lcd)
         self.lcd.style().polish(self.lcd)
-        self.card.layout().setSpacing(6 if full else 3)
-        self.card.layout().setContentsMargins(*(10, 10, 10, 8) if full else (8, 8, 8, 6))
-        self.top_row.setSpacing(10)
+        self.card.layout().setSpacing(6 if full else 5)
+        self.card.layout().setContentsMargins(*(10, 10, 10, 8) if full else (8, 6, 8, 6))
+        self._outer.setContentsMargins(*(8, 8, 8, 8) if full else (6, 6, 6, 6))
+        self.top_row.setSpacing(10 if full else 8)
+        self._size_buttons()
+        self._paint_icons()
+        self.update_flags()
         if self.collapsed:
             self.setMinimumHeight(0)
             QTimer.singleShot(0, self._fit_mini)
-        elif not initial:
+        elif expand and not initial:
             self.setMaximumHeight(16777215)
-            self.resize(self.width(), max(self._expanded_h, 520))
+            self.resize(self.width(), max(self._expanded_h, 420))
+        else:
+            self.setMaximumHeight(16777215)
         self.update_now_playing()
+
+    def _layout_card(self, full: bool):
+        """Розкласти кнопки, смугу й гучність по рядах картки — для повного чи компактного вигляду."""
+        for lay in (self.tr, self.sr, self.tcl):
+            while lay.count():
+                lay.takeAt(0)          # віджети лишаються в картці, порожні проміжки — зникають
+        lv = self.lcd.layout()
+        lv.removeWidget(self.flagw)
+        b = self.buttons
+        sys_skin = self.skin != "classic"
+        shown = set()
+
+        def add(lay, *ws, stretch=0):
+            for w in ws:
+                lay.addWidget(w, stretch)
+                shown.add(w)
+        if full:
+            add(self.tr, b["prev"], *((b["toggle"],) if sys_skin else (b["play"], b["pause"])), b["stop"], b["next"],
+                b["eject"])
+            self.tr.addStretch()
+            add(self.tr, self.collapse_btn)
+            self.tr.addSpacing(6)
+            add(self.tr, self.vol_icon if sys_skin else self.vol_label)
+            add(self.tr, self.vol, self.vol_pct)
+            add(self.sr, self.seek, stretch=1)
+            add(self.sr, self.time)
+            lv.addWidget(self.flagw)
+        else:
+            # два ряди: [обкладинка · назва · ⏮ ⏯ ⏭ · шпилька · згорнути] і [перемикачі · час ━━ час · гучність]
+            add(self.tcl, b["prev"], b["toggle"], b["next"])
+            self.tcl.addSpacing(2)
+            add(self.tcl, self.pin, self.collapse_btn)
+            add(self.sr, self.flagw)
+            self.sr.addSpacing(2)
+            add(self.sr, self.pos_lbl)
+            add(self.sr, self.seek, stretch=1)
+            add(self.sr, self.time)
+            self.sr.addSpacing(4)
+            add(self.sr, self.vol_icon, self.vol)
+        for w in self._card_widgets:
+            w.setVisible(w in shown)
+        self.flagw.show()
+
+    def _size_buttons(self):
+        """Розміри кнопок залежать від скіна: у Windows вони більші (так велить Fluent), у macOS — без рамок."""
+        full = self.is_full()
+        sk = self.skin
+        if sk == "mac":
+            tb, ic, sm, fl, rail = ((34, 28), 15, (26, 26), (28, 24), 20) if full else ((28, 26), 14, (24, 26), (22, 20), 20)
+            tog = (40, 30) if full else (30, 26)
+        elif sk == "fluent":
+            tb, ic, sm, fl, rail = ((36, 36), 16, (32, 32), (32, 28), 22) if full else ((30, 32), 14, (28, 30), (24, 22), 22)
+            tog = (44, 44) if full else (34, 34)
+        else:
+            tb, ic, sm, fl, rail = ((30, 22), 12, (26, 22), (20, 20), 16) if full else ((28, 24), 12, (22, 24), (20, 20), 16)
+            tog = tb if full else (32, 24)
+        for k, btn in self.buttons.items():
+            btn.setFixedSize(*(tog if k == "toggle" else tb))
+            isz = ic + (2 if k == "toggle" and sk != "classic" else 0)
+            btn.setIconSize(QSize(isz, isz))
+        for btn in (self.pin, self.collapse_btn):
+            btn.setFixedSize(*sm)
+            btn.setIconSize(QSize(12 if sk == "classic" else 14, 12 if sk == "classic" else 14))
+        for btn in self.icon_flags.values():
+            btn.setFixedSize(*fl)
+            btn.setIconSize(QSize(14, 14))
+        self.vol_icon.setFixedSize(20, 20)
+        for sl in (self.seek, self.vol):
+            sl.setFixedHeight(rail)
+        self.vol.setFixedWidth(90 if full else 56)
+        tbl = getattr(self, "table", None)
+        if tbl is not None:
+            tbl.verticalHeader().setDefaultSectionSize({"mac": 26, "fluent": 30}.get(sk, 22))
+        # Windows 11: «грати/пауза» — кругла кнопка кольору обкладинки
+        t = self.buttons["toggle"]
+        if sk == "fluent" and hasattr(self, "_acc"):
+            r = tog[0] // 2
+            t.setStyleSheet(f"QToolButton {{ background: {self._acc}; border: none; border-radius: {r}px; }}"
+                            f"QToolButton:hover {{ background: {self._acc_h}; }}")
+        else:
+            t.setStyleSheet("")
 
     def _fit_mini(self):
         self.layout().activate()
@@ -1830,16 +2133,35 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def toggle_view(self):
         self.view = "compact" if self.view == "full" else "full"
+        was = self.collapsed
         if self.collapsed:
             self.collapsed = False
-        self.apply_view()
+        self.apply_view(expand=was)
         self.save_cfg()
+
+    def set_skin(self, skin: str, toast=True):
+        if skin not in skins.SKINS:
+            return
+        self.skin = skin
+        self.apply_theme()
+        self.apply_view()
+        if toast:
+            self.toast(_("Скін: {name}").format(name=self.skin_names()[skin]))
+        self.save_cfg()
+
+    def cycle_skin(self):
+        i = skins.SKINS.index(self.skin)
+        self.set_skin(skins.SKINS[(i + 1) % len(skins.SKINS)])
+
+    @staticmethod
+    def skin_names() -> dict:
+        return {"classic": _("Платівка (класичний)"), "mac": "macOS", "fluent": "Windows 11"}
 
     def toggle_collapsed(self):
         if not self.collapsed:
             self._expanded_h = self.height()
         self.collapsed = not self.collapsed
-        self.apply_view()
+        self.apply_view(expand=not self.collapsed)
         self.save_cfg()
 
     def toggle_on_top(self):
@@ -2094,6 +2416,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.vol.setValue(self.volume)
         self._vol_sync = False
         self.vol_pct.setText(_("без звуку ").strip() if self.sys_muted else f"{self.volume}%")
+        self.vol.setToolTip(_("Гучність") + f": {self.vol_pct.text()}")
+        if hasattr(self, "_fg"):
+            self.vol_icon.setIcon(self._icon("mute" if self.sys_muted or self.volume == 0 else "speaker",
+                                             self._fg if self.skin == "fluent" else self._sub_hex))
 
     def _init_sysvol(self):
         def work():
@@ -2146,10 +2472,15 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.clock.set_text("-" + fmt_time(max(0, dur - pos)))
         else:
             self.clock.set_text(fmt_time(pos) if p.active else "-:--")
-        self.time.setText(f"{fmt_time(pos)} / {fmt_time(dur)}" if self.view == "compact" or self.collapsed
-                          else fmt_time(dur) if dur else "-:--")
+        self.time.setText(fmt_time(dur) if dur else "-:--")
+        if not self.is_full():
+            self.pos_lbl.setText(fmt_time(pos) if p.active else "-:--")
         st = "▶" if p.active and not p.paused else ("❚❚" if p.active else "■")
         self.state.setText(st)
+        playing = bool(p.active and not p.paused)
+        if playing != getattr(self, "_playing", False):
+            self._playing = playing
+            self._paint_toggle()
         self.setWindowTitle(f"{self._now_title} — {APP_NAME}" if p.active and self._now_title else APP_NAME)
         if self.tray is not None:
             self.tray.setToolTip(f"{APP_NAME}\n{self._now_title}" if self._now_title else APP_NAME)
@@ -2222,7 +2553,29 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         on = bool(self.remote and self.remote.running)
         self.f_remote.setText(_("пульт"))
         self.f_remote.setToolTip(_("Пульт з телефона увімкнено — клацніть, щоб відкрити"))
-        self.f_remote.setVisible(on)
+        # перемикачі словами (класичний повний вигляд) чи іконками (скіни macOS/Windows і компактний вигляд)
+        icons = self.skin != "classic" or not self.is_full()
+        for w in (self.f_shuffle, self.f_repeat, self.f_popups):
+            w.setVisible(not icons)
+        self.f_remote.setVisible(on and not icons)
+        self._flags_l.setSpacing(4 if icons else 14)
+        on_col = self._on_acc if self.skin == "fluent" else self._acc
+        rep_txt = {"off": _("повтор: вимк"), "all": _("повтор: все"), "one": _("повтор: один")}[self.repeat]
+        for key, state, kind, tip in (
+                ("shuffle", self.shuffle, "shuffle", _("Перемішувати") + (" ✓" if self.shuffle else "")),
+                ("repeat", self.repeat != "off", "repeat1" if self.repeat == "one" else "repeat", rep_txt),
+                ("popups", self.popups, "bell" if self.popups else "bell_off",
+                 _("сповіщ: {os}").format(os=sysdeps.OS_NAME) if self.popups else _("сповіщ: вимк")),
+                ("remote", True, "phone", _("Пульт з телефона увімкнено — клацніть, щоб відкрити"))):
+            b = self.icon_flags[key]
+            b.setVisible(icons and (on if key == "remote" else True))
+            b.setProperty("on", bool(state))
+            b.setIcon(self._icon(kind, on_col if state else self._sub_hex))
+            b.setToolTip(tip)
+            b.style().unpolish(b)
+            b.style().polish(b)
+        for key, a in getattr(self, "a_skin", {}).items():
+            a.setChecked(key == self.skin)
         u = self.update_info
         self.f_update.setVisible(bool(u))
         if u:
@@ -2625,26 +2978,36 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if not hasattr(self, "_acc"):
             return
         sub = QColor(self._sub) if not self._sub.startswith("rgba") else QColor(128, 128, 128)
+        sk = self.skin
+        a = QColor(self._acc)
+        # як позначено рядок, що грає: класичний — жирний текст кольору обкладинки,
+        # macOS — суцільна плашка цього кольору, Windows 11 — легка плашка й риска зліва
+        cur_fg = QColor(self._on_acc) if sk == "mac" else QColor(self._fg) if sk == "fluent" else a
         for i in range(self.table.rowCount()):
             cur = i == self.current
-            for c in range(3):           # колонка 3 — сердечко, його колір не чіпаємо
+            for c in range(4):           # колонка 3 — сердечко: колір не чіпаємо, лише тло
                 it = self.table.item(i, c)
                 if it is None:
                     continue
+                if c == 3:
+                    continue
                 f = QFont(self.table.font())
-                f.setBold(cur)
+                f.setBold(cur and sk != "mac")
+                if cur and sk == "mac":
+                    f.setWeight(QFont.DemiBold)
                 it.setFont(f)
                 if cur:
-                    it.setForeground(QColor(self._acc))
+                    it.setForeground(cur_fg)
                 else:
                     it.setForeground(sub if c != 1 else self.palette().text().color())
             num = self.table.item(i, 0)
             if num is not None:
                 k = 0 if cur or i >= len(self.playlist) else self.queue_pos(self.playlist[i])
-                num.setText(("▶ " if cur else f"→{k} " if k else "") + f"{i + 1}.")
+                num.setText(("▶ " if cur and sk != "fluent" else f"→{k} " if k else "") + f"{i + 1}.")
                 num.setToolTip(_("У черзі: {k}-й").format(k=k) if k else "")
                 if k:
                     num.setForeground(QColor(self._acc))
+        self.table.viewport().update()
         if 0 <= self.current < self.table.rowCount():
             self.table.scrollToItem(self.table.item(self.current, 0), QAbstractItemView.EnsureVisible)
 

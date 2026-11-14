@@ -33,6 +33,19 @@ def test_desktop_window_views():
         win.toggle_view()
         assert win.view == "full" and win.clock.isVisible()
         win.cycle_theme()
+        # скіни перемикаються на льоту; у компактному вигляді — одна кнопка «грати/пауза»
+        for sk in ("mac", "fluent", "classic"):
+            win.set_skin(sk, toast=False)
+            assert win.skin == sk and win.a_skin[sk].isChecked()
+            win.toggle_view()
+            assert win.buttons["toggle"].isVisible() and not win.buttons["play"].isVisible()
+            assert win.icon_flags["shuffle"].isVisible() and not win.f_shuffle.isVisible()
+            win.toggle_view()
+            assert win.buttons["play"].isVisible() == (sk == "classic")
+        h = win.height()
+        win.toggle_view()
+        win.toggle_view()
+        assert win.height() == h           # перемикання вигляду не розтягує вікно
         win.search.setText("b.mp3")
         win.set_tab("playlist")
         win.apply_filter("b")

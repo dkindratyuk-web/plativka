@@ -90,6 +90,11 @@ h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: .6em; }
 .rows li:last-child { border-bottom: 1px solid var(--line); }
 /* два стовпці: текст і список */
 .split { display: grid; grid-template-columns: 5fr 7fr; gap: 56px; align-items: start; }
+.skins-shot { margin: 28px 0 0; }
+.skins-shot img, .skins-mini img { width: 100%; height: auto; display: block; }
+.skins-mini { margin-top: 36px; align-items: center; }
+.skins-mini figure { margin: 0; max-width: 460px; justify-self: end; width: 100%; }
+.soon { font-weight: 500; }
 .split-rev .split-text { order: 2; }
 .split .sub { margin-bottom: 18px; }
 .aside { color: var(--muted); font-size: 1rem; line-height: 1.65; margin: 0 0 14px; max-width: 34em; }

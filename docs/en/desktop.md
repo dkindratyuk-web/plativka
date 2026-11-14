@@ -17,13 +17,34 @@ Almost everything is clickable: the switches toggle, a click on the seek bar jum
 
 **Colours**: the clock, the visualisation, the window background, the panels and the highlighted track take their colour from the album cover. **T** switches the theme: as in the system → light → dark. On Windows 11 the window has the translucent Mica background, tinted by the cover.
 
+## Skins
+
+*Coming in version 1.6.*
+
+Plativka has three skins: **Plativka** (its own look), **macOS** and **Windows 11**. The layout is the same in all three — the cover, the clock, the switches, the buttons and the playlist stay where they are; what changes is how the controls look:
+
+| | Plativka | macOS | Windows 11 |
+|---|---|---|---|
+| Buttons | small grey squares | borderless, SF Symbols-style icons | Fluent icons, a round **play/pause** button in the cover colour |
+| Shuffle · repeat · notifications | words | icons, the active ones on a light cover-coloured background | toggle buttons, the active ones filled with the cover colour |
+| Sliders | thin, with a ring | thin, with a white knob | Fluent, with a dot in the cover colour |
+| Tabs and search | flat | a segmented control and a rounded search field | an underline under the active tab |
+| The track that is playing | bold, in the cover colour | a rounded bar in the cover colour | a light bar and a short mark on the left |
+| Translucency | — | on a Mac the desktop shows through, blurred | Mica on Windows 11 |
+
+The colour from the album cover works in every skin: the window, the panels, the clock and the playing track are tinted with it.
+
+Switch skins in **☰ → View → Skin** (on a Mac: the **View** menu) or press **Shift+T**. The window changes at once, without a restart; the skin is remembered. Any skin works on any system: the macOS skin on Windows or Linux just has a solid background instead of the blur.
+
 ## Three sizes
 
 | | How | What you see |
 |---|---|---|
 | **Full view** | default, **W** to return | the large cover, the big clock, the playlist and library below |
-| **Compact view** | **W** or a click on the cover | a small cover, the title in large type, "artist — album · year", the visualisation next to it |
-| **Mini player** | **E** or the **▴** button | only the player strip — the window shrinks to it |
+| **Compact view** | **W** or a click on the cover | two rows above the playlist: the cover, the title and ⏮ ⏯ ⏭; then shuffle · repeat · notifications, the seek bar with the time and the volume |
+| **Mini player** | **E** or the **▴** button | only those two rows — the window shrinks to them |
+
+Since version 1.6 the compact view and the mini player are smaller: one **play/pause** button instead of two, the switches as icons, the volume without the label (the percentage is in the tooltip). **Stop** and **Add folder** are in the menu and on the keys (**V**, **L**).
 
 In the compact view and the mini player the **📌** button (or **Ctrl+T**) keeps the window on top of all others — handy for a mini player in a corner of the screen. **E** or **▾** expands the window back to its previous height; clicking a tab does too. The view, the window size and position are remembered.
 

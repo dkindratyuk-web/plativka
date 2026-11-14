@@ -50,8 +50,11 @@ T = {
              "The clock, the level meter, the window and the playlist take their colour "
              "from the album art and change with every album. Light, dark or system theme."),
             ("sizes", "Three sizes",
-             "The full Winamp view, a compact view with large type, and a mini player that "
-             "can stay on top of all windows."),
+             "The full Winamp view, a compact view in two rows above the playlist, and a mini player "
+             "small enough for a corner of the screen, on top of all windows."),
+            ("skins", "Three skins",
+             "Plativka's own look, macOS or Windows 11: native-style buttons, sliders and "
+             "translucency, the same layout. Switch any time, no restart."),
             ("library", "Playlist and library",
              "Your library by artist and album or by folder, instant search, drag folders "
              "into the window, play a whole album with a double-click."),
@@ -90,6 +93,16 @@ T = {
         "mini": [("desk-mac-en-mini.png", "Mini player, macOS"),
                  ("desk-mac-en-mini-dark.png", "Mini player, dark theme, macOS")],
         "mini_cap": "The mini player: just the player strip, pinned above other windows.",
+        "sk_h": "Three skins, one Plativka",
+        "sk_p": "Choose how the window looks: Plativka's own style, macOS or Windows 11. Everything stays where it "
+                "was; only the buttons, sliders, tabs and translucency change. The colour still comes from the album "
+                "cover in every skin.",
+        "sk_alt": ["Plativka, macOS and Windows 11 skins with the same song", "Mini player in the three skins"],
+        "sk_how": "<b>☰ → View → Skin</b> (on a Mac: the View menu) or <b>Shift+T</b>. It switches at once, without a "
+                  "restart. On macOS the macOS skin blurs the desktop behind the window; on Windows 11 every skin "
+                  "has the Mica background.",
+        "sk_soon": "Coming in version 1.6.",
+        "sk_more": "More about skins",
         "fav_h": "Favorites that don't get lost",
         "fav_p": "Listening to a long playlist? Tap the heart on the songs you like, then play only them, "
                  "from all your folders and albums at once.",
@@ -196,8 +209,11 @@ T = {
              "Годинник, індикатор рівня, вікно й список треків беруть колір з обкладинки "
              "й змінюються з кожним альбомом. Світла, темна або системна тема."),
             ("sizes", "Три розміри",
-             "Повний вигляд як у Winamp, компактний з великою назвою треку і міні-плеєр, "
-             "який може бути поверх усіх вікон."),
+             "Повний вигляд як у Winamp, компактний у два ряди над списком і міні-плеєр, "
+             "що вміщається в куток екрана й може бути поверх усіх вікон."),
+            ("skins", "Три скіни",
+             "Власний вигляд Платівки, macOS або Windows 11: кнопки, повзунки й прозорість як у "
+             "системі, розташування те саме. Перемикається будь-коли, без перезапуску."),
             ("library", "Плейлист і бібліотека",
              "Бібліотека за виконавцями й альбомами або за теками, миттєвий пошук, теки "
              "можна просто перетягнути у вікно, подвійний клік грає весь альбом."),
@@ -236,6 +252,15 @@ T = {
         "mini": [("desk-mac-uk-mini-dark.png", "Міні-плеєр, темна тема, macOS"),
                  ("desk-linux-uk-mini.png", "Міні-плеєр, Kubuntu")],
         "mini_cap": "Міні-плеєр: лише смужка керування, закріплена поверх інших вікон.",
+        "sk_h": "Три скіни — одна Платівка",
+        "sk_p": "Оберіть, як виглядає вікно: власний стиль Платівки, macOS чи Windows 11. Усе лишається на своїх "
+                "місцях, змінюються лише кнопки, повзунки, вкладки й прозорість. Колір з обкладинки — у кожному скіні.",
+        "sk_alt": ["Скіни Платівка, macOS і Windows 11 з тією самою піснею", "Міні-плеєр у трьох скінах"],
+        "sk_how": "<b>☰ → Вигляд → Скін</b> (на Mac — меню «Вигляд») або <b>Shift+T</b>. Перемикається одразу, без "
+                  "перезапуску. На macOS скін «macOS» розмиває робочий стіл під вікном, на Windows 11 у кожному скіні "
+                  "фон Mica.",
+        "sk_soon": "З'явиться у версії 1.6.",
+        "sk_more": "Докладніше про скіни",
         "fav_h": "Улюблені, які не губляться",
         "fav_p": "Слухаєте довгий плейлист? Натискайте сердечко на піснях, які сподобались, а потім слухайте лише їх, "
                  "з усіх тек і альбомів разом.",
@@ -317,6 +342,7 @@ T = {
 
 ICONS = {
     "palette": '<circle cx="13.5" cy="6.5" r="1.2"/><circle cx="17.5" cy="10.5" r="1.2"/><circle cx="8.5" cy="7.5" r="1.2"/><circle cx="6.5" cy="12.5" r="1.2"/><path d="M12 2a10 10 0 0 0 0 20c1.1 0 1.7-.9 1.7-1.8 0-.5-.2-.9-.5-1.2-.3-.4-.5-.8-.5-1.3 0-1 .8-1.7 1.7-1.7H16a6 6 0 0 0 6-6c0-4.4-4.5-8-10-8z"/>',
+    "skins": '<rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="M3 8.5h18"/><circle cx="6" cy="6.3" r=".6"/><path d="M8 21h8"/>',
     "sizes": '<rect x="2" y="3" width="13" height="11" rx="2"/><rect x="11" y="10" width="11" height="8" rx="2"/><path d="M4 21h8"/>',
     "library": '<path d="M4 4v16M8 4v16"/><path d="m12.5 4.5 3.9 15.4M17 4l3.6 15"/>',
     "keyboard": '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h0M10 10h0M14 10h0M18 10h0M7 14h10"/>',
@@ -414,6 +440,20 @@ def page(t: dict) -> str:
     {panels}
     <p class="cap">{t['mini_cap']}</p>
     <div class="shots shots-mini">{mini}</div>
+  </div>
+</section>
+
+<section id="skins" class="wrap sec">
+  <h2>{t['sk_h']}</h2>
+  <p class="sub">{t['sk_p']}</p>
+  <figure class="skins-shot">{img(p, f"skins-{t['lang']}.png", t['sk_alt'][0])}</figure>
+  <div class="split skins-mini">
+    <div class="split-text">
+      <p class="aside">{t['sk_how']}</p>
+      <p class="aside soon">{t['sk_soon']}</p>
+      <a class="more" href="{docs}desktop.md#{'skins' if t['lang'] == 'en' else 'скіни'}">{t['sk_more']} {ico("arrow", "ico-a")}</a>
+    </div>
+    <figure>{img(p, "skins-mini.png", t['sk_alt'][1])}</figure>
   </div>
 </section>
 

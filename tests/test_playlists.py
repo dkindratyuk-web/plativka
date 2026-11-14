@@ -1,4 +1,5 @@
 """Збережені списки відтворення: M3U8, який читають і інші плеєри."""
+import os
 from types import SimpleNamespace
 
 import pytest
@@ -13,7 +14,7 @@ def test_save_load_rename_delete(tmp_path):
     a.write_bytes(b"x")
     b.write_bytes(b"x")
     d = tmp_path / "pl"
-    track = lambda p: SimpleNamespace(length=200, display=p.rsplit("/", 1)[-1])
+    track = lambda p: SimpleNamespace(length=200, display=os.path.basename(p))
     f = playlists.save("Для: машини?", [str(a), str(b), str(b) + "#track2"], track, folder=d)
     assert f.name == "Для машини.m3u8"                       # недозволені символи прибрано
     text = f.read_text("utf-8")

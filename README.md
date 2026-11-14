@@ -43,7 +43,7 @@ It comes in two editions; install either one or both — the first time Plativka
 - **Winamp layout**: the cover, an LCD-style clock, a level visualisation, the title and format, shuffle / repeat / notification switches, the seek bar, transport buttons and volume — with the playlist and the library underneath.
 - **The colour comes from the album cover**: the clock, the visualisation, the window background, the panels and the highlighted track all change with every album. Light, dark or system theme (`T`).
 - **Level visualisation**: vertical LED-style columns — the left channel on the left, the right channel on the right, what is playing now in the middle and the last few seconds fading out to the sides.
-- **Three skins** *(coming in 1.6)*: Plativka's own look, **macOS** or **Windows 11** — native-style buttons, sliders, tabs and translucency, with the same layout and the colour still taken from the cover. Switch in ☰ → View → Skin or with `Shift+T`, no restart.
+- **Three skins**: Plativka's own look, **macOS** or **Windows 11** — native-style buttons, sliders, tabs and translucency, with the same layout and the colour still taken from the cover. Switch in ☰ → View → Skin or with `Shift+T`, no restart.
 - **Three sizes**: the full Winamp view, the **compact view** (`W`) with a small cover, the title and the controls in two rows above the playlist, and the **mini player** (`E`) — just those two rows, small enough for a corner of the screen, which can stay on top of all windows (📌).
 - **Playlist and library** in tabs with instant search (`J`): the library by artist → album or by folder, double-click a track to play its whole album, right-click to add to the end of the playlist, `▶ All` to play everything.
 - **Folders**: add them with the usual system folder dialog or drag them into the window; the **Folders…** window lists them with track counts.
@@ -63,7 +63,7 @@ It comes in two editions; install either one or both — the first time Plativka
 
 ### Screenshots
 
-**Skins** *(coming in 1.6)* — Plativka, macOS and Windows 11 with the same song, and the new mini player in each of them:
+**Skins** — Plativka, macOS and Windows 11 with the same song, and the new mini player in each of them:
 
 <p><img src="docs/img/skins-en.png" width="100%" alt="Plativka, macOS and Windows 11 skins"></p>
 <p><img src="docs/img/skins-mini.png" width="48%" alt="Mini player in the three skins"></p>
@@ -145,7 +145,7 @@ Everything is on the [Releases page](https://github.com/dkindratyuk-web/plativka
 | `Ctrl+T` | keep the window on top |
 | `N` | track notifications on / off |
 | `T` | theme: system → light → dark |
-| `Shift+T` | skin: Plativka → macOS → Windows 11 *(1.6)* |
+| `Shift+T` | skin: Plativka → macOS → Windows 11 |
 | `Delete` | remove the selected tracks from the playlist |
 | `F1` | about Plativka |
 | `Q` or `Ctrl+Q` (`⌘Q` on a Mac) | quit |

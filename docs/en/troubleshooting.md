@@ -123,6 +123,10 @@ Some places have no Trash: network drives, and on Linux some USB sticks and othe
 
 Versions up to 1.5.2 could not reach GitHub from the downloaded app on macOS and Windows (a certificate problem), so they never showed updates. Download 1.5.3 or newer once from the [website](https://dkindratyuk-web.github.io/plativka/); after that the check works by itself. If "Check for updates" says there is no connection to GitHub, check the internet or a firewall; `plativka.log` (see [Logs](#logs)) has the exact reason in lines starting with `перевірка оновлень`.
 
+## The macOS skin: the window is not translucent or looks wrong
+
+The blurred desktop behind the window works only on a Mac; on Windows and Linux the macOS skin has a solid background — that is expected. If on a Mac the window looks broken in this skin (black or empty areas), switch to another skin with **Shift+T** and tell us on GitHub. To start Plativka without the blur, run it once with `PLATIVKA_NO_VIBRANCY=1` (Terminal: `PLATIVKA_NO_VIBRANCY=1 open -a "Plativka Desktop"`); `plativka.log` has lines starting with `vibrancy:` if something failed.
+
 ## A cover was not found online
 
 - **Is it on?** Plativka Desktop: ☰ → View → **Find missing covers online**; terminal edition: `Shift+O`. It only looks when there is no cover in the file and no `cover.jpg` next to it.

@@ -101,7 +101,7 @@ T = {
         "sk_how": "<b>☰ → View → Skin</b> (on a Mac: the View menu) or <b>Shift+T</b>. It switches at once, without a "
                   "restart. On macOS the macOS skin blurs the desktop behind the window; on Windows 11 every skin "
                   "has the Mica background.",
-        "sk_soon": "Coming in version 1.6.",
+        "sk_soon": "New in version 1.6.",
         "sk_more": "More about skins",
         "fav_h": "Favorites that don't get lost",
         "fav_p": "Listening to a long playlist? Tap the heart on the songs you like, then play only them, "
@@ -259,7 +259,7 @@ T = {
         "sk_how": "<b>☰ → Вигляд → Скін</b> (на Mac — меню «Вигляд») або <b>Shift+T</b>. Перемикається одразу, без "
                   "перезапуску. На macOS скін «macOS» розмиває робочий стіл під вікном, на Windows 11 у кожному скіні "
                   "фон Mica.",
-        "sk_soon": "З'явиться у версії 1.6.",
+        "sk_soon": "Нове у версії 1.6.",
         "sk_more": "Докладніше про скіни",
         "fav_h": "Улюблені, які не губляться",
         "fav_p": "Слухаєте довгий плейлист? Натискайте сердечко на піснях, які сподобались, а потім слухайте лише їх, "

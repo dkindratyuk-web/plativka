@@ -19,8 +19,6 @@ Almost everything is clickable: the switches toggle, a click on the seek bar jum
 
 ## Skins
 
-*Coming in version 1.6.*
-
 Plativka has three skins: **Plativka** (its own look), **macOS** and **Windows 11**. The layout is the same in all three — the cover, the clock, the switches, the buttons and the playlist stay where they are; what changes is how the controls look:
 
 | | Plativka | macOS | Windows 11 |

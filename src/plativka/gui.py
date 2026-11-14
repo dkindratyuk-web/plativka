@@ -1938,9 +1938,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if skins.vibrancy_supported() and (sk == "mac" or self.vibrancy):
             self.vibrancy = skins.set_vibrancy(self, sk == "mac", dark)
             # заголовок вікна — тим самим матеріалом, як у Finder і Музиці
-            self._title_h = skins.set_unified_titlebar(self, self.vibrancy)
-            if hasattr(self, "_outer"):
-                self._apply_margins()
+            skins.set_unified_titlebar(self, self.vibrancy)
         glass = self.mica or self.vibrancy
         fg = "#F2F3F5" if dark else "#1A1D24"
         sub = "rgba(255,255,255,0.58)" if dark else "rgba(0,0,0,0.52)"
@@ -1959,17 +1957,17 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         # Вікно — тонований фон, картки — помітно світліші (у темній темі — світліші за фон):
         # інакше картки, кнопки й список зливаються в одну пляму.
         if self.vibrancy:          # macOS: під цим шаром — розмиті шпалери, тож фон майже прозорий
-            bg = tint("#1E1E20" if dark else "#EEECE8", .22, .14 if dark else .10)
-            card = tint("#2C2C30" if dark else "#FFFFFF", .14, .40 if dark else .48)
+            bg = tint("#1E1E20" if dark else "#EEECE8", .38, .30 if dark else .30)
+            card = tint("#2C2C30" if dark else "#FFFFFF", .17, .45 if dark else .55)
         elif glass:                # Windows 11: Mica
             bg = tint("#202020" if dark else "#F3F3F3", .25, .18 if dark else .22)
             card = tint("#2B2B2B" if dark else "#FFFFFF", .10, .38 if dark else .55)
         elif sk == "mac":
             bg = blend("#18191C" if dark else "#E7E5DF", .17 if dark else .18)
-            card = blend("#2A2C31" if dark else "#FCFBF8", .10 if dark else .085)
+            card = blend("#2A2C31" if dark else "#FCFBF8", .11 if dark else .10)
         elif sk == "fluent":
             bg = blend("#1C1C1C" if dark else "#E8E8E5", .16 if dark else .18)
-            card = blend("#2D2D2D" if dark else "#FDFDFC", .09 if dark else .085)
+            card = blend("#2D2D2D" if dark else "#FDFDFC", .10 if dark else .10)
         else:
             # як на Windows з Mica: колір обкладинки помітний у фоні вікна й у самому списку
             bg = blend("#16181E" if dark else "#ECEFF4", .17 if dark else .18)
@@ -2252,20 +2250,6 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
     def _apply_margins(self):
         m = 8 if self.is_full() else 6
         self._outer.setContentsMargins(m, m + self._title_h, m, m)
-
-    def mousePressEvent(self, e):
-        # прозорий заголовок (скін «macOS»): за смугу над вмістом вікно тягнеться, як звичайно
-        if self._title_h and e.button() == Qt.LeftButton and e.position().y() < self._title_h:
-            h = self.windowHandle()
-            if h is not None and h.startSystemMove():
-                return
-        super().mousePressEvent(e)
-
-    def mouseDoubleClickEvent(self, e):
-        if self._title_h and e.position().y() < self._title_h:
-            self.showNormal() if self.isMaximized() else self.showMaximized()
-            return
-        super().mouseDoubleClickEvent(e)
 
     def _layout_card(self, full: bool):
         """Розкласти кнопки, смугу й гучність по рядах картки — для повного чи компактного вигляду."""

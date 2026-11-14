@@ -145,13 +145,10 @@ def set_unified_titlebar(widget, on: bool) -> int:
         win = view.window()
         if win is None:
             return 0
-        full = 1 << 15                                # NSWindowStyleMaskFullSizeContentView
-        mask = win.styleMask()
-        win.setStyleMask_((mask | full) if on else (mask & ~full))
+        # Лише прозорий заголовок: під ним той самий матеріал, що й під вікном. Вміст Qt під заголовок
+        # не заходить (перевірено на Mac), тож відступ і власне перетягування вікна не потрібні.
         win.setTitlebarAppearsTransparent_(bool(on))
-        if not on:
-            return 0
-        return max(0, int(round(win.frame().size.height - win.contentLayoutRect().size.height)))
+        return 0
     except Exception as e:
         log(f"titlebar: {e}")
         return 0

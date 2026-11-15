@@ -56,7 +56,7 @@ Plativka never copies or changes your files — it only reads them.
 
 - **L**, **Ctrl+O** or **+ Folder** in the Library tab opens the usual system folder dialog. Folders go to the **library**.
 - **Drag and drop**: drag folders from Finder / File Explorer / your file manager into the window — they go to the library; individual audio files go to the end of the playlist.
-- **⏏** or **+ Folder** in the Playlist tab adds a folder straight into the playlist without adding it to the library.
+- **⏏** or **+ Add** under the playlist → **Files…** or **Folder…** adds single tracks or a whole folder to the end of the playlist without adding them to the library *(single files: coming in 1.9)*. Also **☰ → File → Add files to the playlist…** (**Ctrl+Shift+O**). A recording with a track split is added as its tracks.
 - **Folders…** (Library tab, or **☰ → File**) lists the library folders with the number of tracks in each: tick folders and press **Remove checked**, or **Remove all**; **+ Add…** adds more. Files on disk stay untouched.
 - **↻** rescans the library after you put new files into a folder.
 

@@ -67,6 +67,11 @@ def test_desktop_window_views():
         _split.save(rec, _split.parse_tracklist("0:00 A - One\n1:00 B - Two", 0)[0])
         win.apply_split(rec)
         assert len(win.playlist) == 2 and all(p.startswith(rec + "#track") for p in win.playlist)
+        from unittest import mock                                # «+ Додати» → Файли…: окремі треки в кінець
+        with mock.patch.object(gui.QFileDialog, "getOpenFileNames", return_value=([p1, p2], "")):
+            n0 = len(win.playlist)
+            win.add_playlist_files()
+        assert win.playlist[-2:] == [p1, p2] and len(win.playlist) == n0 + 2
         h = win.height()
         win.toggle_view()
         win.toggle_view()

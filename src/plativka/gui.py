@@ -1725,7 +1725,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 ("pause", "pause", _("Пауза"), lambda: self.spawn(self.pause())),
                 ("stop", "stop", _("Стоп"), lambda: self.spawn(self.stop())),
                 ("next", "next", _("Наступний трек"), lambda: self.spawn(self.next())),
-                ("eject", "eject", _("Додати теку до списку"), self.add_playlist_folder)):
+                ("eject", "eject", _("Додати файли чи теку до списку"), self._add_menu)):
             b = QToolButton()
             b.setProperty("glyph", glyph)
             b.setIconSize(QSize(12, 12))
@@ -1841,7 +1841,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         pv.addWidget(self.pl_empty, 1)
         pb = QHBoxLayout()
         self.pl_buttons = []
-        for t, tip, fn in ((_(" + Тека "), _("Додати теку до списку"), self.add_playlist_folder),
+        for t, tip, fn in ((_(" + Додати "), _("Додати файли чи теку до списку"), self._add_menu),
                            (_(" − Прибрати "), _("Прибрати виділені зі списку"), self.remove_selected),
                            (_(" Очистити "), "", self.clear_playlist),
                            (_(" Зберегти… "), _("Зберегти список під назвою (Ctrl+S)"), lambda: self.save_playlist())):
@@ -1926,6 +1926,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.a_shuffle = act(_("Перемішувати"), self.toggle_shuffle, ["S"], True)
         a_repeat = act(_("Повтор: вимк → усе → один"), self.cycle_repeat, ["R"])
         a_add = act(_("Додати теку до медіатеки…"), self.add_library_folder, ["L", "Ctrl+O"])
+        a_addf = act(_("Додати файли до списку…"), self.add_playlist_files, ["Ctrl+Shift+O"])
+        a_addd = act(_("Додати теку до списку…"), self.add_playlist_folder)
         a_folders = act(_("Теки медіатеки…"), self.manage_folders)
         a_plsave = act(_("Зберегти список"), lambda: self.save_playlist(), ["Ctrl+S"])
         a_plsaveas = act(_("Зберегти список як…"), lambda: self.save_playlist(as_new=True), ["Ctrl+Shift+S"])
@@ -1987,7 +1989,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         a_qnext = act(_("Грати наступним"), lambda: self.play_next(), ["Shift+N"])
         a_qclear = act(_("Очистити чергу"), self.clear_queue)
         menus = [
-            (_("Файл"), [a_add, a_folders, None, a_plsave, a_plsaveas, a_plopen, None, a_copy, a_dupes, None, a_quit]),
+            (_("Файл"), [a_addf, a_addd, a_add, a_folders, None, a_plsave, a_plsaveas, a_plopen, None, a_copy, a_dupes, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
                                  None, a_qnext, a_qclear, None, a_eq, self.a_eq_on, m_rg, m_sleep, None, a_remote]),
             (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
@@ -3851,6 +3853,30 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def manage_folders(self):
         FoldersDialog(self).exec()
+
+    def _add_menu(self):
+        """Кнопка «+ Додати» (і ⏏): файли чи цілу теку — в кінець списку відтворення."""
+        b = self.sender()
+        m = QMenu(self)
+        m.addAction(_("Файли…"), self.add_playlist_files)
+        m.addAction(_("Теку…"), self.add_playlist_folder)
+        if isinstance(b, QWidget):
+            m.exec(b.mapToGlobal(b.rect().bottomLeft()))
+        else:
+            self.add_playlist_files()
+
+    def add_playlist_files(self):
+        exts = " ".join(f"*{e}" for e in sorted(AUDIO_EXT))
+        start = self.cfg.get("last_files_dir") or str(Path.home())
+        files, _f = QFileDialog.getOpenFileNames(self, _("Файли — у список відтворення"), start,
+                                                 _("Музика ({exts})").format(exts=exts))
+        if not files:
+            return
+        self.cfg["last_files_dir"] = os.path.dirname(files[0])
+        paths = [p for f in files for p in expand_file(f)]      # запис із розбивкою — одразу треками
+        self.add_to_playlist(paths, play=not self.playlist)
+        self.save_cfg()
+        self.toast(_("Додано в кінець списку: {n}").format(n=n_tracks(len(paths))))
 
     def add_playlist_folder(self):
         d = QFileDialog.getExistingDirectory(self, _("Теку — у список відтворення"), str(Path.home()))

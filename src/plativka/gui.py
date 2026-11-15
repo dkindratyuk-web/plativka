@@ -32,12 +32,12 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDial
                                QSpacerItem, QStyle, QStyledItemDelegate, QStyleOptionViewItem, QTableWidget, QTableWidgetItem, QToolButton,
                                QTreeWidget, QTreeWidgetItem, QVBoxLayout, QWidget)
 
-from . import eq, playlists, skins, sysdeps, sysvol
+from . import eq, playlists, skins, split, sysdeps, sysvol
 from .remote import RemoteHost
 from .core import (APP_NAME, AUDIO_EXT, AUTHOR, CACHE_DIR, CONF_DIR, GITHUB_URL, ISSUES_URL, VERSION,
                    SLEEP_CHOICES, DemoPlayer, Library, MpvPlayer, PlayerExtras, Track, accent_from,
                    UPDATE_EVERY, check_update, clamp, fmt_time, load_cover, log, read_track, real_path, rgb_hex, rotate_log,
-                   scan_dir, tune)
+                   scan_dir, tune, expand_file, is_cue_path)
 from .i18n import LANG, _, n_tracks
 
 DEFAULT_ACCENT = (14, 124, 132)
@@ -638,6 +638,100 @@ def qr_pixmap(text: str, size: int) -> QPixmap:
                 p.fillRect((x + 4) * k, (y + 4) * k, k, k, QColor("black"))
     p.end()
     return QPixmap.fromImage(img).scaled(size, size, Qt.KeepAspectRatio, Qt.FastTransformation)
+
+
+class SplitDialog(QDialog):
+    """Розбити довгий запис (оцифрована платівка, концерт, мікс, лекція) на треки за списком із таймкодами."""
+
+    def __init__(self, win: "MainWindow", audio: str):
+        super().__init__(win)
+        self.win, self.audio = win, audio
+        self.length = win.track(audio).length or read_track(audio).length
+        self.setWindowTitle(_("Розбити на треки"))
+        self.resize(640, 560)
+        lay = QVBoxLayout(self)
+        head = QLabel(f"<b>{html.escape(Path(audio).name)}</b> · {fmt_time(self.length)}")
+        head.setWordWrap(True)
+        lay.addWidget(head)
+        hint = QLabel(_("Вставте список треків із часом початку — по одному в рядку, наприклад "
+                        "«0:00 Виконавець — Назва» або «Назва 12:34». Сам файл не змінюється: Платівка "
+                        "запише поруч розбивку (.cue) і показуватиме запис окремими треками."))
+        hint.setObjectName("dim")
+        hint.setWordWrap(True)
+        lay.addWidget(hint)
+        from PySide6.QtWidgets import QPlainTextEdit
+        self.text = QPlainTextEdit()
+        self.text.setPlaceholderText("0:00 Виконавець — Перша пісня\n3:42 Виконавець — Друга пісня\n1:02:15 …")
+        self.text.setPlainText(split.read_back(audio))
+        self.text.textChanged.connect(self._preview)
+        lay.addWidget(self.text, 2)
+        self.table = QTableWidget(0, 3)
+        self.table.setHorizontalHeaderLabels([_("Початок"), _("Трек"), _("Довжина")])
+        self.table.verticalHeader().hide()
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.setSelectionMode(QAbstractItemView.NoSelection)
+        hh = self.table.horizontalHeader()
+        hh.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        hh.setSectionResizeMode(1, QHeaderView.Stretch)
+        hh.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        lay.addWidget(self.table, 3)
+        self.info = QLabel()
+        self.info.setObjectName("dim")
+        self.info.setWordWrap(True)
+        lay.addWidget(self.info)
+        br = QHBoxLayout()
+        self.b_remove = QPushButton(_("Прибрати розбивку"))
+        self.b_remove.setVisible(split.existing(audio) is not None)
+        self.b_remove.clicked.connect(self._remove)
+        br.addWidget(self.b_remove)
+        br.addStretch()
+        b_cancel = QPushButton(_("Скасувати"))
+        b_cancel.clicked.connect(self.reject)
+        self.b_ok = QPushButton(_("Розбити"))
+        self.b_ok.setObjectName("primary")
+        self.b_ok.setDefault(True)
+        self.b_ok.clicked.connect(self._save)
+        br.addWidget(b_cancel)
+        br.addWidget(self.b_ok)
+        lay.addLayout(br)
+        self.items = []
+        self._preview()
+
+    def _preview(self):
+        self.items, skipped = split.parse_tracklist(self.text.toPlainText(), self.length)
+        self.table.setRowCount(len(self.items))
+        for i, it in enumerate(self.items):
+            end = self.items[i + 1].start if i + 1 < len(self.items) else self.length
+            name = f"{it.artist} — {it.title}" if it.artist else it.title
+            for c, v in enumerate((split.fmt(it.start), name, fmt_time(max(0, end - it.start)))):
+                cell = QTableWidgetItem(v)
+                if c != 1:
+                    cell.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+                self.table.setItem(i, c, cell)
+        msg = []
+        if self.items:
+            msg.append(_("Треків: {n}").format(n=len(self.items)))
+        if skipped:
+            msg.append(_("Пропущено рядків без часу чи поза записом: {n}").format(n=len(skipped)))
+        if split.foreign_cue(self.audio):
+            msg.append(_("Поруч уже є чужий файл .cue — Платівка його не змінить і збереже розбивку у своїй теці."))
+        self.info.setText(" · ".join(msg[:2]) + ("\n" + msg[2] if len(msg) > 2 else ""))
+        self.b_ok.setEnabled(len(self.items) >= 2)
+
+    def _save(self):
+        try:
+            where = split.save(self.audio, self.items)
+        except (OSError, ValueError) as e:
+            QMessageBox.warning(self, _("Розбити на треки"), _("Не вдалося зберегти: {e}").format(e=e))
+            return
+        log(f"розбивка: {where}")
+        self.win.apply_split(self.audio)
+        self.accept()
+
+    def _remove(self):
+        if split.remove(self.audio):
+            self.win.apply_split(self.audio)
+        self.accept()
 
 
 class EqualizerDialog(QDialog):
@@ -2923,6 +3017,53 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.toast(_("У вас найновіша версія ({v})").format(v=VERSION))
 
     # ── пульт з телефона ──
+    # ───────────── довгий запис → треки ─────────────
+    def split_record(self, path: str):
+        audio = real_path(path)
+        if not os.path.isfile(audio):
+            self.toast(_("Файл не знайдено"))
+            return
+        SplitDialog(self, audio).exec()
+
+    def apply_split(self, audio: str):
+        """Розбивку збережено чи прибрано: замінити в списку запис (чи його старі треки) на нові треки."""
+        new = expand_file(audio)
+        for p in new:
+            self.lib.tracks.pop(p, None)
+            self.extra.pop(p, None)
+        old_cur = self.playlist[self.current] if 0 <= self.current < len(self.playlist) else None
+        out, first = [], None
+        for p in self.playlist:
+            if real_path(p) == audio:
+                if first is None:
+                    first = len(out)
+                    out.extend(new)
+                continue
+            out.append(p)
+        if first is None:
+            out.extend(new)
+        self.playlist = out
+        resume = None
+        if old_cur is not None and real_path(old_cur) == audio:
+            # запис саме грає: перейти на трек, у якому зараз позиція, без паузи в звуці
+            p = self.player
+            pos = (getattr(p, "abs_pos", 0.0) or p.time_pos or 0.0) if p and p.active else 0.0
+            starts = [(i, self.track(q).start) for i, q in enumerate(out) if real_path(q) == audio]
+            idx = max((i for i, st in starts if st <= pos + 0.5), default=starts[0][0] if starts else -1)
+            self.current = idx
+            if p and p.active and idx >= 0:
+                resume = (idx, max(0.0, pos - self.track(out[idx]).start), p.paused)
+        elif old_cur in out:
+            self.current = out.index(old_cur)
+        self.rebuild_playlist()
+        if resume:
+            self.spawn(self.play_index(*resume))
+        self.save_cfg()
+        if any(audio.startswith(f.rstrip(os.sep) + os.sep) for f in self.lib.folders):
+            self.start_scan()
+        n = len(new)
+        self.toast(_("Розбито на треки: {n}").format(n=n) if n > 1 else _("Розбивку прибрано"))
+
     # ───────────── збережені списки ─────────────
     @staticmethod
     def saved_paths(name: str) -> list[str]:
@@ -3492,6 +3633,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 m.addAction(_("Грати наступним"), lambda: self.play_next(self._selected_paths(r)))
             if r < len(self.playlist):
                 m.addAction(_("Знайти обкладинку…"), lambda: self.pick_cover(self.playlist[r]))
+                src = real_path(self.playlist[r])
+                if not is_cue_path(self.playlist[r]) or split.existing(src):
+                    m.addAction(_("Змінити розбивку на треки…") if split.existing(src) else _("Розбити на треки…"),
+                                lambda: self.split_record(self.playlist[r]))
             fav = self.is_fav(self.playlist[r]) if r < len(self.playlist) else False
             m.addAction(_("Прибрати з улюблених") if fav else _("До улюблених"), lambda: self._like_row(r))
             m.addAction(_("Прибрати зі списку"), self.remove_selected)
@@ -3799,7 +3944,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if folders:
             self.add_folders_to_library(folders)
         if files:
-            self.add_to_playlist(files, play=not self.playlist)
+            self.add_to_playlist([p for f in files for p in expand_file(f)], play=not self.playlist)
 
     # ───────────── система ─────────────
     def setup_platform(self):

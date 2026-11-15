@@ -228,7 +228,11 @@ def scan_dir(folder: str):
                 for f, n in cue_tracks(os.path.join(root, fn), audio):
                     split.setdefault(f, []).append(n)
         for f in audio:
-            if f in split:
+            if f not in split:
+                dc = data_cue(f)
+                if dc.is_file():
+                    split[f] = [n for ff, n in cue_tracks(str(dc), [f]) if ff == f]
+            if split.get(f):
                 yield from (cue_path(f, n) for n in sorted(split[f]))
             else:
                 yield f
@@ -238,6 +242,16 @@ def scan_dir(folder: str):
 # Альбом одним файлом (FLAC/APE/WAV) + .cue з розбивкою: кожен трек — «віртуальний»
 # шлях «файл#track03». Грає той самий файл з потрібного місця до потрібного.
 _CUE_RE = re.compile(r"^(.*)#track(\d{1,3})$")
+
+
+SPLITS_DIR = CONF_DIR / "splits"
+
+
+def data_cue(file: str) -> Path:
+    """Розбивка довгого запису, яку Платівка не змогла покласти поруч (тека лише для читання)."""
+    import hashlib
+    h = hashlib.sha1(os.path.abspath(file).encode()).hexdigest()[:16]
+    return SPLITS_DIR / f"{Path(file).stem[:60]}.{h}.cue"
 
 
 def cue_path(file: str, n: int) -> str:
@@ -376,7 +390,16 @@ def _cue_for(file: str):
         d = parse_cue(c).get(file)
         if d:
             return d
+    dc = data_cue(file)
+    if dc.is_file():
+        return parse_cue(str(dc), [file]).get(file)
     return None
+
+
+def expand_file(file: str) -> list[str]:
+    """Файл → його треки з CUE (якщо є розбивка), інакше сам файл."""
+    d = _cue_for(file)
+    return [cue_path(file, n) for n in sorted(d["tracks"])] if d else [file]
 
 
 _base_cache: dict = {}

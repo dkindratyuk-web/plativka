@@ -60,6 +60,13 @@ def test_desktop_window_views():
         win.save_playlist()                                      # Ctrl+S — під тією ж назвою, без питань
         win.clear_playlist()
         assert win.pl_name is None
+        from plativka import split as _split                     # розбивка довгого запису на треки
+        rec = tune + "/live.mp3"
+        open(rec, "wb").close()
+        win.add_to_playlist([rec], replace=True)
+        _split.save(rec, _split.parse_tracklist("0:00 A - One\n1:00 B - Two", 0)[0])
+        win.apply_split(rec)
+        assert len(win.playlist) == 2 and all(p.startswith(rec + "#track") for p in win.playlist)
         h = win.height()
         win.toggle_view()
         win.toggle_view()

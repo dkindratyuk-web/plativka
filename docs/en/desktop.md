@@ -77,6 +77,22 @@ In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or
 
 **Search**: **J**, **/** or **Ctrl+F** jumps to the search field; it filters the current tab as you type. **Enter** in the search field plays the first match in the playlist, or jumps to it in the library. **Esc** clears the search.
 
+## A long recording as tracks
+
+*Coming in version 1.9.*
+
+A digitised vinyl side, a concert, a DJ set or a lecture often comes as one long file. If you have its track list with times — from the sleeve, the booklet, the description or your own notes — Plativka can show the recording as separate tracks.
+
+1. In the playlist, right-click the recording → **Split into tracks…**
+2. Paste the list, one track per line, with the start time: `0:00 Artist — Title`, `3:42 Title`, `[1:02:15] Artist - Title` or `Title 12:34`. Lines without a time (headings, empty lines) are skipped.
+3. Check the preview — start, name and length of each track — and press **Split**.
+
+<img src="../img/split-en.png" width="520" alt="Splitting a long recording into tracks">
+
+The file itself is not changed. Plativka writes a small `.cue` file with the same name next to it (the standard format for "one file, many tracks"), so other players that read CUE see the same tracks. If that folder is read-only, or another `.cue` already lies there, the split is kept in Plativka's settings folder (`splits/`) instead.
+
+After that the recording behaves like an album: each track has its own line, you can add tracks to Favorites, play one next or copy the list to a USB stick. If the recording is playing, it carries on without a break, just as tracks. To fix a time or a name: right-click → **Edit the track split…**; to undo it: **Remove the split** in the same window.
+
 ## Saved playlists
 
 Keep several playlists ("For the car", "Work", "Evening") and switch between them.
@@ -269,7 +285,7 @@ At start and then every 6 hours Plativka asks GitHub whether a new version is ou
 
 The first time Plativka Desktop starts, it takes the music folders and the playlist from the terminal edition (if it is installed); after that each edition keeps its own settings. The library cache is shared.
 
-Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe. Saved playlists are in the settings folder, in `playlists/` (M3U8 files).
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe. Saved playlists are in the settings folder, in `playlists/` (M3U8 files); track splits that could not be saved next to a recording are in `splits/`.
 
 ## Command-line options
 

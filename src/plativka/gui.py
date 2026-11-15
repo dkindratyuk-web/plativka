@@ -700,7 +700,7 @@ class EqualizerDialog(QDialog):
         self.corr.setWordWrap(True)
         bl.addWidget(self.corr)
         hint = QLabel(_("Знайдіть свою модель на <a href=\"https://autoeq.app\">autoeq.app</a>, у списку програм "
-                        "оберіть «EqualizerAPO ParametricEq», завантажте файл і відкрийте його тут. "
+                        "оберіть «EqualizerAPO Parametric Eq», завантажте файл і відкрийте його тут. "
                         "Повзунки вище додаються зверху — для вашого смаку."))
         hint.setObjectName("dim")
         hint.setWordWrap(True)

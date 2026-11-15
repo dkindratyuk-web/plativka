@@ -114,7 +114,7 @@ T = {
                                     "16 kHz. <b>Shift+E</b> opens the window; the sound changes as you move a slider."),
             ("No distortion", "Boosted frequencies can push loud moments over the limit. Plativka works out the peak "
                               "of your curve and leaves exactly that much headroom, so the sound stays clean."),
-            ("Headphone correction", "Find your model on autoeq.app, choose <b>EqualizerAPO ParametricEq</b>, download "
+            ("Headphone correction", "Find your model on autoeq.app, choose <b>EqualizerAPO Parametric Eq</b>, download "
                                      "the file and open it in Plativka. Your headphones get closer to a neutral sound; "
                                      "the sliders still work on top."),
         ],
@@ -295,7 +295,7 @@ T = {
                                                "змінюється, щойно рухаєте повзунок."),
             ("Без спотворень", "Підсилені частоти можуть вивести гучні місця за межу. Платівка рахує найвищу точку "
                                "вашої кривої й лишає рівно такий запас гучності — звук лишається чистим."),
-            ("Корекція навушників", "Знайдіть свою модель на autoeq.app, оберіть <b>EqualizerAPO ParametricEq</b>, "
+            ("Корекція навушників", "Знайдіть свою модель на autoeq.app, оберіть <b>EqualizerAPO Parametric Eq</b>, "
                                     "завантажте файл і відкрийте його в Платівці. Навушники звучать ближче до "
                                     "нейтрального, а повзунки працюють і далі — поверх корекції."),
         ],

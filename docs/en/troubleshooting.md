@@ -131,7 +131,7 @@ The blurred desktop behind the window works only on a Mac; on Windows and Linux 
 
 - **Quieter** with the equalizer on is expected when you raise some bands: Plativka lowers the overall level by the shown **headroom** so that the boosted frequencies don't distort. Turn the volume up.
 - **Distorted** sound with the equalizer should not happen; if it does, turn the equalizer off (**Shift+E** → **Turn on**) and tell us on GitHub which preset or file you used.
-- **"This file has no equalizer filters"**: the file is not in the Equalizer APO format. On autoeq.app choose **EqualizerAPO ParametricEq** (not the graphic or another app's format).
+- **"This file has no equalizer filters"**: the file is not in the Equalizer APO format. On autoeq.app choose **EqualizerAPO Parametric Eq** (not the graphic or another app's format).
 - **Headphone correction on speakers** makes the sound worse — it is for one model of headphones. Press **Remove** in the equalizer window.
 
 ## A cover was not found online

@@ -172,7 +172,7 @@ EN: dict[str, str] = {
     'Електроніка': 'Electronic',
     'Завантажено: {name} ({n} фільтрів)': 'Loaded: {name} ({n} filters)',
     'Запас гучності: {db} дБ — щоб підсилені частоти не спотворювались. Здається тихіше? Додайте гучність.': "Headroom: {db} dB, so that boosted frequencies don't distort. Sounds quieter? Turn the volume up.",
-    'Знайдіть свою модель на <a href="https://autoeq.app">autoeq.app</a>, у списку програм оберіть «EqualizerAPO ParametricEq», завантажте файл і відкрийте його тут. Повзунки вище додаються зверху — для вашого смаку.': 'Find your model on <a href="https://autoeq.app">autoeq.app</a>, choose "EqualizerAPO ParametricEq" in the list of apps, download the file and open it here. The sliders above are added on top, to your taste.',
+    'Знайдіть свою модель на <a href="https://autoeq.app">autoeq.app</a>, у списку програм оберіть «EqualizerAPO Parametric Eq», завантажте файл і відкрийте його тут. Повзунки вище додаються зверху — для вашого смаку.': 'Find your model on <a href="https://autoeq.app">autoeq.app</a>, choose "EqualizerAPO Parametric Eq" in the list of apps, download the file and open it here. The sliders above are added on top, to your taste.',
     'Класика': 'Classical',
     'Корекція навушників (AutoEQ)': 'Headphone correction (AutoEQ)',
     'Не завантажено — звук навушників як є.': 'Not loaded: your headphones sound as they are.',

@@ -154,7 +154,7 @@ Raising a frequency by 6 dB makes the loudest moments of a song go over the maxi
 Every model of headphones changes the sound in its own way: one has too much bass, another a sharp peak around 6 kHz. The open project [AutoEQ](https://autoeq.app) has measured thousands of models and calculated, for each of them, the equalizer settings that bring its sound close to a neutral reference. These are numbers from measurements, not someone's taste.
 
 1. Open [autoeq.app](https://autoeq.app) and find your headphones by name.
-2. In the list of equalizer apps choose **EqualizerAPO ParametricEq** and download the file. It is called like *Your Model ParametricEQ.txt*.
+2. In the list of equalizer apps choose **EqualizerAPO Parametric Eq** and download the file. It is called like *Your Model ParametricEQ.txt*.
 3. In Plativka: **Equalizer… → Open file…** and choose that file. The window shows *Loaded: Your Model (10 filters)*, and the equalizer turns on.
 4. Listen with the equalizer on and off. The sliders above still work and are added on top of the correction — for your own taste.
 

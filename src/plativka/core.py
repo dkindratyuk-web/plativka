@@ -312,9 +312,11 @@ def parse_cue(cue: str, audio: list[str] | None = None) -> dict:
             audio = []
 
     def locate(name: str) -> str | None:
-        cand = os.path.join(folder, name.replace("\\", "/"))
+        cand = os.path.normpath(os.path.join(folder, name.replace("\\", "/")))
         if os.path.isfile(cand) and Path(cand).suffix.lower() in AUDIO_EXT:
-            return cand
+            # той самий файл — у тому самому написанні, що й у списку теки (Windows: C:/ і C:\\)
+            key = os.path.normcase(cand)
+            return next((a for a in audio if os.path.normcase(os.path.normpath(a)) == key), cand)
         stem = Path(name.replace("\\", "/")).stem.lower()
         same = [a for a in audio if Path(a).stem.lower() == stem]
         if same:

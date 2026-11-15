@@ -56,7 +56,7 @@ Plativka never copies or changes your files — it only reads them.
 
 - **L**, **Ctrl+O** or **+ Folder** in the Library tab opens the usual system folder dialog. Folders go to the **library**.
 - **Drag and drop**: drag folders from Finder / File Explorer / your file manager into the window — they go to the library; individual audio files go to the end of the playlist.
-- **⏏** or **+ Add** under the playlist → **Files…** or **Folder…** adds single tracks or a whole folder to the end of the playlist without adding them to the library *(single files: coming in 1.9)*. Also **☰ → File → Add files to the playlist…** (**Ctrl+Shift+O**). A recording with a track split is added as its tracks.
+- **⏏** or **+ Add** under the playlist → **Files…** or **Folder…** adds single tracks or a whole folder to the end of the playlist without adding them to the library. Also **☰ → File → Add files to the playlist…** (**Ctrl+Shift+O**). A recording with a track split is added as its tracks.
 - **Folders…** (Library tab, or **☰ → File**) lists the library folders with the number of tracks in each: tick folders and press **Remove checked**, or **Remove all**; **+ Add…** adds more. Files on disk stay untouched.
 - **↻** rescans the library after you put new files into a folder.
 
@@ -78,8 +78,6 @@ In the **Playlist** tab: double-click or **Enter** plays a track, **Delete** (or
 **Search**: **J**, **/** or **Ctrl+F** jumps to the search field; it filters the current tab as you type. **Enter** in the search field plays the first match in the playlist, or jumps to it in the library. **Esc** clears the search.
 
 ## A long recording as tracks
-
-*Coming in version 1.9.*
 
 A digitised vinyl side, a concert, a DJ set or a lecture often comes as one long file. If you have its track list with times — from the sleeve, the booklet, the description or your own notes — Plativka can show the recording as separate tracks.
 

@@ -142,7 +142,7 @@ T = {
         "tl_p": "Everyday chores that usually need a separate program.",
         "tools": [
             ("split", "A long recording as tracks", "A vinyl rip, a concert or a mix in one file? Paste its track list with "
-                                                  "times, and it plays as separate tracks. The file itself is not changed. Coming in 1.9."),
+                                                  "times, and it plays as separate tracks. The file itself is not changed. New in 1.9."),
             ("list", "Saved playlists", "\"For the car\", \"Work\", \"Evening\": save the list with <b>Ctrl+S</b>, open it from "
                                       "the library later. Ordinary M3U8 files, so other players open them too. New in 1.8."),
             ("next", "Play next", "Want this song right after the current one? <b>Shift+N</b> or right-click → <b>Play next</b>; "
@@ -325,7 +325,7 @@ T = {
         "tl_p": "Щоденні справи, для яких зазвичай потрібна окрема програма.",
         "tools": [
             ("split", "Довгий запис — треками", "Оцифрована платівка, концерт чи мікс одним файлом? Вставте список треків "
-                                                "із часом, і він гратиме окремими треками. Сам файл не змінюється. У версії 1.9."),
+                                                "із часом, і він гратиме окремими треками. Сам файл не змінюється. Нове у версії 1.9."),
             ("list", "Збережені списки", "«Для машини», «Робота», «Вечір»: збережіть список клавішами <b>Ctrl+S</b> і відкривайте "
                                        "з медіатеки. Звичайні файли M3U8, тож їх відкриють і інші плеєри. Нове в 1.8."),
             ("next", "Грати наступним", "Хочете цю пісню одразу після поточної? <b>Shift+N</b> або правий клік → "

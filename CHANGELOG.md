@@ -1,5 +1,21 @@
 # Changelog / Історія змін
 
+## 1.9.0
+
+**English**
+
+- **A long recording as tracks**: a vinyl rip, a concert, a DJ set or a lecture in one file? Right-click it in the playlist → **Split into tracks…**, paste its track list with times (`0:00 Artist — Title`, `Title 12:34`…), check the preview and press **Split**. Plativka writes a `.cue` next to the file — the file itself is not changed — and the recording plays as separate tracks: favorites, queue, USB copy and the remote work with them. A playing recording carries on without a break. **Edit the track split…** / **Remove the split** to change it. [How to use it](docs/en/desktop.md#a-long-recording-as-tracks)
+- **Single files to the playlist**: **+ Add → Files…** (or ⏏, or `Ctrl+Shift+O`) adds chosen tracks to the end of the playlist without adding a whole folder.
+- AutoEQ: the option on autoeq.app is called *EqualizerAPO Parametric Eq* — the hint now says so.
+- CUE files on Windows are matched to their audio file regardless of slash style.
+
+**Українська**
+
+- **Довгий запис — окремими треками**: оцифрована платівка, концерт, DJ-сет чи лекція одним файлом? Правий клік у списку → **Розбити на треки…**, вставте список треків із часом (`0:00 Виконавець — Назва`, `Назва 12:34`…), перевірте попередній перегляд і натисніть **Розбити**. Платівка пише поруч `.cue` — сам файл не змінюється, — і запис грає окремими треками: улюблені, черга, копіювання на флешку й пульт працюють із ними. Запис, що грає, продовжує без паузи. Змінити — **Змінити розбивку на треки…** / **Прибрати розбивку**. [Як користуватися](docs/uk/desktop.md#довгий-запис--окремими-треками)
+- **Окремі файли в список**: **+ Додати → Файли…** (або ⏏, або `Ctrl+Shift+O`) додає вибрані треки в кінець списку, без цілої теки.
+- AutoEQ: пункт на autoeq.app називається *EqualizerAPO Parametric Eq* — підказка тепер так і каже.
+- Файли CUE на Windows знаходять свій аудіофайл незалежно від того, які скісні риски в шляху.
+
 ## 1.8.0
 
 **English**

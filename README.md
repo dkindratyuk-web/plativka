@@ -51,8 +51,8 @@ It comes in two editions; install either one or both — the first time Plativka
 - **Windows 11**: the translucent Mica background, tinted by the cover.
 - **Plays like an album**: no pauses between tracks (gapless), volume levelling with ReplayGain (by album or by track), albums as one FLAC/APE/WAV file with a `.cue` sheet shown as separate tracks.
 - **Equalizer**: 10 bands, presets, automatic headroom so boosted bass never distorts, and **headphone correction** from [AutoEQ](https://autoeq.app) — measured settings for thousands of headphone models. `Shift+E`. [How to use it](docs/en/desktop.md#equalizer).
-- **Single files to the playlist** *(coming in 1.9)*: **+ Add → Files…** or `Ctrl+Shift+O` adds chosen tracks without adding a whole folder.
-- **A long recording as tracks** *(coming in 1.9)*: a vinyl rip, a concert or a mix in one file? Paste its track list with times, and Plativka shows it as separate tracks (a `.cue` next to the file; the file itself is not changed).
+- **Single files to the playlist**: **+ Add → Files…** or `Ctrl+Shift+O` adds chosen tracks without adding a whole folder.
+- **A long recording as tracks**: a vinyl rip, a concert or a mix in one file? Paste its track list with times, and Plativka shows it as separate tracks (a `.cue` next to the file; the file itself is not changed).
 - **Saved playlists**: keep "For the car", "Work" and more as ordinary M3U8 files — save with `Ctrl+S`, open from the library, import M3U from other players.
 - **Favorites that don't get lost**: like a song with a heart (or `F`) and play only your favorites from all folders at once. Likes survive moving and renaming files — Plativka recognises the song by artist, title and length. Plus smart lists (*Recently added*, *Most played*, *Not played for a while*) and **Remove non-favorites** — from the list, or to the Trash, never permanently.
 - **Play next**: `Shift+N` puts a song (or a whole album) right after the current one, without breaking the order of the list.

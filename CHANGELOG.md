@@ -1,5 +1,15 @@
 # Changelog / Історія змін
 
+## Unreleased / Не випущено
+
+**English**
+
+- After a long idle or Mac sleep the player no longer ignores Play: the sound engine (mpv) is checked before playing and restarted quietly with the same track at the same position; audio is reconnected after sleep and when playback stalls; such events are written to the log.
+
+**Українська**
+
+- Після довгого простою чи сну Mac плеєр більше не ігнорує «грати»: звуковий рушій (mpv) перевіряється перед відтворенням і тихо перезапускається з тим самим треком на тому ж місці; звук перепідключається після сну й коли відтворення «зависло»; такі події пишуться в журнал.
+
 ## 1.9.0
 
 **English**

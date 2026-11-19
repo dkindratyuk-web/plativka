@@ -3,6 +3,9 @@
 Every release ships with its description — on GitHub **and** on the website.
 Кожен випуск виходить разом з описом — на GitHub **і** на сайті.
 
+**Unreleased changes / Невипущені зміни.** Everything committed to `main` since the last release is listed under `## Unreleased / Не випущено` at the top of CHANGELOG.md (and in ROADMAP.md). When releasing, turn that section into the new version's entry and release notes — every item goes in without the author having to remind.
+Усе, що потрапило в `main` після останнього випуску, записується в розділ `## Unreleased / Не випущено` нагорі CHANGELOG.md (і в ROADMAP.md). Під час випуску цей розділ стає описом нової версії й приміток до випуску — кожен пункт входить без нагадування автора.
+
 **When to release / Коли випускати.** Do not bump the version or publish after every fix or feature on your own. Commit changes (with docs) to `main` and ask; release only when the author says to make the new version — more changes fit into one version, and GitHub isn't loaded with needless builds.
 Нову версію не випускаємо самі після кожного виправлення чи функції: зміни (з документацією) йдуть у `main`, а випуск — лише коли автор скаже зробити нову версію.
 

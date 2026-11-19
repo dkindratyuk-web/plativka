@@ -9,6 +9,6 @@ key, secret = os.environ.get("LASTFM_API_KEY", "").strip(), os.environ.get("LAST
 if key and secret:
     out = pathlib.Path(__file__).resolve().parent.parent / "src" / "plativka" / "_keys.py"
     out.write_text(f"LASTFM_KEY = {key!r}\nLASTFM_SECRET = {secret!r}\n", encoding="utf-8")
-    print("Last.fm: ключі записано")
+    print("Last.fm: keys written")
 else:
-    print("Last.fm: секретів немає — збірка без Last.fm")
+    print("Last.fm: no secrets, building without Last.fm")

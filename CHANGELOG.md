@@ -1,6 +1,6 @@
 # Changelog / Історія змін
 
-## Unreleased / Не випущено
+## 1.10.0
 
 **English**
 

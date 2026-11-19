@@ -141,6 +141,8 @@ T = {
         "tl_h": "Small things that save time",
         "tl_p": "Everyday chores that usually need a separate program.",
         "tools": [
+            ("scrobble", "Last.fm and ListenBrainz", "What you listen to goes to your profile for statistics and "
+                                                     "recommendations; ♥ can become \"Loved\". Off until you connect an account. New in 1.10."),
             ("split", "A long recording as tracks", "A vinyl rip, a concert or a mix in one file? Paste its track list with "
                                                   "times, and it plays as separate tracks. The file itself is not changed. New in 1.9."),
             ("list", "Saved playlists", "\"For the car\", \"Work\", \"Evening\": save the list with <b>Ctrl+S</b>, open it from "
@@ -324,6 +326,8 @@ T = {
         "tl_h": "Дрібниці, які заощаджують час",
         "tl_p": "Щоденні справи, для яких зазвичай потрібна окрема програма.",
         "tools": [
+            ("scrobble", "Last.fm і ListenBrainz", "Прослухане потрапляє у ваш профіль — для статистики й рекомендацій; "
+                                                   "♥ може ставати «Loved». Вимкнено, доки не підключите обліковий запис. Нове у версії 1.10."),
             ("split", "Довгий запис — треками", "Оцифрована платівка, концерт чи мікс одним файлом? Вставте список треків "
                                                 "із часом, і він гратиме окремими треками. Сам файл не змінюється. Нове у версії 1.9."),
             ("list", "Збережені списки", "«Для машини», «Робота», «Вечір»: збережіть список клавішами <b>Ctrl+S</b> і відкривайте "
@@ -394,6 +398,7 @@ ICONS = {
     "eq": '<path d="M5 3v6M5 13v8M12 3v10M12 17v4M19 3v3M19 10v11"/><path d="M3 11h4M10 15h4M17 8h4"/>',
     "tune": '<path d="M3 12h3l3-7 4 14 3-7h5"/>',
     "ear": '<path d="M7 9a5 5 0 0 1 10 0c0 3-3 4-3 7a3 3 0 0 1-6 0"/><path d="M10 9a2 2 0 0 1 4 0"/>',
+    "scrobble": '<path d="M3 17l5-6 4 4 5-7 4 5"/><path d="M3 21h18"/>',
     "split": '<path d="M3 12h18"/><path d="M8 8v8M14 8v8"/><path d="M3 6v12M21 6v12"/>',
     "skins": '<rect x="3" y="4" width="18" height="14" rx="2.5"/><path d="M3 8.5h18"/><circle cx="6" cy="6.3" r=".6"/><path d="M8 21h8"/>',
     "sizes": '<rect x="2" y="3" width="13" height="11" rx="2"/><rect x="11" y="10" width="11" height="8" rx="2"/><path d="M4 21h8"/>',

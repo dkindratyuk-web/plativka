@@ -128,6 +128,7 @@ EN: dict[str, str] = {
     'Тема: авто → світла → темна': 'Theme: auto → light → dark',
     'Тема: світла': 'Theme: light',
     'Тема: темна': 'Theme: dark',
+    'Звук не відповідає — перезапустіть Платівку': 'Sound is not responding — restart Plativka',
     ' + Додати ': ' + Add ',
     'Додати файли чи теку до списку': 'Add files or a folder to the playlist',
     'Додати файли до списку…': 'Add files to the playlist…',

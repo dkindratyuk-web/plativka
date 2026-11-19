@@ -675,6 +675,7 @@ class MpvPlayer(BasePlayer):
         self._dur_abs = 0.0
         self._seg_done = False
         self._next = None             # gapless: (шлях, id у плейлисті mpv), уже доданий наступним
+        self._lost = False            # зв'язок із mpv обірвався (mpv завершився чи завис)
 
     @staticmethod
     def find_exe() -> str | None:
@@ -743,8 +744,27 @@ class MpvPlayer(BasePlayer):
         except Exception:
             self.vu_ok = False
 
+    @property
+    def alive(self) -> bool:
+        return bool(self.writer) and not self._lost and (self.proc is None or self.proc.returncode is None)
+
+    async def ping(self, timeout: float = 2.0) -> bool:
+        """Чи mpv живий і відповідає (після сну Mac чи довгого простою він міг завершитися або зависнути)."""
+        if not self.alive:
+            return False
+        try:
+            await asyncio.wait_for(self.cmd("get_property", "pid"), timeout)
+            return True
+        except Exception as e:
+            log(f"mpv не відповідає: {type(e).__name__} {e}")
+            return False
+
+    async def reload_audio(self):
+        """Перепідключити звуковий вихід — після сну, зміни навушників чи коли звук «завис»."""
+        await self._safe("ao-reload")
+
     async def cmd(self, *args):
-        if not self.writer:
+        if not self.writer or self._lost:
             raise MpvError("not connected")
         self._req += 1
         rid = self._req
@@ -761,7 +781,8 @@ class MpvPlayer(BasePlayer):
         while True:
             try:
                 line = await self.reader.readline()
-            except Exception:
+            except Exception as e:
+                log(f"mpv: читання обірвалося ({type(e).__name__} {e})")
                 break
             if not line:
                 break
@@ -836,11 +857,23 @@ class MpvPlayer(BasePlayer):
                     self.on_error(msg.get("file_error") or "error")
             elif ev == "client-message":
                 self.on_message(msg.get("args") or [])
+        self._lost = True
+        for fut in list(self._pending.values()):
+            if not fut.done():
+                fut.set_exception(MpvError("mpv connection lost"))
+        code = self.proc.returncode if self.proc else None
+        if not getattr(self, "_closing", False):
+            log(f"mpv: зв'язок втрачено (код виходу: {code})")
 
     async def _safe(self, *args):
         try:
             return await self.cmd(*args)
-        except Exception:
+        except MpvError as e:
+            if self._lost or str(e) == "not connected":
+                log(f"mpv: команда {args[0]} не дійшла — немає зв'язку")
+            return None
+        except Exception as e:
+            log(f"mpv: команда {args[0]}: {type(e).__name__} {e}")
             return None
 
     def _set_duration(self):
@@ -954,6 +987,7 @@ class MpvPlayer(BasePlayer):
         self._decay(l, r)
 
     async def close(self):
+        self._closing = True
         try:
             if self.writer:
                 self.writer.write(b'{"command":["quit"]}\n')
@@ -997,6 +1031,14 @@ class DemoPlayer(BasePlayer):
             if self.time_pos >= self.duration:
                 self.active = False
                 self.on_eof(None)
+
+    alive = True
+
+    async def ping(self, timeout: float = 2.0) -> bool:
+        return True
+
+    async def reload_audio(self):
+        pass
 
     async def set_pause(self, p):
         self.paused = p

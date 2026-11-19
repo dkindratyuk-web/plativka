@@ -2585,9 +2585,55 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.current = -1
         self.setup_platform()
 
+    async def ensure_player(self) -> bool:
+        """mpv живий? Після сну Mac чи довгого простою він міг завершитися або зависнути —
+        тоді тихо перезапускаємо його й повертаємо той самий трек на те саме місце."""
+        p = self.player
+        if p is None or self.demo or isinstance(p, DemoPlayer):
+            return p is not None
+        if await p.ping():
+            return True
+        if getattr(self, "_restarting", False):
+            return False
+        self._restarting = True
+        try:
+            pos = p.time_pos if p.active else float(self.cfg.get("position", 0) or 0)
+            log(f"mpv: перезапуск (трек {self.current}, позиція {pos:.1f})")
+            try:
+                await asyncio.wait_for(p.close(), 3)
+            except Exception:
+                pass
+            self.player = MpvPlayer(self._mpv_eof, self._mpv_error, self._mpv_message, self._mpv_external_pause)
+            self.player.replaygain, self.player.on_advance = self.replaygain, self._mpv_advance
+            await self.player.start(self.player_volume)
+            await self.apply_eq()
+            if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
+                await self.load_track(self.playlist[self.current], start=max(0.0, pos), paused=True)
+            return True
+        except Exception as e:
+            log(f"mpv: перезапуск не вдався: {e}")
+            self.toast(_("Звук не відповідає — перезапустіть Платівку"))
+            return False
+        finally:
+            self._restarting = False
+
+    async def _restart_and_play(self):
+        p = self.player
+        if p is not None and isinstance(p, MpvPlayer):
+            p._lost = True                       # вважаємо зв'язок втраченим — ensure_player перезапустить
+        if await self.ensure_player() and self.player and self.player.active:
+            await self.player.set_pause(False)
+
+    async def _after_wake(self):
+        """Mac прокинувся (чи програма довго була «приспана» системою): перевірити mpv і перепідключити звук."""
+        if await self.ensure_player() and self.player is not None:
+            await self.player.reload_audio()
+
     async def play_index(self, i: int, start: float = 0.0, paused: bool = False):
         if not (0 <= i < len(self.playlist)) or self.player is None:
             return
+        if not getattr(self, "_restarting", False):
+            await self.ensure_player()
         self._load_gen += 1
         gen = self._load_gen
         async with self._load_lock:
@@ -2610,6 +2656,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         if not self.playlist:
             self.toast(_("Список порожній — оберіть музику в медіатеці"))
             return
+        await self.ensure_player()
         if self.player.active and self.player.paused:
             await self.player.set_pause(False)
         elif self.player.active:
@@ -2619,10 +2666,12 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             await self.play_index(i)
 
     async def pause(self):
+        await self.ensure_player()
         if self.player and self.player.active:
             await self.player.set_pause(not self.player.paused)
 
     async def toggle(self):
+        await self.ensure_player()
         if self.player and self.player.active:
             await self.player.set_pause(not self.player.paused)
         else:
@@ -2805,6 +2854,26 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         p = self.player
         if p is None:
             return
+        now = time.time()               # «настінний» час: на Mac monotonic стоїть, поки комп'ютер спить
+        last = getattr(self, "_tick_wall", now)
+        self._tick_wall = now
+        if now - last > 30:
+            log(f"пробудження: пауза в роботі {now - last:.0f} с")
+            self.spawn(self._after_wake())
+        # звук «завис»: грає, але позиція не рухається — перепідключити вихід, а якщо не допоможе — перезапустити mpv
+        if p.active and not p.paused and not getattr(self, "_restarting", False):
+            if abs(p.time_pos - getattr(self, "_stall_pos", -1)) > 0.05:
+                self._stall_pos, self._stall_since, self._stall_step = p.time_pos, now, 0
+            elif now - getattr(self, "_stall_since", now) > 6:
+                self._stall_since = now
+                self._stall_step = getattr(self, "_stall_step", 0) + 1
+                log(f"звук стоїть на {p.time_pos:.1f} с (крок {self._stall_step})")
+                if self._stall_step == 1:
+                    self.spawn(p.reload_audio())
+                elif self._stall_step == 2:
+                    self.spawn(self._restart_and_play())
+        else:
+            self._stall_pos = -1
         dur = p.duration or (self.track(self.playlist[self.current]).length if 0 <= self.current < len(self.playlist) else 0)
         pos = p.time_pos if p.active else 0
         if not self.seek.dragging:

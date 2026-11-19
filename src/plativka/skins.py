@@ -48,6 +48,9 @@ _SVG = {
                 'stroke-linecap="round"/>',
     "phone": '<rect x="4.5" y="1.5" width="7" height="13" rx="1.8" fill="none" stroke="{c}" stroke-width="{w}"/>'
              '<path d="M7 12.2h2" stroke="{c}" stroke-width="{w}" stroke-linecap="round"/>',
+    "scrobble": '<circle cx="8" cy="9" r="1.6" fill="{c}"/><path d="M5.2 11.8a4 4 0 0 1 0-5.6M10.8 6.2a4 4 0 0 1 0 5.6'
+                'M3.1 13.9a7 7 0 0 1 0-9.8M12.9 4.1a7 7 0 0 1 0 9.8" fill="none" stroke="{c}" stroke-width="{w}" '
+                'stroke-linecap="round"/>',
     "speaker": '<path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="{c}"/><path d="M10.5 5.8a2.8 2.8 0 0 1 0 4.4" fill="none" '
                'stroke="{c}" stroke-width="{w}" stroke-linecap="round"/>',
     "mute": '<path d="M2 6h2.5L8 3v10L4.5 10H2z" fill="{c}"/><path d="M10.5 6l3.5 4M14 6l-3.5 4" fill="none" '

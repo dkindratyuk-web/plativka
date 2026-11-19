@@ -152,6 +152,18 @@ The blurred desktop behind the window works only on a Mac; on Windows and Linux 
 
 Plativka treats songs with the same artist and title and a length within 3 seconds as the same song — which is usually right (an MP3 and a FLAC of the same album). If a different version slipped in, keep both ticked: nothing is removed unless you untick it.
 
+## Play does nothing after the computer slept or the player sat idle for a long time
+
+Since version 1.10.0, before playing, Plativka checks that its sound engine (mpv) answers, and if it doesn't, restarts it quietly with the same track at the same position; after sleep and when the sound gets stuck it also reconnects the audio output. If you still see *"The sound is not responding — restart Plativka"*, quit Plativka and open it again, and send the log (below) in an [issue](https://github.com/dkindratyuk-web/plativka/issues).
+
+## Scrobbling: listens don't appear on Last.fm or ListenBrainz
+
+- Check the switch next to shuffle and repeat. **scrobble ·N** means N listens are waiting — usually there is no internet or the service is down; they will be sent later by themselves (or press **Send now** in ☰ → Playback → Scrobbling…).
+- **scrobble !** means the service refused. Most often the permission was withdrawn on Last.fm or the ListenBrainz token was reset: press **Disconnect** and connect again.
+- A track counts only after half of it or 4 minutes have actually played; short tracks (under 30 seconds) are not counted.
+- Last.fm may drop a listen it considers wrong (for example, a missing artist tag). Fill in the tags of the file.
+- Running Plativka from the source code? Last.fm needs the app key: set `PLATIVKA_LASTFM_KEY` and `PLATIVKA_LASTFM_SECRET` (get your own at last.fm/api). ListenBrainz works without it.
+
 ## Logs
 
 If something goes wrong, the logs show what happened:

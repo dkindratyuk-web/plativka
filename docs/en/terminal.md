@@ -179,6 +179,8 @@ If the page does not open on the phone, see [Troubleshooting](troubleshooting.md
 - **Windows — tray icon**: play/pause, next, previous, show the player, Plativka on GitHub, quit. **H** hides the window to the tray; the **Minimize to tray** option in the tray menu makes minimising do the same. Closing the window with ✕ quits.
 - **Linux — MPRIS**: media keys, the GNOME/KDE media widget and `playerctl` control Plativka and show the track and cover.
 - **macOS — media keys**: ⏮ ⏯ ⏭ (F7 F8 F9) and headphone buttons control Plativka, and the **Now Playing** widget in Control Center shows the track and cover. macOS sends these keys to the app that started playing most recently — if a browser or Music played something after Plativka, press play in Plativka once and the keys come back.
+- **Scrobbling to Last.fm and ListenBrainz**: connect the accounts once in [Plativka Desktop](desktop.md#scrobbling-lastfm-and-listenbrainz) (☰ → Playback → Scrobbling…) — the terminal edition then scrobbles with them too, and ♥ in it is passed on as "Loved" if you turned that on.
+- **After sleep or a long idle** Plativka checks its sound engine (mpv) before playing and quietly restarts it with the same track at the same position if it stopped answering.
 
 ## Updates
 

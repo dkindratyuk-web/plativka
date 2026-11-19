@@ -1964,6 +1964,7 @@ class Plativka(App, PlayerExtras, RemoteHost):
         self.current = i
         self.stopped = False
         path = self.playlist[i]
+        await self.ensure_player()
         await self.load_track(path, start=start, paused=paused)
         if not paused:
             self.announce(path)
@@ -1972,10 +1973,15 @@ class Plativka(App, PlayerExtras, RemoteHost):
         self.load_cover_bg(path)
         self.save_cfg()
 
+    def _say_error(self, text: str):
+        log(text)
+        self.notify(text, severity="error")
+
     async def play(self):
         if not self.playlist:
             self.notify(_("Список порожній — оберіть музику в медіатеці"))
             return
+        await self.ensure_player()
         if self.player.active and self.player.paused:
             await self.player.set_pause(False)
         elif self.player.active:
@@ -1985,10 +1991,12 @@ class Plativka(App, PlayerExtras, RemoteHost):
             await self.play_index(i)
 
     async def pause(self):
+        await self.ensure_player()
         if self.player.active:
             await self.player.set_pause(not self.player.paused)
 
     async def toggle(self):
+        await self.ensure_player()
         if self.player.active:
             await self.player.set_pause(not self.player.paused)
         else:
@@ -2465,6 +2473,8 @@ class Plativka(App, PlayerExtras, RemoteHost):
             pass
         if self.sleep_until and self.sleep_left == 0:
             self.run_worker(self._sleep_fire())
+        self.health_tick()
+        self.scrobble_tick()
         self._platform_tick()
 
     def _ui_tick(self):

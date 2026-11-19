@@ -4,11 +4,19 @@
 
 **English**
 
-- After a long idle or Mac sleep the player no longer ignores Play: the sound engine (mpv) is checked before playing and restarted quietly with the same track at the same position; audio is reconnected after sleep and when playback stalls; such events are written to the log.
+- **Scrobbling to Last.fm and ListenBrainz**: what you listen to goes to your profile — "now playing", then a scrobble after half of the track or 4 minutes (tracks over 30 seconds). Off until you connect an account: **☰ → Playback → Scrobbling (Last.fm, ListenBrainz)…** — Last.fm is approved in the browser (Plativka never sees the password), ListenBrainz takes your user token. ♥ can be passed on as "Loved" / "Love". Without internet, listens wait in a queue and are sent later with the right time. Only the artist, title, album, length and time are sent. The terminal edition scrobbles with the same accounts. [How to connect](docs/en/desktop.md#scrobbling-lastfm-and-listenbrainz)
+- **Scrobbling status** next to shuffle and repeat: **scrobble** — all sent, **scrobble ·3** — waiting to be sent, **scrobble !** — the service refused; a click opens the Scrobbling window.
+- **After a long idle or Mac sleep the player no longer ignores Play** — in both editions: the sound engine (mpv) is checked before playing and restarted quietly with the same track at the same position; audio is reconnected after sleep and when playback gets stuck; such events are written to the log.
+- **Messages pop up over the window** for a few seconds instead of a strip at the bottom that shifted the playlist.
+- Long durations ("1:05:12") and the playing track's time are no longer cut in the playlist; in a narrow window the footer under the playlist gets shorter instead of being cut ("19 tr…").
 
 **Українська**
 
-- Після довгого простою чи сну Mac плеєр більше не ігнорує «грати»: звуковий рушій (mpv) перевіряється перед відтворенням і тихо перезапускається з тим самим треком на тому ж місці; звук перепідключається після сну й коли відтворення «зависло»; такі події пишуться в журнал.
+- **Скроблінг на Last.fm і ListenBrainz**: прослухане потрапляє у ваш профіль — «зараз слухає», а після половини треку або 4 хвилин — скробл (для треків довших за 30 секунд). Вимкнено, доки не підключите обліковий запис: **☰ → Відтворення → Скроблінг (Last.fm, ListenBrainz)…** — Last.fm підтверджується в браузері (пароля Платівка не бачить), для ListenBrainz — ваш токен користувача. ♥ можна передавати як «Loved» / «Love». Без інтернету прослухане чекає в черзі й надсилається пізніше з правильним часом. Надсилаються лише виконавець, назва, альбом, тривалість і час. Консольна версія скробить із тими самими обліковими записами. [Як підключити](docs/uk/desktop.md#скроблінг-lastfm-і-listenbrainz)
+- **Стан скроблінгу** поруч із «перемішати» й «повтор»: **скробл** — усе надіслано, **скробл ·3** — чекає надсилання, **скробл !** — сервіс відмовив; клік відкриває вікно скроблінгу.
+- **Після довгого простою чи сну Mac плеєр більше не ігнорує «грати»** — в обох версіях: звуковий рушій (mpv) перевіряється перед відтворенням і тихо перезапускається з тим самим треком на тому ж місці; звук перепідключається після сну й коли відтворення «зависло»; такі події пишуться в журнал.
+- **Повідомлення спливають поверх вікна** на кілька секунд, а не смугою внизу, що зсувала список.
+- Довгі тривалості («1:05:12») і час треку, що грає, більше не обрізаються в списку; у вузькому вікні підпис під списком стає коротшим, а не обрізаним («19 тр…»).
 
 ## 1.9.0
 

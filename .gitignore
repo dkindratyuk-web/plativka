@@ -7,3 +7,4 @@ dist/
 venv/
 .pytest_cache/
 .DS_Store
+src/plativka/_keys.py

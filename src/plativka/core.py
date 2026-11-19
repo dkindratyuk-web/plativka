@@ -1173,6 +1173,117 @@ class PlayerExtras:
             except Exception as e:
                 log(f"історія: {e}")
 
+    # ── mpv після простою чи сну: перевірити, перезапустити, перепідключити звук ──
+    def _new_player(self):
+        p = MpvPlayer(self._mpv_eof, self._mpv_error, self._mpv_message, self._mpv_external_pause)
+        p.replaygain, p.on_advance = self.replaygain, self._mpv_advance
+        return p
+
+    async def _player_restarted(self):
+        """Після перезапуску mpv: віконна версія повертає еквалайзер."""
+
+    def _say_error(self, text: str):
+        log(text)
+
+    def _bg(self, coro):
+        if hasattr(self, "spawn"):
+            self.spawn(coro)
+        else:
+            self.run_worker(coro)
+
+    async def ensure_player(self) -> bool:
+        """mpv живий? Після сну комп'ютера чи довгого простою він міг завершитися або зависнути —
+        тоді тихо перезапускаємо його й повертаємо той самий трек на те саме місце."""
+        p = self.player
+        if p is None or getattr(self, "demo", False) or not isinstance(p, MpvPlayer):
+            return p is not None
+        if await p.ping():
+            return True
+        if getattr(self, "_restarting", False):
+            return False
+        self._restarting = True
+        try:
+            pos = p.time_pos if p.active else float(self.cfg.get("position", 0) or 0)
+            log(f"mpv: перезапуск (трек {self.current}, позиція {pos:.1f})")
+            try:
+                await asyncio.wait_for(p.close(), 3)
+            except Exception:
+                pass
+            self.player = self._new_player()
+            await self.player.start(self.player_volume)
+            await self._player_restarted()
+            if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
+                await self.load_track(self.playlist[self.current], start=max(0.0, pos), paused=True)
+            return True
+        except Exception as e:
+            log(f"mpv: перезапуск не вдався: {e}")
+            self._say_error(_("Звук не відповідає — перезапустіть Платівку"))
+            return False
+        finally:
+            self._restarting = False
+
+    async def _restart_and_play(self):
+        p = self.player
+        if isinstance(p, MpvPlayer):
+            p._lost = True                       # вважаємо зв'язок втраченим — ensure_player перезапустить
+        if await self.ensure_player() and self.player and self.player.active:
+            await self.player.set_pause(False)
+
+    async def _after_wake(self):
+        """Комп'ютер прокинувся (чи програма довго була «приспана» системою): перевірити mpv і звук."""
+        if await self.ensure_player() and self.player is not None:
+            await self.player.reload_audio()
+
+    def health_tick(self):
+        """З таймера інтерфейсу: пробудження після сну й «завислий» звук."""
+        p = self.player
+        if p is None or getattr(self, "demo", False):
+            return
+        now = time.time()               # «настінний» час: на Mac monotonic стоїть, поки комп'ютер спить
+        last = getattr(self, "_tick_wall", now)
+        self._tick_wall = now
+        if now - last > 30:
+            log(f"пробудження: пауза в роботі {now - last:.0f} с")
+            self._bg(self._after_wake())
+        # звук «завис»: грає, але позиція не рухається — перепідключити вихід, а якщо не допоможе — перезапустити mpv
+        if p.active and not p.paused and not getattr(self, "_restarting", False):
+            if abs(p.time_pos - getattr(self, "_stall_pos", -1)) > 0.05:
+                self._stall_pos, self._stall_since, self._stall_step = p.time_pos, now, 0
+            elif now - getattr(self, "_stall_since", now) > 6:
+                self._stall_since = now
+                self._stall_step = getattr(self, "_stall_step", 0) + 1
+                log(f"звук стоїть на {p.time_pos:.1f} с (крок {self._stall_step})")
+                if self._stall_step == 1:
+                    self._bg(p.reload_audio())
+                elif self._stall_step == 2:
+                    self._bg(self._restart_and_play())
+        else:
+            self._stall_pos = -1
+
+    # ── скроблінг (scrobble.py): вимкнено, доки людина не підключить Last.fm чи ListenBrainz ──
+    @property
+    def scrobbler(self):
+        if getattr(self, "_scrobbler", None) is None:
+            from .scrobble import Scrobbler
+            self._scrobbler = Scrobbler()
+            if self._scrobbler.enabled and not getattr(self, "demo", False):
+                self._scrobbler.start()
+        return self._scrobbler
+
+    def scrobble_begin(self, path: str | None):
+        if getattr(self, "demo", False):
+            return
+        try:
+            self.scrobbler.begin(self.track(path) if path else None)
+        except Exception as e:
+            log(f"скроблінг: {e}")
+
+    def scrobble_tick(self):
+        p = self.player
+        if getattr(self, "demo", False):
+            return
+        self.scrobbler.tick(bool(p is not None and p.active and not p.paused))
+
     def is_fav(self, path: str | None) -> bool:
         return bool(path) and path in self.favs
 
@@ -1180,7 +1291,13 @@ class PlayerExtras:
         """Лайк / зняти лайк. Повертає новий стан або None, якщо треку немає."""
         if not path:
             return None
-        return self.favs.toggle(self.track(path))
+        state = self.favs.toggle(self.track(path))
+        if state is not None and not getattr(self, "demo", False):
+            try:
+                self.scrobbler.love(self.track(path), bool(state))
+            except Exception as e:
+                log(f"скроблінг: {e}")
+        return state
 
     def smart_lists(self, tracks: dict) -> list[tuple[str, str, list[str]]]:
         """(ключ, назва, шляхи) для розумних списків у бібліотеці."""
@@ -1242,6 +1359,7 @@ class PlayerExtras:
         self.end_listen()
         self.queue_consume(path)
         self._listen_path = path
+        self.scrobble_begin(path)
         t = self.track(path)
         await self.player.load(real_path(path), start=start, paused=paused, seg=t.segment)
         await self.refresh_preload()
@@ -1280,6 +1398,7 @@ class PlayerExtras:
             n = self.track(prev).length or 0
             self.hist.note(prev, n, n)
         self._listen_path = self.playlist[j]
+        self.scrobble_begin(self.playlist[j])
         self.queue_consume(self.playlist[j])
         if self.current != j and self.current >= 0:
             self.history = (self.history + [self.current])[-200:]

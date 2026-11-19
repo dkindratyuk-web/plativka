@@ -28,6 +28,11 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Last.fm keys
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+        run: python packaging/write_keys.py
       - name: Smoke test
         run: |
           python -m pip install . pytest pytest-asyncio
@@ -62,6 +67,11 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Last.fm keys
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+        run: python packaging/write_keys.py
       - name: Build
         env:
           MPV_ZIP_URL: https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-${{ matrix.mpv }}.zip
@@ -77,6 +87,11 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Last.fm keys
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+        run: python packaging/write_keys.py
       - name: Inno Setup
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
@@ -104,6 +119,11 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Last.fm keys
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+        run: python packaging/write_keys.py
       - name: Build
         env:
           MPV_ZIP_URL: https://github.com/mpv-player/mpv/releases/download/${{ env.MPV_VERSION }}/mpv-${{ env.MPV_VERSION }}-${{ matrix.mpv }}.zip
@@ -118,6 +138,11 @@ jobs:
       - uses: actions/checkout@v5
       - uses: actions/setup-python@v6
         with: { python-version: "${{ env.PYTHON_VERSION }}" }
+      - name: Last.fm keys
+        env:
+          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
+          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
+        run: python packaging/write_keys.py
       - name: Inno Setup
         run: |
           if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }

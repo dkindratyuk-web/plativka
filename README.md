@@ -59,6 +59,7 @@ It comes in two editions; install either one or both — the first time Plativka
 - **Copy to a USB stick** for the car: numbered files so the stereo keeps your order, the size and free space shown first, nothing overwritten without asking.
 - **Find duplicates**: identical files and the same song in different files (MP3 and FLAC of one album); you choose which copy to keep, the extras go from the list or to the Trash.
 - **Covers from the internet** (off by default): if a file has no cover, Plativka finds it on MusicBrainz or Apple — only a confident match, or pick one yourself from a few options.
+- **Scrobbling to Last.fm and ListenBrainz** (off until you connect an account): what you listen to goes to your profile, ♥ can become "Loved", listens made offline are sent later. [How to connect](docs/en/desktop.md#scrobbling-lastfm-and-listenbrainz)
 - **Phone remote**: control the music from your phone on the same Wi-Fi — scan a QR code, nothing to install. Pause, next track, volume, sleep timer, any track from the playlist — on a page that looks like Plativka itself; only phones you paired, only in your home network.
 - **Sleep timer**: stop after 15–90 minutes or after the current track, with a gentle fade-out.
 - **Smart tags**: files without tags are read from their names ("01. Artist - Title.mp3"), old Windows-1251 tags are fixed automatically.

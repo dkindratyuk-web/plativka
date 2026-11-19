@@ -15,6 +15,7 @@ import asyncio
 import io
 import json
 import html
+import re
 import os
 import random
 import sys
@@ -22,7 +23,7 @@ import threading
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, QTimer, Signal, QObject
+from PySide6.QtCore import QEvent, QPointF, QRectF, QSize, Qt, QTimer, QUrl, Signal, QObject
 from PySide6.QtGui import (QAction, QActionGroup, QColor, QDesktopServices, QFont, QFontMetrics, QIcon,
                            QImage, QKeySequence, QPainter, QPainterPath, QPalette, QPixmap, QShortcut)
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QDialog, QDialogButtonBox,
@@ -186,7 +187,14 @@ class Clickable(QLabel):
 
 
 class ElidedLabel(QLabel):
-    """Рядок, що не влазить, закінчується «…», а не обривається на півслові."""
+    """Рядок, що не влазить, закінчується «…», а не обривається на півслові.
+    setTexts([повний, коротший, найкоротший]) — показати найдовший варіант, що вміщається цілим."""
+
+    _alts: list = []
+
+    def setTexts(self, texts):
+        self._alts = [t for t in texts if t]
+        self.setText(self._alts[0] if self._alts else "")
 
     def paintEvent(self, e):
         p = QPainter(self)
@@ -194,7 +202,12 @@ class ElidedLabel(QLabel):
         p.setFont(self.font())
         fm = QFontMetrics(self.font())
         r = self.contentsRect()
-        p.drawText(r, Qt.AlignLeft | Qt.AlignVCenter, fm.elidedText(self.text(), Qt.ElideRight, r.width()))
+        text = self.text()
+        for alt in self._alts:
+            if fm.horizontalAdvance(alt) <= r.width():
+                text = alt
+                break
+        p.drawText(r, Qt.AlignLeft | Qt.AlignVCenter, fm.elidedText(text, Qt.ElideRight, r.width()))
         p.end()
 
 
@@ -732,6 +745,230 @@ class SplitDialog(QDialog):
         if split.remove(self.audio):
             self.win.apply_split(self.audio)
         self.accept()
+
+
+class ScrobbleDialog(QDialog):
+    """Підключення Last.fm і ListenBrainz. Обидва необов'язкові; без них Платівка нічого нікуди не надсилає."""
+
+    def __init__(self, win: "MainWindow"):
+        super().__init__(win)
+        from . import scrobble as S
+        self.win, self.S, self.sc = win, S, win.scrobbler
+        self.setWindowTitle(_("Скроблінг"))
+        self.setMinimumWidth(500)
+        lay = QVBoxLayout(self)
+        intro = QLabel(_("Платівка може записувати, що ви слухаєте, у ваш профіль Last.fm чи ListenBrainz. "
+                         "Надсилаються лише виконавець, назва, альбом, тривалість і час прослуховування. "
+                         "Без інтернету прослухане чекає в черзі."))
+        intro.setObjectName("dim")
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+
+        # Last.fm
+        lf = QFrame()
+        lf.setObjectName("listcard")
+        ll = QVBoxLayout(lf)
+        t = QLabel("Last.fm")
+        t.setObjectName("title")
+        ll.addWidget(t)
+        self.lf_state = QLabel()
+        self.lf_state.setWordWrap(True)
+        ll.addWidget(self.lf_state)
+        self.lf_love = QCheckBox(_("Позначати улюблені (♥) як «Loved» на Last.fm"))
+        self.lf_love.toggled.connect(lambda on: self.sc.set_love_sync("Last.fm", on))
+        ll.addWidget(self.lf_love)
+        r = QHBoxLayout()
+        self.lf_btn = QPushButton()
+        self.lf_btn.clicked.connect(self._lastfm)
+        self.lf_done = QPushButton(_("Я підтвердив у браузері"))
+        self.lf_done.clicked.connect(self._lastfm_finish)
+        self.lf_done.hide()
+        r.addWidget(self.lf_btn)
+        r.addWidget(self.lf_done)
+        r.addStretch()
+        ll.addLayout(r)
+        lay.addWidget(lf)
+
+        # ListenBrainz
+        lb = QFrame()
+        lb.setObjectName("listcard")
+        bl = QVBoxLayout(lb)
+        t = QLabel("ListenBrainz")
+        t.setObjectName("title")
+        bl.addWidget(t)
+        self.lb_state = QLabel()
+        self.lb_state.setWordWrap(True)
+        self.lb_state.setOpenExternalLinks(True)
+        bl.addWidget(self.lb_state)
+        self.lb_token = QLineEdit()
+        self.lb_token.setEchoMode(QLineEdit.Password)
+        self.lb_token.setPlaceholderText(_("Токен користувача"))
+        bl.addWidget(self.lb_token)
+        self.lb_love = QCheckBox(_("Позначати улюблені (♥) як «Love» у ListenBrainz"))
+        self.lb_love.toggled.connect(lambda on: self.sc.set_love_sync("ListenBrainz", on))
+        bl.addWidget(self.lb_love)
+        r = QHBoxLayout()
+        self.lb_btn = QPushButton()
+        self.lb_btn.clicked.connect(self._listenbrainz)
+        r.addWidget(self.lb_btn)
+        r.addStretch()
+        bl.addLayout(r)
+        lay.addWidget(lb)
+
+        self.queue = QLabel()
+        self.queue.setObjectName("dim")
+        self.queue.setWordWrap(True)
+        lay.addWidget(self.queue)
+        bc = QHBoxLayout()
+        self.b_send = QPushButton(_("Надіслати зараз"))
+        self.b_send.clicked.connect(self._send)
+        bc.addWidget(self.b_send)
+        bc.addStretch()
+        b_close = QPushButton(_("Закрити"))
+        b_close.clicked.connect(self.close)
+        bc.addWidget(b_close)
+        lay.addLayout(bc)
+        self._token = None
+        self.refresh()
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self.refresh)
+        self._timer.start(2000)
+
+    def refresh(self):
+        S, c = self.S, self.sc.cfg
+        key, _secret = S.lastfm_keys()
+        lf = c.get("lastfm") or {}
+        if not key:
+            self.lf_state.setText(_("У цій збірці немає ключа Last.fm (запуск із вихідного коду) — "
+                                    "див. інструкцію, як додати свій."))
+            self.lf_btn.setEnabled(False)
+            self.lf_btn.setText(_("Підключити…"))
+        elif lf.get("session"):
+            err = self.sc.errors.get("Last.fm")
+            self.lf_state.setText(_("Підключено: {user}").format(user=lf.get("user") or "?") +
+                                  (f" — {err}" if err else ""))
+            self.lf_btn.setText(_("Відключити"))
+            self.lf_btn.setEnabled(True)
+        else:
+            self.lf_state.setText(_("Не підключено. Платівка відкриє сторінку Last.fm у браузері — "
+                                    "увійдіть і натисніть «Yes, allow access»."))
+            self.lf_btn.setText(_("Підключити…"))
+            self.lf_btn.setEnabled(True)
+        self.lf_love.blockSignals(True)
+        self.lf_love.setChecked(bool(lf.get("love", True)))
+        self.lf_love.setVisible(bool(lf.get("session")))
+        self.lf_love.blockSignals(False)
+        lb = c.get("listenbrainz") or {}
+        if lb.get("token"):
+            err = self.sc.errors.get("ListenBrainz")
+            self.lb_state.setText(_("Підключено: {user}").format(user=lb.get("user") or "?") +
+                                  (f" — {err}" if err else ""))
+            self.lb_btn.setText(_("Відключити"))
+            self.lb_token.hide()
+        else:
+            self.lb_state.setText(_("Не підключено. Токен — на <a href=\"https://listenbrainz.org/settings/\">"
+                                    "listenbrainz.org/settings</a> (User token)."))
+            self.lb_btn.setText(_("Підключити"))
+            self.lb_token.show()
+        self.lb_love.blockSignals(True)
+        self.lb_love.setChecked(bool(lb.get("love", True)))
+        self.lb_love.setVisible(bool(lb.get("token")))
+        self.lb_love.blockSignals(False)
+        n = len(self.sc.pending)
+        self.queue.setText(_("У черзі на надсилання: {n}").format(n=n) if n else
+                           (_("Усе надіслано.") if self.sc.enabled else ""))
+        self.b_send.setVisible(bool(n))
+
+    def _run(self, fn, done):
+        """Мережа — у фоновому потоці, щоб вікно не завмирало."""
+        def work():
+            try:
+                res, err = fn(), None
+            except Exception as e:
+                res, err = None, e
+            self.win.call_from_thread(done, res, err)
+        threading.Thread(target=work, daemon=True).start()
+
+    def _lastfm(self):
+        S = self.S
+        if (self.sc.cfg.get("lastfm") or {}).get("session"):
+            self.sc.disconnect("Last.fm")
+            self.refresh()
+            return
+        key, secret = S.lastfm_keys()
+        api = S.LastFM(key, secret)
+        self.lf_btn.setEnabled(False)
+
+        def got(token, err):
+            self.lf_btn.setEnabled(True)
+            if err:
+                QMessageBox.warning(self, "Last.fm", _("Не вдалося зв'язатися з Last.fm: {e}").format(e=err))
+                return
+            self._token = token
+            QDesktopServices.openUrl(QUrl(api.auth_url(token)))
+            self.lf_state.setText(_("У браузері відкрилась сторінка Last.fm. Увійдіть, натисніть «Yes, allow access» "
+                                    "і поверніться сюди."))
+            self.lf_done.show()
+            self._poll = 0
+            QTimer.singleShot(4000, self._lastfm_poll)
+        self._run(api.get_token, got)
+
+    def _lastfm_poll(self):
+        """Чекаємо підтвердження в браузері (до ~3 хвилин), щоб не треба було нічого натискати."""
+        if not self._token or not self.isVisible():
+            return
+        self._poll += 1
+        self._lastfm_finish(quiet=True)
+
+    def _lastfm_finish(self, quiet=False):
+        S = self.S
+        token = self._token
+        if not token:
+            return
+        key, secret = S.lastfm_keys()
+
+        def done(res, err):
+            if res:
+                self._token = None
+                self.lf_done.hide()
+                self.sc.connect_lastfm(*res)
+                self.win.toast(_("Last.fm підключено: {user}").format(user=res[1]))
+                self.refresh()
+                self.win.update_flags()
+            elif quiet and self._poll < 45:
+                QTimer.singleShot(4000, self._lastfm_poll)
+            elif not quiet:
+                QMessageBox.information(self, "Last.fm", _("Last.fm ще не бачить підтвердження. Натисніть "
+                                                           "«Yes, allow access» у браузері й спробуйте ще раз."))
+        self._run(lambda: S.LastFM(key, secret).get_session(token), done)
+
+    def _listenbrainz(self):
+        S = self.S
+        if (self.sc.cfg.get("listenbrainz") or {}).get("token"):
+            self.sc.disconnect("ListenBrainz")
+            self.refresh()
+            return
+        token = self.lb_token.text().strip()
+        if not token:
+            self.lb_token.setFocus()
+            return
+        self.lb_btn.setEnabled(False)
+
+        def done(user, err):
+            self.lb_btn.setEnabled(True)
+            if err:
+                QMessageBox.warning(self, "ListenBrainz", _("Токен не підійшов або немає зв'язку: {e}").format(e=err))
+                return
+            self.sc.connect_listenbrainz(token, user or "")
+            self.lb_token.clear()
+            self.win.toast(_("ListenBrainz підключено: {user}").format(user=user))
+            self.refresh()
+            self.win.update_flags()
+        self._run(lambda: S.ListenBrainz(token).validate(), done)
+
+    def _send(self):
+        self.sc.flush()
+        QTimer.singleShot(1500, self.refresh)
 
 
 class EqualizerDialog(QDialog):
@@ -1655,7 +1892,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         # іконки-перемикачі (скіни macOS і Windows, а також компактний вигляд у будь-якому скіні)
         self.icon_flags = {}
         for key, fn in (("shuffle", self.toggle_shuffle), ("repeat", self.cycle_repeat),
-                        ("popups", self.toggle_popups), ("remote", self.open_remote)):
+                        ("popups", self.toggle_popups), ("remote", self.open_remote),
+                        ("scrobble", self.open_scrobbling)):
             b = QToolButton()
             b.setObjectName("flagicon")
             b.setCursor(Qt.PointingHandCursor)
@@ -1681,11 +1919,16 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.f_eq.setObjectName("flagon")
         self.f_eq.clicked.connect(self.open_equalizer)
         self.f_eq.hide()
+        self.f_scrobble = Clickable()       # скроблінг підключено: стан; клік — вікно скроблінгу
+        self.f_scrobble.setObjectName("flagon")
+        self.f_scrobble.clicked.connect(self.open_scrobbling)
+        self.f_scrobble.hide()
         self.f_update = Clickable()         # «вийшла нова версія»: клік — сторінка завантаження
         self.f_update.setObjectName("flagon")
         self.f_update.clicked.connect(self.open_update)
         self.f_update.hide()
-        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_eq, self.f_sleep, self.f_remote, self.f_update):
+        for w in (self.f_shuffle, self.f_repeat, self.f_popups, self.f_eq, self.f_sleep, self.f_remote,
+                  self.f_scrobble, self.f_update):
             flags.addWidget(w)
         flags.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
         lv.addWidget(self.flagw)
@@ -1978,6 +2221,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         a_findcover = act(_("Знайти обкладинку…"), lambda: self.pick_cover())
         a_upd = act(_("Перевірити оновлення…"), lambda: self.spawn(self.look_for_update(manual=True)))
         a_remote = act(_("Пульт з телефона…"), self.open_remote)
+        a_scrob = act(_("Скроблінг (Last.fm, ListenBrainz)…"), self.open_scrobbling)
         a_eq = act(_("Еквалайзер…"), self.open_equalizer, ["Shift+E"])
         self.a_eq_on = act(_("Еквалайзер увімкнено"), lambda: self.set_eq(on=not self.eq_cfg.get("on")), None, True)
         a_like = act(_("До улюблених / прибрати"), lambda: self.like(), ["F"])
@@ -1991,7 +2235,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         menus = [
             (_("Файл"), [a_addf, a_addd, a_add, a_folders, None, a_plsave, a_plsaveas, a_plopen, None, a_copy, a_dupes, None, a_quit]),
             (_("Відтворення"), [self.a_play, a_stop, a_prev, a_next, None, self.a_shuffle, a_repeat,
-                                 None, a_qnext, a_qclear, None, a_eq, self.a_eq_on, m_rg, m_sleep, None, a_remote]),
+                                 None, a_qnext, a_qclear, None, a_eq, self.a_eq_on, m_rg, m_sleep, None, a_remote, a_scrob]),
             (_("Улюблені"), [a_like, a_favplay, None, a_unliked, None, a_favm3u]),
             (_("Вигляд"), [self.a_view, self.a_mini, self.a_top, None, m_skin, a_theme, self.a_popups, a_lang, None,
                            self.a_online, a_findcover, None, a_find]
@@ -2167,6 +2411,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             QDialog, QMessageBox {{ background: {menu_bg}; }}
             QListWidget {{ background: {card}; border: 1px solid {stroke}; border-radius: 6px; }}
             QToolTip {{ background: {menu_bg}; color: {fg}; border: 1px solid {stroke}; }}
+            QLabel#toast {{ background: {menu_bg}; color: {fg}; border: 1px solid {stroke}; border-radius: 10px;
+                            padding: 8px 14px; font-size: 13px; }}
             QToolButton#plain {{ background: transparent; border: none; padding: 0; }}
             QToolButton#flagicon {{ background: transparent; border: none; border-radius: 5px; padding: 0; }}
             QToolButton#flagicon:hover {{ background: {btn}; }}
@@ -2414,6 +2660,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
 
     def resizeEvent(self, e):
         super().resizeEvent(e)
+        if getattr(self, "_toast", None) is not None and self._toast.isVisible():
+            self._place_toast()
         if hasattr(self, "mini_vu") and not self.is_full():
             self._fit_mini_vu()
 
@@ -2578,6 +2826,8 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             await self.player.start(self.player_volume)
         if self.volume_mode == "system" and not self.demo:
             self._init_sysvol()
+        if not self.demo:
+            self.scrobbler.on_change = self._scrobble_changed
         await self.apply_eq()
         if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
             await self.play_index(self.current, start=float(self.cfg.get("position", 0)), paused=True)
@@ -2585,49 +2835,11 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.current = -1
         self.setup_platform()
 
-    async def ensure_player(self) -> bool:
-        """mpv живий? Після сну Mac чи довгого простою він міг завершитися або зависнути —
-        тоді тихо перезапускаємо його й повертаємо той самий трек на те саме місце."""
-        p = self.player
-        if p is None or self.demo or isinstance(p, DemoPlayer):
-            return p is not None
-        if await p.ping():
-            return True
-        if getattr(self, "_restarting", False):
-            return False
-        self._restarting = True
-        try:
-            pos = p.time_pos if p.active else float(self.cfg.get("position", 0) or 0)
-            log(f"mpv: перезапуск (трек {self.current}, позиція {pos:.1f})")
-            try:
-                await asyncio.wait_for(p.close(), 3)
-            except Exception:
-                pass
-            self.player = MpvPlayer(self._mpv_eof, self._mpv_error, self._mpv_message, self._mpv_external_pause)
-            self.player.replaygain, self.player.on_advance = self.replaygain, self._mpv_advance
-            await self.player.start(self.player_volume)
-            await self.apply_eq()
-            if 0 <= self.current < len(self.playlist) and os.path.exists(real_path(self.playlist[self.current])):
-                await self.load_track(self.playlist[self.current], start=max(0.0, pos), paused=True)
-            return True
-        except Exception as e:
-            log(f"mpv: перезапуск не вдався: {e}")
-            self.toast(_("Звук не відповідає — перезапустіть Платівку"))
-            return False
-        finally:
-            self._restarting = False
+    async def _player_restarted(self):
+        await self.apply_eq()
 
-    async def _restart_and_play(self):
-        p = self.player
-        if p is not None and isinstance(p, MpvPlayer):
-            p._lost = True                       # вважаємо зв'язок втраченим — ensure_player перезапустить
-        if await self.ensure_player() and self.player and self.player.active:
-            await self.player.set_pause(False)
-
-    async def _after_wake(self):
-        """Mac прокинувся (чи програма довго була «приспана» системою): перевірити mpv і перепідключити звук."""
-        if await self.ensure_player() and self.player is not None:
-            await self.player.reload_audio()
+    def _say_error(self, text: str):
+        self.toast(text)
 
     async def play_index(self, i: int, start: float = 0.0, paused: bool = False):
         if not (0 <= i < len(self.playlist)) or self.player is None:
@@ -2854,26 +3066,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         p = self.player
         if p is None:
             return
-        now = time.time()               # «настінний» час: на Mac monotonic стоїть, поки комп'ютер спить
-        last = getattr(self, "_tick_wall", now)
-        self._tick_wall = now
-        if now - last > 30:
-            log(f"пробудження: пауза в роботі {now - last:.0f} с")
-            self.spawn(self._after_wake())
-        # звук «завис»: грає, але позиція не рухається — перепідключити вихід, а якщо не допоможе — перезапустити mpv
-        if p.active and not p.paused and not getattr(self, "_restarting", False):
-            if abs(p.time_pos - getattr(self, "_stall_pos", -1)) > 0.05:
-                self._stall_pos, self._stall_since, self._stall_step = p.time_pos, now, 0
-            elif now - getattr(self, "_stall_since", now) > 6:
-                self._stall_since = now
-                self._stall_step = getattr(self, "_stall_step", 0) + 1
-                log(f"звук стоїть на {p.time_pos:.1f} с (крок {self._stall_step})")
-                if self._stall_step == 1:
-                    self.spawn(p.reload_audio())
-                elif self._stall_step == 2:
-                    self.spawn(self._restart_and_play())
-        else:
-            self._stall_pos = -1
+        self.health_tick()
         dur = p.duration or (self.track(self.playlist[self.current]).length if 0 <= self.current < len(self.playlist) else 0)
         pos = p.time_pos if p.active else 0
         if not self.seek.dragging:
@@ -2900,6 +3093,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
             self.f_sleep.setText(self.sleep_label())
             if self.sleep_left == 0:
                 self.spawn(self._sleep_fire())
+        self.scrobble_tick()
         self._platform_tick()
 
     async def vu_tick(self):
@@ -2973,14 +3167,22 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self._flags_l.setSpacing(4 if icons else 14)
         on_col = self._on_acc if self.skin == "fluent" else self._acc
         rep_txt = {"off": _("повтор: вимк"), "all": _("повтор: все"), "one": _("повтор: один")}[self.repeat]
+        sc_state, sc_detail = ("off", "") if self.demo else self.scrobbler.status()
+        sc_tip = {"ok": _("Скроблінг: {s}"), "wait": _("Скроблінг: у черзі ({s})"),
+                  "error": _("Скроблінг — помилка: {s}")}.get(sc_state, "").format(s=sc_detail)
+        self.f_scrobble.setVisible(sc_state != "off" and not icons)
+        self.f_scrobble.setText({"ok": _("скробл"), "wait": _("скробл ·{n}").format(n=len(self.scrobbler.pending)
+                                 if not self.demo else 0), "error": _("скробл !")}.get(sc_state, ""))
+        self.f_scrobble.setToolTip(sc_tip)
         for key, state, kind, tip in (
                 ("shuffle", self.shuffle, "shuffle", _("Перемішувати") + (" ✓" if self.shuffle else "")),
                 ("repeat", self.repeat != "off", "repeat1" if self.repeat == "one" else "repeat", rep_txt),
                 ("popups", self.popups, "bell" if self.popups else "bell_off",
                  _("сповіщ: {os}").format(os=sysdeps.OS_NAME) if self.popups else _("сповіщ: вимк")),
-                ("remote", True, "phone", _("Пульт з телефона увімкнено — клацніть, щоб відкрити"))):
+                ("remote", True, "phone", _("Пульт з телефона увімкнено — клацніть, щоб відкрити")),
+                ("scrobble", sc_state == "ok", "scrobble", sc_tip)):
             b = self.icon_flags[key]
-            b.setVisible(icons and (on if key == "remote" else True))
+            b.setVisible(icons and (on if key == "remote" else sc_state != "off" if key == "scrobble" else True))
             b.setProperty("on", bool(state))
             b.setIcon(self._icon(kind, on_col if state else self._muted_acc))
             b.setToolTip(tip)
@@ -3173,8 +3375,17 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
     def rebuild_playlist_info(self):
         has = bool(self.playlist)
         total = sum(self.track(p).length for p in self.playlist)
-        info = f"{n_tracks(len(self.playlist))} · {fmt_time(total)}" if has else ""
-        self.pl_count.setText(f"{self.pl_name} · {info}" if self.pl_name and has else info)
+        self._set_pl_count(has, total)
+
+    def _set_pl_count(self, has: bool, total: float):
+        """Підпис під списком: у вузькому вікні — коротший, а не обрізаний («19 тр…»)."""
+        if not has:
+            self.pl_count.setTexts([])
+            return
+        n = len(self.playlist)
+        full = f"{n_tracks(n)} · {fmt_time(total)}"
+        alts = [f"{self.pl_name} · {full}"] if self.pl_name else []
+        self.pl_count.setTexts(alts + [full, n_tracks(n), str(n)])
 
     def open_saved(self, name: str, append: bool = False):
         paths = self.saved_paths(name)
@@ -3241,6 +3452,17 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
                 self.save_cfg()
             self.rebuild_tree()
             self.toast(_("Список «{name}» видалено").format(name=name))
+
+    # ───────────── скроблінг ─────────────
+    def open_scrobbling(self):
+        if self.demo:
+            self.toast(_("Скроблінг недоступний у демо-режимі"))
+            return
+        ScrobbleDialog(self).exec()
+        self.update_flags()
+
+    def _scrobble_changed(self):
+        self.call_from_thread(self.update_flags)
 
     # ───────────── еквалайзер ─────────────
     def open_equalizer(self):
@@ -3350,12 +3572,33 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.save_cfg()
 
     def toast(self, text: str):
-        """Коротке повідомлення в рядку під кнопками (не заважає роботі)."""
+        """Коротке повідомлення, що спливає поверх нижньої частини вікна й нічого не зсуває."""
         log(f"toast: {text}")
-        sb = self.statusBar()
-        sb.show()
-        sb.showMessage(text, 5000)
-        QTimer.singleShot(5200, lambda: sb.hide() if not sb.currentMessage() else None)
+        t = getattr(self, "_toast", None)
+        if t is None:
+            t = self._toast = QLabel(self)
+            t.setObjectName("toast")
+            t.setWordWrap(True)
+            t.setAlignment(Qt.AlignCenter)
+            t.setAttribute(Qt.WA_TransparentForMouseEvents)
+            self._toast_timer = QTimer(self)
+            self._toast_timer.setSingleShot(True)
+            self._toast_timer.timeout.connect(t.hide)
+        t.setText(text)
+        self._place_toast()
+        t.show()
+        t.raise_()
+        self._toast_timer.start(max(3500, min(8000, 60 * len(text))))
+
+    def _place_toast(self):
+        t = getattr(self, "_toast", None)
+        if t is None:
+            return
+        w = min(self.width() - 32, max(220, t.fontMetrics().horizontalAdvance(t.text()) + 36))
+        t.setFixedWidth(max(120, w))
+        t.adjustSize()
+        bottom = 56 if self.lists.isVisible() else 10
+        t.move((self.width() - t.width()) // 2, max(8, self.height() - t.height() - bottom))
 
     # ───────────── обкладинка ─────────────
     def load_cover(self, path: str):
@@ -3463,8 +3706,7 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         self.table.setVisible(has)
         self.pl_empty.setVisible(not has)
         total = sum(self.track(p).length for p in self.playlist)
-        info = f"{n_tracks(len(self.playlist))} · {fmt_time(total)}" if has else ""
-        self.pl_count.setText(f"{self.pl_name} · {info}" if self.pl_name and has else info)
+        self._set_pl_count(has, total)
         self.pl_count.setToolTip(_("Збережений список: {name}").format(name=self.pl_name) if self.pl_name else "")
         self.mark_current()
         self.apply_filter(self.search.text())
@@ -3631,8 +3873,10 @@ class MainWindow(QMainWindow, PlayerExtras, RemoteHost):
         need = QFontMetrics(bf).horizontalAdvance("→9 " + "9" * digits + ".")
         pad = 18 if self.skin == "fluent" else 12
         self.table.setColumnWidth(0, max(56, need + pad))
-        # колонка часу: жирний «4:08» на рядку, що грає, теж має влазити («3:…» не годиться)
-        self.table.setColumnWidth(2, max(50, QFontMetrics(bf).horizontalAdvance("88:88") + pad))
+        # колонка часу — за найдовшою тривалістю (треки понад годину: «1:50:12»), жирним, як на рядку, що грає
+        longest = max((fmt_time(self.track(p).length) for p in self.playlist), key=len, default="88:88")
+        sample = re.sub(r"\d", "8", longest if len(longest) > 5 else "88:88")
+        self.table.setColumnWidth(2, max(50, QFontMetrics(bf).horizontalAdvance(sample) + pad + 12))
         self.table.viewport().update()
         if 0 <= self.current < self.table.rowCount():
             self.table.scrollToItem(self.table.item(self.current, 0), QAbstractItemView.EnsureVisible)

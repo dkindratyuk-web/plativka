@@ -257,6 +257,39 @@ If the page does not open on the phone, see [Troubleshooting](troubleshooting.md
 - The remote can only control the music — it has no access to files, settings or anything else on the computer.
 - Inside the home network the page uses plain HTTP (a real certificate cannot be issued for a home address). That is fine on a Wi-Fi network with a password; do not turn the remote on in public Wi-Fi (cafés, hotels).
 
+## Scrobbling: Last.fm and ListenBrainz
+
+Plativka can record what you listen to in your **Last.fm** or **ListenBrainz** profile — for statistics, charts and recommendations. It is **off until you connect an account**. Open **☰ → Playback → Scrobbling (Last.fm, ListenBrainz)…** (on a Mac — the **Playback** menu in the menu bar). You can connect one service or both.
+
+**Last.fm**
+
+1. Press **Connect…**. Plativka opens the Last.fm page in your browser.
+2. Sign in to Last.fm and press **Yes, allow access**.
+3. Come back to Plativka — it notices the approval by itself within a few seconds (or press **I approved it in the browser**). The window shows *Connected: your name*.
+
+Plativka never sees your Last.fm password: the browser gives it only a permission that you can withdraw at any time on last.fm → Settings → Applications.
+
+**ListenBrainz** (free and open, by the MusicBrainz people)
+
+1. On [listenbrainz.org/settings](https://listenbrainz.org/settings/) copy your **user token**.
+2. Paste it into the **User token** field in Plativka and press **Connect**.
+
+The token is kept only on your computer, in a settings file that only your user can read. Don't post it anywhere — whoever has it can add listens to your profile; if it leaks, reset it on the same ListenBrainz page.
+
+**What is counted and sent**
+
+- While a track plays, the service shows it as **now playing**.
+- A track counts as listened (a *scrobble*) after **half of it or 4 minutes**, whichever comes first; tracks shorter than 30 seconds are not counted. Time on pause does not count, and seeking does not add time. Tracks of a recording split into tracks (CUE) count one by one.
+- Only the **artist, title, album, length and the time you listened** are sent — nothing else about you or your files.
+- **Without internet** listens wait in a queue and are sent later, with the right time, even after a restart. The window shows how many are waiting; **Send now** tries at once.
+- **Likes**: tick **Mark favorites (♥) as "Loved" on Last.fm** / **as "Love" on ListenBrainz**, and the ♥ you put or remove in Plativka is passed to the service. (ListenBrainz needs the song to be in MusicBrainz to find it; songs it doesn't know are skipped.)
+
+**The switch next to shuffle and repeat** shows the state once an account is connected: **scrobble** — all sent; **scrobble ·3** — three listens are waiting to be sent; **scrobble !** — the service refused (for example, the permission was withdrawn); hover over it for details and click it to open the Scrobbling window. With icons instead of words it is the same, as an icon.
+
+**Disconnect** removes the saved permission or token from your computer.
+
+The terminal edition scrobbles too, with the accounts you connected in Plativka Desktop (the settings are shared).
+
 ## Notifications, media keys, tray
 
 - **Track notifications** with the album cover appear when the window is in the background or collapsed to the mini player. **N** or the **notifications** switch turns them off.
@@ -283,7 +316,7 @@ At start and then every 6 hours Plativka asks GitHub whether a new version is ou
 
 The first time Plativka Desktop starts, it takes the music folders and the playlist from the terminal edition (if it is installed); after that each edition keeps its own settings. The library cache is shared.
 
-Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe. Saved playlists are in the settings folder, in `playlists/` (M3U8 files); track splits that could not be saved next to a recording are in `splits/`.
+Favorites and the play history are kept next to the settings, in `favorites.json` and `history.json` — shared by both editions. Covers found online are kept in the cache folder, in `covers/`; deleting it is safe. Saved playlists are in the settings folder, in `playlists/` (M3U8 files); track splits that could not be saved next to a recording are in `splits/`. Scrobbling accounts and the queue of unsent listens are in `scrobble.json` and `scrobble-queue.json` in the settings folder.
 
 ## Command-line options
 
